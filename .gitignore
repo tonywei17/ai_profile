@@ -4,6 +4,7 @@
 # Xcode
 build/
 DerivedData/
+*.xcodeproj/
 *.pbxuser
 !default.pbxuser
 *.mode1v3
@@ -53,3 +54,7 @@ playground.xcworkspace
 
 # Others
 *.orig
+
+# Local logs
+*.log
+*.xcactivitylog

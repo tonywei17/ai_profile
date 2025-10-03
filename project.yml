@@ -1,0 +1,56 @@
+name: AIIDPhoto
+
+options:
+  minimumXcodeGenVersion: 2.31.0
+  deploymentTarget:
+    iOS: "16.0"
+
+settings:
+  BASE_SDK: iphoneos
+
+# 不引入 AdMob 包，代码里已用 `#if canImport(GoogleMobileAds)` 保护，可直接在模拟器运行
+
+packages: {}
+
+schemes:
+  AIIDPhoto:
+    build:
+      targets:
+        AIIDPhoto: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+
+targets:
+  AIIDPhoto:
+    type: application
+    platform: iOS
+    productName: AIIDPhoto
+    deploymentTarget: "16.0"
+    sources:
+      - path: ios/AIIDPhoto
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.yourcompany.aiidphoto
+      SWIFT_VERSION: 5.9
+      IPHONEOS_DEPLOYMENT_TARGET: 16.0
+      TARGETED_DEVICE_FAMILY: "1"   # iPhone
+    info:
+      # 让 XcodeGen 在此路径生成 Info.plist（目录已存在）
+      path: ios/AIIDPhoto/Info.plist
+      properties:
+        CFBundleDisplayName: AIIDPhoto
+        CFBundleIdentifier: com.yourcompany.aiidphoto
+        CFBundleName: AIIDPhoto
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0"
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UILaunchScreen: {}
+        NSCameraUsageDescription: "We need camera access for selfies."
+        NSPhotoLibraryUsageDescription: "Allow access to pick photos."
+        NSPhotoLibraryAddUsageDescription: "Allow saving generated photos."
+        # 可按需填写，留空也可以正常启动 UI
+        GEMINI_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent"
+        GEMINI_API_KEY: ""
+        # 如需广告，后续在此加入：
+        # GADApplicationIdentifier: ""

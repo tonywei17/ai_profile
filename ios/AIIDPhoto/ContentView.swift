@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var showSubscriptionSheet = false
     @State private var showCamera = false
     @State private var errorMessage: String?
+    @State private var prompt: String = "生成证件照：浅色纯色背景，35x45mm，正脸居中，头肩框图，光照均匀，自然风格。"
 
     var body: some View {
         ZStack {
@@ -94,13 +95,12 @@ struct ContentView: View {
                 }
                 .frame(height: 220)
             }
-
             HStack(spacing: 12) {
                 PhotosPicker(selection: $selectedItem, matching: .images) {
                     Label("相册选择", systemImage: "photo")
                         .buttonStyle()
                 }
-                .onChange(of: selectedItem) { _, newItem in
+                .onChange(of: selectedItem) { newItem in
                     Task { await loadSelectedImage(newItem) }
                 }
 
@@ -149,6 +149,10 @@ struct ContentView: View {
 
     private var generateSection: some View {
         VStack(spacing: 8) {
+            TextField("输入生成指令（可选）", text: $prompt)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal, 0)
+
             Button {
                 Task { await generateTapped() }
             } label: {
@@ -210,7 +214,7 @@ struct ContentView: View {
         isGenerating = true
         defer { isGenerating = false }
         do {
-            let result = try await GeminiService.shared.generateIDPhoto(from: input)
+            let result = try await GeminiService.shared.generateIDPhoto(from: input, prompt: prompt)
             self.outputImage = result
             usage.markUsed(isSubscribed: subscription.isSubscribed)
         } catch {
@@ -246,10 +250,10 @@ struct GlassButtonStyle: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .foregroundStyle(foreground)
     }
-    private var background: some ShapeStyle {
+    private var background: AnyShapeStyle {
         switch style {
-        case .primary: Color.accentColor
-        case .secondary: .ultraThinMaterial
+        case .primary: AnyShapeStyle(Color.accentColor)
+        case .secondary: AnyShapeStyle(.ultraThinMaterial)
         }
     }
     private var foreground: Color {
