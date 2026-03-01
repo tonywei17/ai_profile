@@ -44,11 +44,34 @@ struct SubscriptionSheetView: View {
 
             Spacer()
 
-            Text("订阅自动续期，可随时在设置中取消。")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            VStack(spacing: 8) {
+                Text("订阅自动续期，可随时在设置中取消。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                LegalLinksView()
+            }
         }
         .padding()
         .background(GlassBackground.gradient.ignoresSafeArea())
+    }
+}
+
+// MARK: - Legal Links
+
+// TODO: 替换为正式的隐私政策和服务条款 URL
+private enum LegalURLs {
+    static let privacyPolicy = URL(string: "https://example.com/privacy")!
+    static let termsOfService = URL(string: "https://example.com/terms")!
+}
+
+struct LegalLinksView: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            Link("隐私政策", destination: LegalURLs.privacyPolicy)
+            Text("·").foregroundStyle(.secondary)
+            Link("服务条款", destination: LegalURLs.termsOfService)
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
     }
 }

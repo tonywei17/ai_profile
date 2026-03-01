@@ -31,7 +31,7 @@ targets:
     sources:
       - path: ios/AIIDPhoto
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.yourcompany.aiidphoto
+      PRODUCT_BUNDLE_IDENTIFIER: com.nexus.aiidphoto
       SWIFT_VERSION: 5.9
       IPHONEOS_DEPLOYMENT_TARGET: 16.0
       TARGETED_DEVICE_FAMILY: "1"   # iPhone
@@ -40,7 +40,7 @@ targets:
       path: ios/AIIDPhoto/Info.plist
       properties:
         CFBundleDisplayName: AIIDPhoto
-        CFBundleIdentifier: com.yourcompany.aiidphoto
+        CFBundleIdentifier: com.nexus.aiidphoto
         CFBundleName: AIIDPhoto
         CFBundleVersion: "1"
         CFBundleShortVersionString: "1.0"
@@ -49,8 +49,10 @@ targets:
         NSCameraUsageDescription: "We need camera access for selfies."
         NSPhotoLibraryUsageDescription: "Allow access to pick photos."
         NSPhotoLibraryAddUsageDescription: "Allow saving generated photos."
-        # 可按需填写，留空也可以正常启动 UI
+        # 后端代理地址（GCP Cloud Run，API Key 存储在服务端 Secret Manager）
+        BACKEND_BASE_URL: "https://aiidphoto-backend-616059029156.asia-northeast1.run.app"
+        # 以下为开发环境直连 Gemini 的配置（生产环境应留空，通过后端代理）
         GEMINI_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent"
-        GEMINI_API_KEY: ""
+        GEMINI_API_KEY: ""  # FIXME: 仅限开发环境，生产环境必须使用后端代理
         # 如需广告，后续在此加入：
-        # GADApplicationIdentifier: ""
+        # GADApplicationIdentifier: ""  # TODO: 替换为正式 AdMob App ID

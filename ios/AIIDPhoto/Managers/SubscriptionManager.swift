@@ -6,34 +6,39 @@ final class SubscriptionManager: ObservableObject {
     @Published private(set) var isSubscribed: Bool = false
     @Published private(set) var displayPrice: String?
 
+    // TODO: 替换为正式 Product ID
     private let productID = "com.yourcompany.aiidphoto.premium"
     private var product: Product?
 
     init() {
         Task { await refreshProducts() }
-        Task { await updateEntitlements() }
+        Task { await checkCurrentEntitlements() }
+        Task { await listenForUpdates() }
     }
 
     private func refreshProducts() async {
         do {
             let products = try await Product.products(for: [productID])
             product = products.first
-            if let p = product, let price = p.displayPrice as String? {
-                displayPrice = price
+            if let p = product {
+                displayPrice = p.displayPrice
             }
         } catch {
             print("StoreKit products error: \(error)")
         }
     }
 
-    private func updateEntitlements() async {
+    /// Check existing entitlements on launch (finite iteration)
+    private func checkCurrentEntitlements() async {
+        for await trans in Transaction.currentEntitlements {
+            await handle(transaction: trans)
+        }
+    }
+
+    /// Listen for new transactions (infinite stream, runs for app lifetime)
+    private func listenForUpdates() async {
         for await result in Transaction.updates {
             await handle(transaction: result)
-        }
-        // Also check current entitlements on launch
-        let current = await Transaction.currentEntitlements
-        for await trans in current {
-            await handle(transaction: trans)
         }
     }
 

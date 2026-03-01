@@ -51,8 +51,8 @@ struct AdUnits {
     static let banner = "ca-app-pub-3940256099942544/2934735716" // test
     static let rewarded = "ca-app-pub-3940256099942544/5224354917" // test
     #else
-    static let banner = "YOUR_PRODUCTION_BANNER_UNIT_ID"
-    static let rewarded = "YOUR_PRODUCTION_REWARDED_UNIT_ID"
+    static let banner = "YOUR_PRODUCTION_BANNER_UNIT_ID"     // TODO: 替换为正式 Banner Ad Unit ID
+    static let rewarded = "YOUR_PRODUCTION_REWARDED_UNIT_ID" // TODO: 替换为正式 Rewarded Ad Unit ID
     #endif
 }
 

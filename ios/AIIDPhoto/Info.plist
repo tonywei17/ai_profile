@@ -20,6 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>BACKEND_BASE_URL</key>
+	<string>https://aiidphoto-backend-616059029156.asia-northeast1.run.app</string>
 	<key>GEMINI_API_KEY</key>
 	<string>AIzaSyDHj_8kdb2YbsxbVjTGJVejUQwOlOvW1F8</string>
 	<key>GEMINI_ENDPOINT</key>

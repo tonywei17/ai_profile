@@ -1,0 +1,94 @@
+import { Router, Request, Response } from "express";
+import { config } from "../config";
+
+const router = Router();
+
+interface GenerateRequest {
+  image: string; // base64
+  prompt: string;
+}
+
+interface GeminiAPIResponse {
+  candidates?: Array<{
+    content: {
+      parts: Array<{
+        text?: string;
+        inline_data?: { mime_type: string; data: string };
+        inlineData?: { mimeType: string; data: string };
+      }>;
+    };
+  }>;
+  error?: { code: number; message: string };
+}
+
+router.post("/generate", async (req: Request, res: Response) => {
+  try {
+    const { image, prompt } = req.body as GenerateRequest;
+
+    if (!image || !prompt) {
+      res.status(400).json({ error: "Missing required fields: image, prompt" });
+      return;
+    }
+
+    if (!config.geminiApiKey) {
+      res.status(500).json({ error: "Server API key not configured" });
+      return;
+    }
+
+    // Forward to Gemini API
+    const geminiBody = {
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: "image/jpeg", data: image } },
+          ],
+        },
+      ],
+    };
+
+    const geminiRes = await fetch(config.geminiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": config.geminiApiKey,
+      },
+      body: JSON.stringify(geminiBody),
+    });
+
+    const geminiData = (await geminiRes.json()) as GeminiAPIResponse;
+
+    if (!geminiRes.ok) {
+      const message =
+        geminiData.error?.message ||
+        `Gemini API error: ${geminiRes.status}`;
+      res.status(geminiRes.status).json({ error: message });
+      return;
+    }
+
+    // Extract image from response
+    const candidates = geminiData.candidates;
+    if (!candidates || candidates.length === 0) {
+      res.status(502).json({ error: "No result from Gemini API" });
+      return;
+    }
+
+    const parts = candidates[0].content.parts;
+    for (const part of parts) {
+      const inlineData = part.inline_data || part.inlineData;
+      if (inlineData?.data) {
+        res.json({ image: inlineData.data });
+        return;
+      }
+    }
+
+    res.status(502).json({ error: "No image in Gemini response" });
+  } catch (err) {
+    console.error("Generate error:", err);
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Internal server error",
+    });
+  }
+});
+
+export default router;
