@@ -1,74 +1,195 @@
 import Foundation
 import StoreKit
 
+/// Represents a subscription plan option.
+enum SubscriptionPlan: String, CaseIterable, Identifiable {
+    case monthly = "com.nexus.aiidphoto.pro_monthly"
+    case annual  = "com.nexus.aiidphoto.pro_annual"
+
+    var id: String { rawValue }
+
+    static let allProductIDs: Set<String> = Set(allCases.map(\.rawValue))
+}
+
 @MainActor
 final class SubscriptionManager: ObservableObject {
-    @Published private(set) var isSubscribed: Bool = false
-    @Published private(set) var displayPrice: String?
 
-    // TODO: 替换为正式 Product ID
-    private let productID = "com.yourcompany.aiidphoto.premium"
-    private var product: Product?
+    // MARK: - Debug Override
+
+    /// Set to `true` to simulate a subscribed state on device (DEBUG only).
+    #if DEBUG
+    static let forceSubscribed = true
+    #else
+    static let forceSubscribed = false
+    #endif
+
+    // MARK: - Published State
+
+    @Published private(set) var isSubscribed: Bool = false
+    @Published private(set) var expirationDate: Date?
+    @Published private(set) var isTrialEligible: Bool = false
+    @Published private(set) var isPurchasing: Bool = false
+    @Published private(set) var isRestoring: Bool = false
+    @Published var purchaseError: String?
+
+    /// Currently selected plan for purchase.
+    @Published var selectedPlan: SubscriptionPlan = .annual
+
+    /// Per-plan display prices (localized with currency code).
+    @Published private(set) var monthlyDisplayPrice: String?
+    @Published private(set) var annualDisplayPrice: String?
+
+    // MARK: - Private
+
+    private var products: [SubscriptionPlan: Product] = [:]
+    private var updateListenerTask: Task<Void, Never>?
+
+    /// Fallback prices when StoreKit products aren't available.
+    private static let fallbackMonthlyPrice = "$1.99 USD"
+    private static let fallbackAnnualPrice  = "$12.99 USD"
+
+    // MARK: - Init / Deinit
 
     init() {
+        if Self.forceSubscribed { isSubscribed = true }
+        updateListenerTask = Task { await listenForUpdates() }
         Task { await refreshProducts() }
         Task { await checkCurrentEntitlements() }
-        Task { await listenForUpdates() }
     }
 
-    private func refreshProducts() async {
+    deinit { updateListenerTask?.cancel() }
+
+    // MARK: - Product Loading
+
+    func refreshProducts() async {
         do {
-            let products = try await Product.products(for: [productID])
-            product = products.first
-            if let p = product {
-                displayPrice = p.displayPrice
+            let loaded = try await Product.products(for: SubscriptionPlan.allProductIDs)
+            let currencyCode = Locale.current.currency?.identifier ?? ""
+
+            for p in loaded {
+                guard let plan = SubscriptionPlan(rawValue: p.id) else { continue }
+                products[plan] = p
+                let price = "\(p.displayPrice) \(currencyCode)"
+                switch plan {
+                case .monthly: monthlyDisplayPrice = price
+                case .annual:  annualDisplayPrice = price
+                }
+                print("[SubscriptionManager] loaded: \(p.id) → \(price)")
+            }
+
+            // Trial eligibility (check annual first, then monthly)
+            if let annual = products[.annual] {
+                isTrialEligible = await isEligibleForTrial(annual)
+            } else if let monthly = products[.monthly] {
+                isTrialEligible = await isEligibleForTrial(monthly)
+            }
+
+            // Fallback prices
+            if monthlyDisplayPrice == nil {
+                monthlyDisplayPrice = Self.fallbackMonthlyPrice
+                print("[SubscriptionManager] no monthly product returned, using fallback")
+            }
+            if annualDisplayPrice == nil {
+                annualDisplayPrice = Self.fallbackAnnualPrice
+                print("[SubscriptionManager] no annual product returned, using fallback")
             }
         } catch {
-            print("StoreKit products error: \(error)")
+            print("[SubscriptionManager] products error: \(error)")
+            if monthlyDisplayPrice == nil { monthlyDisplayPrice = Self.fallbackMonthlyPrice }
+            if annualDisplayPrice == nil  { annualDisplayPrice = Self.fallbackAnnualPrice }
         }
     }
 
-    /// Check existing entitlements on launch (finite iteration)
-    private func checkCurrentEntitlements() async {
-        for await trans in Transaction.currentEntitlements {
-            await handle(transaction: trans)
+    /// Display price for the currently selected plan.
+    var displayPrice: String? {
+        switch selectedPlan {
+        case .monthly: return monthlyDisplayPrice
+        case .annual:  return annualDisplayPrice
         }
     }
 
-    /// Listen for new transactions (infinite stream, runs for app lifetime)
+    private func isEligibleForTrial(_ p: Product) async -> Bool {
+        guard let sub = p.subscription,
+              let intro = sub.introductoryOffer,
+              intro.paymentMode == .freeTrial else { return false }
+        return await sub.isEligibleForIntroOffer
+    }
+
+    // MARK: - Entitlement Checking
+
+    func checkCurrentEntitlements() async {
+        if Self.forceSubscribed {
+            isSubscribed = true
+            expirationDate = Calendar.current.date(byAdding: .year, value: 1, to: Date())
+            return
+        }
+        var foundActive = false
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let t) = result,
+               SubscriptionPlan.allProductIDs.contains(t.productID) {
+                let active = t.revocationDate == nil &&
+                             (t.expirationDate ?? .distantFuture) > Date()
+                isSubscribed = active
+                expirationDate = active ? t.expirationDate : nil
+                foundActive = active
+                await t.finish()
+            }
+        }
+        if !foundActive {
+            isSubscribed = false
+            expirationDate = nil
+        }
+    }
+
     private func listenForUpdates() async {
         for await result in Transaction.updates {
-            await handle(transaction: result)
+            await handle(result)
         }
     }
 
-    private func handle(transaction: VerificationResult<Transaction>) async {
-        guard case .verified(let t) = transaction else { return }
-        let active = (t.productID == productID) && (t.revocationDate == nil) && (t.expirationDate ?? .distantFuture) > Date()
+    private func handle(_ result: VerificationResult<Transaction>) async {
+        guard case .verified(let t) = result,
+              SubscriptionPlan.allProductIDs.contains(t.productID) else { return }
+        let active = t.revocationDate == nil &&
+                     (t.expirationDate ?? .distantFuture) > Date()
         isSubscribed = active
+        expirationDate = active ? t.expirationDate : nil
         await t.finish()
     }
 
+    // MARK: - Purchase
+
     func purchase() async {
-        guard let p = product else { return }
+        guard let p = products[selectedPlan], !isPurchasing else { return }
+        isPurchasing = true
+        purchaseError = nil
+        defer { isPurchasing = false }
         do {
             let result = try await p.purchase()
             switch result {
-            case .success(let verification):
-                await handle(transaction: verification)
-            case .userCancelled, .pending: break
-            @unknown default: break
+            case .success(let verification): await handle(verification)
+            case .userCancelled:             break
+            case .pending:                   break
+            @unknown default:                break
             }
+        } catch StoreKitError.userCancelled {
+            // user dismissed sheet — no error needed
         } catch {
-            print("Purchase error: \(error)")
+            purchaseError = error.localizedDescription
         }
     }
 
+    // MARK: - Restore
+
     func restore() async {
+        isRestoring = true
+        purchaseError = nil
+        defer { isRestoring = false }
         do {
             try await AppStore.sync()
+            await checkCurrentEntitlements()
         } catch {
-            print("Restore error: \(error)")
+            purchaseError = error.localizedDescription
         }
     }
 }

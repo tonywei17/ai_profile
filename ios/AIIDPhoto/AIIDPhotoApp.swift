@@ -6,6 +6,7 @@ struct AIIDPhotoApp: App {
     @StateObject private var subscription = SubscriptionManager()
     @StateObject private var usage = UsageManager()
     @StateObject private var adManager = AdManager()
+    @StateObject private var langManager = LanguageManager()
 
     var body: some Scene {
         WindowGroup {
@@ -13,6 +14,8 @@ struct AIIDPhotoApp: App {
                 .environmentObject(subscription)
                 .environmentObject(usage)
                 .environmentObject(adManager)
+                .environmentObject(langManager)
+                .preferredColorScheme(langManager.appearance.colorScheme)
         }
     }
 }

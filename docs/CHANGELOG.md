@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.3.0] — 2026-03-02
+
+### 新增
+- 证件照规格体系（`IDPhotoSpec`）：10+ 规格覆盖日/中/韩/美，含尺寸、背景色、AI prompt
+- 日本在留カード规格（30×40mm）
+- Pro 自定义尺寸（宽 20~60mm，高 20~80mm，Stepper 控件）
+- 排版打印功能（L判/2L判，300 DPI 渲染，裁切线）
+- 美颜等级（自然/清透/精致）& 服装风格选项（正装/商务/学生等）
+- 前后对比滑块（`ComparisonSliderView`）
+- 多语言支持（中/英/日/韩）+ `LanguageManager`
+- 设置页面（`SettingsView`）：语言切换、隐私政策
+- StoreKit 测试配置（`Products.storekit`）
+- Plus Jakarta Sans 自定义字体
+
+### 改进
+- Pro 订阅门控：规格卡片锁定图标 + 订阅弹窗触发
+- `SubscriptionSheetView` 全面重构：功能列表、价格、合规链接
+- iOS 26 Liquid Glass UI 全面升级（`.glassEffect()` 修饰符）
+- iPad 适配：移除双栏布局，统一单栏 + maxWidth 居中
+- `ScrollView` 阴影裁切修复（`.scrollClipDisabled(true)`）
+- `PrintLayoutInfo` 支持自定义尺寸（`photoSizeMM` tuple 接口）
+
+---
+
 ## [0.2.0] — 2026-03-01
 
 ### 新增

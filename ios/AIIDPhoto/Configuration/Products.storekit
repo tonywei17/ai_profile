@@ -1,0 +1,100 @@
+{
+  "identifier" : "com.nexus.aiidphoto.storekit",
+  "nonConsumableProducts" : [],
+  "nonRenewingSubscriptionProducts" : [],
+  "products" : [],
+  "settings" : {
+    "_applicationInternalID" : "aiidphoto",
+    "_storefront" : "USA,840",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "pro_group_001",
+      "localizations" : [],
+      "name" : "Pro",
+      "subscriptions" : [
+        {
+          "adHocOfferCodesEnabled" : false,
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "pro_monthly_001",
+          "introductoryOffer" : {
+            "period" : "1 Week",
+            "periodCount" : 1,
+            "type" : "FreeTrial"
+          },
+          "localizations" : [
+            {
+              "description" : "20 AI generations per day, no ads, all photo formats worldwide.",
+              "displayName" : "AI ID Photo Pro (Monthly)",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "1日20回AI生成、広告なし、全フォーマット対応。",
+              "displayName" : "AI証明写真 Pro（月額）",
+              "locale" : "ja_JP"
+            },
+            {
+              "description" : "每日20次AI生成，无广告，支持所有证件规格。",
+              "displayName" : "AI证件照 Pro（月付）",
+              "locale" : "zh_CN"
+            },
+            {
+              "description" : "하루 20회 AI 생성, 광고 없음, 모든 규격 지원.",
+              "displayName" : "AI 증명사진 Pro (월간)",
+              "locale" : "ko_KR"
+            }
+          ],
+          "productID" : "com.nexus.aiidphoto.pro_monthly",
+          "referenceName" : "Pro Monthly",
+          "subscriptionPeriod" : "1 Month",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOfferCodesEnabled" : false,
+          "displayPrice" : "12.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "pro_annual_001",
+          "introductoryOffer" : {
+            "period" : "1 Week",
+            "periodCount" : 1,
+            "type" : "FreeTrial"
+          },
+          "localizations" : [
+            {
+              "description" : "20 AI generations per day, no ads, all photo formats worldwide.",
+              "displayName" : "AI ID Photo Pro",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "1日20回AI生成、広告なし、全フォーマット対応。",
+              "displayName" : "AI証明写真 Pro",
+              "locale" : "ja_JP"
+            },
+            {
+              "description" : "每日20次AI生成，无广告，支持所有证件规格。",
+              "displayName" : "AI证件照 Pro",
+              "locale" : "zh_CN"
+            },
+            {
+              "description" : "하루 20회 AI 생성, 광고 없음, 모든 규격 지원.",
+              "displayName" : "AI 증명사진 Pro",
+              "locale" : "ko_KR"
+            }
+          ],
+          "productID" : "com.nexus.aiidphoto.pro_annual",
+          "referenceName" : "Pro Annual",
+          "subscriptionPeriod" : "1 Year",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

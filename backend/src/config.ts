@@ -3,5 +3,5 @@ export const config = {
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiEndpoint:
     process.env.GEMINI_ENDPOINT ||
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
 };

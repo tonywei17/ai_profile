@@ -2,16 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BACKEND_BASE_URL</key>
+	<string>https://aiidphoto-backend-616059029156.asia-northeast1.run.app</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>AIIDPhoto</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>com.nexus.aiidphoto</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>zh-Hans</string>
+		<string>ja</string>
+		<string>ko</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>AIIDPhoto</string>
 	<key>CFBundlePackageType</key>
@@ -20,23 +29,33 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>BACKEND_BASE_URL</key>
-	<string>https://aiidphoto-backend-616059029156.asia-northeast1.run.app</string>
 	<key>GEMINI_API_KEY</key>
-	<string>AIzaSyDHj_8kdb2YbsxbVjTGJVejUQwOlOvW1F8</string>
+	<string></string>
 	<key>GEMINI_ENDPOINT</key>
-	<string>https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent</string>
+	<string>https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need camera access for selfies.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow saving generated photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to pick photos.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>PlusJakartaSans-SemiBold.ttf</string>
+		<string>PlusJakartaSans-Bold.ttf</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

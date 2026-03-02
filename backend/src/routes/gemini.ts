@@ -35,7 +35,8 @@ router.post("/generate", async (req: Request, res: Response) => {
       return;
     }
 
-    // Forward to Gemini API
+    // Forward to Gemini API (Nano Banana 2 / gemini-3.1-flash-image-preview requires
+    // explicit responseModalities to enable image output)
     const geminiBody = {
       contents: [
         {
@@ -45,6 +46,9 @@ router.post("/generate", async (req: Request, res: Response) => {
           ],
         },
       ],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+      },
     };
 
     const geminiRes = await fetch(config.geminiEndpoint, {

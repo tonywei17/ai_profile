@@ -3,7 +3,7 @@ name: AIIDPhoto
 options:
   minimumXcodeGenVersion: 2.31.0
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "26.0"
 
 settings:
   BASE_SDK: iphoneos
@@ -19,6 +19,8 @@ schemes:
         AIIDPhoto: all
     run:
       config: Debug
+      # StoreKit local testing config (simulator only)
+      storeKitConfiguration: ios/AIIDPhoto/Configuration/Products.storekit
     archive:
       config: Release
 
@@ -27,24 +29,45 @@ targets:
     type: application
     platform: iOS
     productName: AIIDPhoto
-    deploymentTarget: "16.0"
+    deploymentTarget: "26.0"
     sources:
       - path: ios/AIIDPhoto
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.nexus.aiidphoto
       SWIFT_VERSION: 5.9
-      IPHONEOS_DEPLOYMENT_TARGET: 16.0
-      TARGETED_DEVICE_FAMILY: "1"   # iPhone
+      IPHONEOS_DEPLOYMENT_TARGET: 26.0
+      TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
+    resources:
+      - path: ios/AIIDPhoto/Resources/Fonts
+      - path: ios/AIIDPhoto/Resources/en.lproj
+      - path: ios/AIIDPhoto/Resources/zh-Hans.lproj
+      - path: ios/AIIDPhoto/Resources/ja.lproj
+      - path: ios/AIIDPhoto/Resources/ko.lproj
+
     info:
       # 让 XcodeGen 在此路径生成 Info.plist（目录已存在）
       path: ios/AIIDPhoto/Info.plist
       properties:
+        UIAppFonts:
+          - PlusJakartaSans-SemiBold.ttf
+          - PlusJakartaSans-Bold.ttf
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations:
+          - en
+          - zh-Hans
+          - ja
+          - ko
         CFBundleDisplayName: AIIDPhoto
         CFBundleIdentifier: com.nexus.aiidphoto
         CFBundleName: AIIDPhoto
         CFBundleVersion: "1"
         CFBundleShortVersionString: "1.0"
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UILaunchScreen: {}
         NSCameraUsageDescription: "We need camera access for selfies."
         NSPhotoLibraryUsageDescription: "Allow access to pick photos."
@@ -52,7 +75,7 @@ targets:
         # 后端代理地址（GCP Cloud Run，API Key 存储在服务端 Secret Manager）
         BACKEND_BASE_URL: "https://aiidphoto-backend-616059029156.asia-northeast1.run.app"
         # 以下为开发环境直连 Gemini 的配置（生产环境应留空，通过后端代理）
-        GEMINI_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent"
+        GEMINI_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
         GEMINI_API_KEY: ""  # FIXME: 仅限开发环境，生产环境必须使用后端代理
         # 如需广告，后续在此加入：
         # GADApplicationIdentifier: ""  # TODO: 替换为正式 AdMob App ID

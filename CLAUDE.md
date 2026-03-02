@@ -3,7 +3,7 @@
 ## Project Overview
 
 SwiftUI iOS app for AI-powered ID photo generation using Gemini API.
-- **Platform**: iOS 16+, iPhone only
+- **Platform**: iOS 16+, iPhone + iPad (single-column layout)
 - **Language**: Swift 5.9
 - **UI Framework**: SwiftUI with glass (frosted) UI style
 - **Project Generator**: XcodeGen (`project.yml`)
@@ -16,18 +16,35 @@ ios/AIIDPhoto/
 ├── AIIDPhotoApp.swift          # @main entry point
 ├── AppDelegate.swift           # AdMob initialization
 ├── Config.swift                # Info.plist config reader
-├── ContentView.swift           # Main UI
+├── ContentView.swift           # Main UI (spec selection, generate, compare, print)
+├── Configuration/
+│   └── Products.storekit       # StoreKit testing configuration
 ├── Managers/
 │   ├── SubscriptionManager.swift   # StoreKit 2
 │   ├── AdManager.swift             # Google AdMob
+│   ├── LanguageManager.swift       # 4-language switcher (zh/en/ja/ko)
 │   └── UsageManager.swift          # Free/premium usage limits
+├── Models/
+│   ├── IDPhotoSpec.swift       # Photo specs (10+ presets) + CustomSizeSpec
+│   ├── PhotoOptions.swift      # Beauty level & outfit style (Pro)
+│   └── PrintLayout.swift       # PrintPaperSize + PrintLayoutInfo grid calc
+├── Resources/
+│   ├── Fonts/                  # Plus Jakarta Sans (Bold, SemiBold)
+│   └── {en,ja,ko,zh-Hans}.lproj/Localizable.strings
 ├── Services/
-│   └── GeminiService.swift     # Gemini API client
+│   ├── GeminiService.swift     # Gemini API client
+│   └── PrintLayoutService.swift # 300 DPI tiled print renderer
 └── Views/
     ├── SubscriptionSheetView.swift
+    ├── PrintLayoutSheetView.swift  # Print preview + save
+    ├── SettingsView.swift          # Language, privacy, version
     └── Components/
-        ├── GlassBackground.swift
-        └── ImagePickers.swift
+        ├── GlassBackground.swift       # Liquid Glass backgrounds
+        ├── ImagePickers.swift
+        ├── ComparisonSliderView.swift  # Before/after drag slider
+        ├── CustomSizePickerView.swift  # Pro custom size steppers
+        ├── ProOptionsView.swift        # Beauty + outfit options
+        └── SpecSelectorView.swift      # Horizontal spec card selector
 ```
 
 ## Build & Run
