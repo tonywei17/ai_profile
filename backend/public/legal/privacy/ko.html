@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개인정보 처리방침 — AI 증명사진</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.6em; border-bottom: 2px solid #007AFF; padding-bottom: 8px; }
+  h2 { font-size: 1.2em; margin-top: 2em; color: #007AFF; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f7; }
+  .lang-nav { text-align: right; margin-bottom: 16px; font-size: 0.9em; }
+  .lang-nav a { margin-left: 12px; color: #007AFF; text-decoration: none; }
+  .contact { background: #f5f5f7; padding: 16px; border-radius: 8px; margin-top: 24px; }
+  .update { color: #888; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="lang-nav">
+  <a href="en.html">English</a>
+  <a href="ja.html">日本語</a>
+  <a href="zh.html">中文</a>
+  <a href="vi.html">Tiếng Việt</a>
+  <a href="id.html">Indonesia</a>
+  <a href="pt.html">Português</a>
+</div>
+
+<h1>개인정보 처리방침</h1>
+<p class="update">최종 업데이트: 2026년 3월 2일</p>
+
+<p>본 개인정보 처리방침은 <strong>Wei Wenxin</strong>(이하 "개발자", "당사")이 제공하는 모바일 애플리케이션 <strong>AI 증명사진</strong>(이하 "본 앱")을 사용할 때 귀하의 정보를 어떻게 수집, 사용 및 보호하는지 설명합니다.</p>
+
+<h2>1. 수집하는 정보</h2>
+
+<table>
+<tr><th>데이터 유형</th><th>목적</th><th>저장 방식</th></tr>
+<tr><td><strong>업로드한 사진</strong></td><td>AI 증명사진 생성</td><td>저장하지 않음 — 실시간 처리 후 즉시 삭제</td></tr>
+<tr><td><strong>생성된 사진</strong></td><td>앱 내 표시 및 저장용</td><td>귀하의 기기에만 저장</td></tr>
+<tr><td><strong>이용 데이터</strong></td><td>일일 생성 횟수 관리</td><td>기기 내에만 저장 (UserDefaults)</td></tr>
+<tr><td><strong>구독 상태</strong></td><td>Pro 멤버십 관리</td><td>Apple 관리 (StoreKit 2)</td></tr>
+<tr><td><strong>광고 식별자</strong></td><td>광고 표시 (무료 플랜만 해당)</td><td>Google AdMob 관리</td></tr>
+</table>
+
+<p><strong>수집하지 않는 정보:</strong> 이름, 이메일 주소, 전화번호, 위치 정보, 연락처 또는 위에 나열된 것 이외의 개인 식별 정보.</p>
+
+<h2>2. 사진 처리 방식</h2>
+
+<p>사진을 업로드하면 다음과 같은 처리가 진행됩니다:</p>
+<ol>
+  <li>귀하의 기기에서 압축 및 크기 조정 (무료 사용자: 512px, Pro 사용자: 1024px)</li>
+  <li>HTTPS를 통해 당사의 백엔드 서버(<strong>Google Cloud Platform 도쿄 리전</strong>)로 전송</li>
+  <li><strong>Google Gemini API</strong>로 전달하여 AI 증명사진 생성</li>
+  <li>생성된 결과를 귀하에게 반환하고 원본 사진은 <strong>즉시 삭제</strong></li>
+</ol>
+
+<p><strong>당사의 서버에 사진을 저장, 기록 또는 보관하지 않습니다.</strong> 사진은 처리 중(일반적으로 30초 이내)에만 서버 메모리에 존재합니다.</p>
+
+<h2>3. 제3자 서비스</h2>
+
+<p>당사는 다음 제3자 서비스와 데이터를 공유합니다. 각 서비스는 자체 개인정보 처리방침에 따라 데이터를 처리합니다:</p>
+
+<table>
+<tr><th>서비스</th><th>제공업체</th><th>공유 데이터</th><th>목적</th></tr>
+<tr><td><strong>Gemini API</strong></td><td>Google LLC</td><td>업로드한 사진 + 텍스트 프롬프트</td><td>AI 이미지 생성</td></tr>
+<tr><td><strong>AdMob</strong></td><td>Google LLC</td><td>광고 식별자, 기기 정보</td><td>광고 표시 (무료 플랜만 해당)</td></tr>
+<tr><td><strong>StoreKit 2</strong></td><td>Apple Inc.</td><td>구독 거래 데이터</td><td>결제 처리</td></tr>
+</table>
+
+<p>본 앱을 사용함으로써 귀하는 AI 증명사진 생성을 위해 사진이 <strong>Google Gemini API</strong>로 전송되는 것에 동의합니다. Google은 <a href="https://policies.google.com/privacy" target="_blank">Google 개인정보 처리방침</a>에 따라 데이터를 처리합니다.</p>
+
+<h2>4. 데이터 보안</h2>
+
+<ul>
+  <li>모든 데이터 전송은 <strong>HTTPS/TLS 암호화</strong>를 사용합니다</li>
+  <li>백엔드 서버는 <strong>Google Cloud Run</strong> 도쿄 리전(asia-northeast1)에서 운영됩니다</li>
+  <li>사용자의 사진이나 개인 데이터를 데이터베이스에 저장하지 않습니다</li>
+  <li>API 키는 Google Cloud Secret Manager에 보관되며 클라이언트 코드에 포함되지 않습니다</li>
+</ul>
+
+<h2>5. 데이터 보존</h2>
+
+<ul>
+  <li><strong>사진:</strong> 보존하지 않음 — 실시간 처리 후 즉시 삭제</li>
+  <li><strong>이용 데이터:</strong> 기기에만 저장; 앱 삭제 시 제거됩니다</li>
+  <li><strong>구독 데이터:</strong> Apple이 관리하며 Apple의 데이터 보존 정책을 따릅니다</li>
+  <li><strong>광고 데이터:</strong> Google AdMob이 관리하며 Google의 데이터 보존 정책을 따릅니다</li>
+</ul>
+
+<h2>6. 귀하의 권리</h2>
+
+<ul>
+  <li><strong>데이터 삭제:</strong> 당사 서버에 사진이나 개인 데이터를 저장하지 않으므로 서버 측에서 삭제할 데이터가 없습니다. 앱을 삭제하면 기기 내 모든 데이터가 제거됩니다.</li>
+  <li><strong>맞춤형 광고 거부:</strong> 기기의 "설정 > 개인정보 보호 > 추적"에서 제한할 수 있습니다.</li>
+  <li><strong>동의 철회:</strong> 언제든지 앱 사용을 중단할 수 있습니다.</li>
+  <li><strong>정보 문의:</strong> 데이터 처리 방식에 대해 문의하실 수 있습니다.</li>
+</ul>
+
+<h2>7. 아동의 개인정보</h2>
+
+<p>본 앱은 13세 미만(또는 귀하의 관할 지역에서 적용되는 동의 연령 미만)의 아동을 대상으로 하지 않습니다. 당사는 의도적으로 아동의 개인정보를 수집하지 않습니다.</p>
+
+<h2>8. 개인정보 보호법(PIPA) 준수</h2>
+
+<p>안면 사진은 개인정보 보호법에 따라 개인정보로 분류됩니다. 당사는 사진 업로드 행위를 통한 명시적 동의 하에 증명사진 생성 목적으로만 귀하의 사진을 처리합니다. 처리 후 사진을 보관하지 않습니다.</p>
+
+<h2>9. 방침 변경</h2>
+
+<p>당사는 수시로 본 개인정보 처리방침을 업데이트할 수 있습니다. 변경 사항은 이 페이지에 게시되며 수정 날짜가 업데이트됩니다. 변경 후 앱을 계속 사용하면 수정된 방침에 동의한 것으로 간주됩니다.</p>
+
+<div class="contact">
+<h2>10. 문의하기</h2>
+<p>본 개인정보 처리방침에 관한 문의 사항이 있으시면 아래로 연락해 주십시오.</p>
+<p>
+  <strong>Wei Wenxin</strong><br>
+  이메일: <a href="mailto:nexuswei.dev@gmail.com">nexuswei.dev@gmail.com</a>
+</p>
+</div>
+
+</body>
+</html>

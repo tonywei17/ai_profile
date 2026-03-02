@@ -1,11 +1,14 @@
 import SwiftUI
 import PhotosUI
+import StoreKit
 
 struct ContentView: View {
     @EnvironmentObject var subscription: SubscriptionManager
     @EnvironmentObject var usage: UsageManager
     @EnvironmentObject var adManager: AdManager
     @EnvironmentObject var langManager: LanguageManager
+    @EnvironmentObject var historyManager: HistoryManager
+    @EnvironmentObject var referralManager: ReferralManager
 
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.colorScheme) private var colorScheme
@@ -42,6 +45,11 @@ struct ContentView: View {
     @State private var showPrintLayout = false
     @State private var isCustomSize = false
     @State private var customSize = CustomSizeSpec()
+    @State private var showHistory = false
+
+    // Review prompt tracking
+    @AppStorage("successfulGenerations") private var successfulGenerations: Int = 0
+    @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion: String = ""
 
     var body: some View {
         ZStack {
@@ -60,11 +68,19 @@ struct ContentView: View {
                 .environmentObject(langManager)
                 .environmentObject(subscription)
                 .environmentObject(usage)
+                .environmentObject(referralManager)
                 .presentationDetents([.large])
                 .preferredColorScheme(sheetColorScheme)
         }
         .sheet(isPresented: $showCamera) {
             CameraPicker(image: $inputImage).ignoresSafeArea()
+        }
+        .sheet(isPresented: $showHistory) {
+            HistoryView()
+                .environmentObject(langManager)
+                .environmentObject(historyManager)
+                .presentationDetents([.large])
+                .preferredColorScheme(sheetColorScheme)
         }
         .alert(errorTitle, isPresented: Binding(
             get: { errorMessage != nil },
@@ -158,6 +174,14 @@ struct ContentView: View {
                     // Settings
                     Button { showSettingsSheet = true } label: {
                         Image(systemName: "gearshape.fill")
+                            .font(.title3)
+                            .padding(16)
+                    }
+                    .glassEffect(.regular.interactive(), in: .circle)
+
+                    // History
+                    Button { showHistory = true } label: {
+                        Image(systemName: "clock.arrow.circlepath")
                             .font(.title3)
                             .padding(16)
                     }
@@ -283,29 +307,39 @@ struct ContentView: View {
     }
 
     private var resultActions: some View {
-        GlassEffectContainer(spacing: 12) {
-            HStack(spacing: 12) {
-                Button {
-                    guard let img = outputImage else { return }
-                    UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
-                    showSavedToastBriefly()
-                } label: {
-                    Label(saveLabel, systemImage: "square.and.arrow.down")
-                        .font(.callout.bold())
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .foregroundStyle(.white)
-                }
-                .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 12))
+        VStack(spacing: 10) {
+            GlassEffectContainer(spacing: 12) {
+                HStack(spacing: 12) {
+                    Button {
+                        guard let img = outputImage else { return }
+                        UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
+                        showSavedToastBriefly()
+                        AnalyticsManager.shared.track(AnalyticsManager.Event.photoSaved)
+                    } label: {
+                        Label(saveLabel, systemImage: "square.and.arrow.down")
+                            .font(.callout.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .foregroundStyle(.white)
+                    }
+                    .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 12))
 
-                Button { outputImage = nil } label: {
-                    Label(regenerateLabel, systemImage: "arrow.counterclockwise")
-                        .font(.callout.bold())
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                    Button { sharePhoto() } label: {
+                        Label(shareLabel, systemImage: "square.and.arrow.up")
+                            .font(.callout.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                    }
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
                 }
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
             }
+
+            Button { outputImage = nil } label: {
+                Label(regenerateLabel, systemImage: "arrow.counterclockwise")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 2)
         }
     }
 
@@ -439,6 +473,7 @@ struct ContentView: View {
     }
     private var comparisonTitle: String { l("效果对比", "Before & After", "効果比較", "전후 비교", vi: "Trước & Sau", id: "Sebelum & Sesudah", pt: "Antes & Depois") }
     private var saveLabel:       String { l("保存到相册", "Save to Photos", "写真を保存", "사진 저장", vi: "Lưu vào Ảnh", id: "Simpan ke Foto", pt: "Salvar em Fotos") }
+    private var shareLabel:      String { l("分享", "Share", "共有", "공유", vi: "Chia sẻ", id: "Bagikan", pt: "Compartilhar") }
     private var regenerateLabel: String { l("重新生成", "Regenerate", "再生成", "재생성", vi: "Tạo lại", id: "Buat Ulang", pt: "Regerar") }
     private var retakeLabel:     String { l("换一张照片", "Try Another Photo", "別の写真で試す", "다른 사진으로", vi: "Thử ảnh khác", id: "Coba Foto Lain", pt: "Outra Foto") }
     private var savedMessage:    String { l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료", vi: "Đã lưu vào Ảnh", id: "Tersimpan ke Foto", pt: "Salvo em Fotos") }
@@ -460,10 +495,15 @@ struct ContentView: View {
         case .allowed:
             await performGenerate(input: input)
         case .requireRewardedAd:
+            // Use referral bonus before requiring ad
+            if referralManager.useBonusGeneration() {
+                await performGenerate(input: input)
+                return
+            }
             await presentRewardedThenGenerate(input: input)
         case .reachedLimit:
-            // Show subscription sheet; it explains the limit and lets user upgrade.
             showSubscriptionSheet = true
+            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedLimit"])
         }
     }
 
@@ -471,6 +511,7 @@ struct ContentView: View {
         await adManager.loadRewarded()
         let rewarded = await adManager.showRewarded()
         if rewarded {
+            AnalyticsManager.shared.track(AnalyticsManager.Event.adWatched)
             usage.markUsed(isSubscribed: false)
             await performGenerate(input: input)
         } else {
@@ -499,9 +540,37 @@ struct ContentView: View {
             self.outputImage = result
             usage.markUsed(isSubscribed: subscription.isSubscribed)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+
+            // Save to history
+            historyManager.addRecord(
+                image: result,
+                specRawValue: isCustomSize ? "custom" : selectedSpec.rawValue,
+                sizeLabel: isCustomSize ? customSize.sizeLabel : selectedSpec.sizeLabel,
+                isCustomSize: isCustomSize
+            )
+
+            let specName = isCustomSize ? "custom" : selectedSpec.rawValue
+            AnalyticsManager.shared.track(AnalyticsManager.Event.generationSuccess, properties: ["spec": specName])
+
+            // Request App Store review after 3rd success, once per version
+            successfulGenerations += 1
+            if successfulGenerations >= 3 {
+                let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+                if lastReviewPromptVersion != currentVersion {
+                    lastReviewPromptVersion = currentVersion
+                    Task {
+                        try? await Task.sleep(for: .seconds(1.5))
+                        if let scene = UIApplication.shared.connectedScenes
+                            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                            AppStore.requestReview(in: scene)
+                        }
+                    }
+                }
+            }
         } catch {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             errorMessage = error.localizedDescription
+            AnalyticsManager.shared.track(AnalyticsManager.Event.generationFailed)
         }
     }
 
@@ -510,6 +579,42 @@ struct ContentView: View {
         if let data = try? await item.loadTransferable(type: Data.self),
            let ui = UIImage(data: data) {
             await MainActor.run { inputImage = ui }
+        }
+    }
+
+    private func sharePhoto() {
+        guard let img = outputImage else { return }
+        let shareImage = subscription.isSubscribed ? img : addWatermark(to: img)
+        let items: [Any] = [shareImage]
+
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.keyWindow?.rootViewController {
+            let ac = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            if let popover = ac.popoverPresentationController {
+                popover.sourceView = root.view
+                popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
+            }
+            root.present(ac, animated: true)
+        }
+        AnalyticsManager.shared.track(AnalyticsManager.Event.photoShared)
+    }
+
+    private func addWatermark(to image: UIImage) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: image.size)
+        return renderer.image { _ in
+            image.draw(at: .zero)
+            let text = "AI ID Photo"
+            let fontSize = max(image.size.width * 0.035, 14)
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold),
+                .foregroundColor: UIColor.white.withAlphaComponent(0.5),
+            ]
+            let textSize = text.size(withAttributes: attrs)
+            let point = CGPoint(
+                x: image.size.width - textSize.width - 16,
+                y: image.size.height - textSize.height - 16
+            )
+            text.draw(at: point, withAttributes: attrs)
         }
     }
 

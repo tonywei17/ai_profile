@@ -4,9 +4,13 @@ struct SettingsView: View {
     @EnvironmentObject var langManager: LanguageManager
     @EnvironmentObject var subscription: SubscriptionManager
     @EnvironmentObject var usage: UsageManager
+    @EnvironmentObject var referralManager: ReferralManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var showSubscriptionSheet = false
+    @State private var redeemCodeInput = ""
+    @State private var isRedeeming = false
+    @State private var showRedeemSuccess = false
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
@@ -101,12 +105,79 @@ struct SettingsView: View {
                     }
                     .listRowBackground(Color.primary.opacity(0.06))
 
+                    // MARK: Referral
+                    Section {
+                        // Share referral code
+                        Button { shareReferralCode() } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "person.2.fill")
+                                    .foregroundStyle(.white)
+                                    .frame(width: 28, height: 28)
+                                    .background(Color.green.gradient)
+                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(inviteLabel).foregroundStyle(.primary)
+                                    if let code = referralManager.referralCode {
+                                        Text("\(codeLabel): \(code)")
+                                            .font(.caption.monospaced())
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "square.and.arrow.up").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+
+                        // Bonus remaining
+                        if referralManager.bonusGenerations > 0 {
+                            HStack(spacing: 12) {
+                                Image(systemName: "gift.fill")
+                                    .foregroundStyle(.white)
+                                    .frame(width: 28, height: 28)
+                                    .background(Color.purple.gradient)
+                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                                Text(bonusLabel)
+                                Spacer()
+                                Text("\(referralManager.bonusGenerations)")
+                                    .font(.callout.bold())
+                                    .foregroundStyle(.purple)
+                            }
+                        }
+
+                        // Redeem code
+                        HStack(spacing: 12) {
+                            Image(systemName: "ticket.fill")
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .background(Color.orange.gradient)
+                                .clipShape(RoundedRectangle(cornerRadius: 7))
+                            TextField(redeemPlaceholder, text: $redeemCodeInput)
+                                .textInputAutocapitalization(.characters)
+                                .autocorrectionDisabled()
+                            Button {
+                                Task { await redeemCode() }
+                            } label: {
+                                if isRedeeming {
+                                    ProgressView().scaleEffect(0.8)
+                                } else {
+                                    Text(redeemLabel).font(.callout.bold())
+                                }
+                            }
+                            .disabled(redeemCodeInput.count < 4 || isRedeeming)
+                        }
+                    } header: {
+                        sectionHeader(icon: "gift", title: sectionTitle("Invite Friends", "邀请好友", "友達を招待", "친구 초대", vi: "Mời bạn bè", id: "Undang Teman", pt: "Convidar Amigos"))
+                    } footer: {
+                        Text(referralFooter).font(.caption)
+                    }
+                    .listRowBackground(Color.primary.opacity(0.06))
+
                     // MARK: Legal
                     Section {
-                        Link(destination: LegalURLs.privacyPolicy) {
+                        Link(destination: LegalURLs.privacyPolicy(lang: lang)) {
                             legalRow(icon: "hand.raised.fill", color: .teal, title: privacyLabel)
                         }
-                        Link(destination: LegalURLs.termsOfService) {
+                        Link(destination: LegalURLs.termsOfService(lang: lang)) {
                             legalRow(icon: "doc.text.fill", color: .orange, title: termsLabel)
                         }
                     } header: {
@@ -128,6 +199,35 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+        .alert(
+            sectionTitle("Success!", "兑换成功！", "成功！", "성공!",
+                         vi: "Thành công!", id: "Berhasil!", pt: "Sucesso!"),
+            isPresented: $showRedeemSuccess
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(sectionTitle(
+                "You got 3 free Pro generations!",
+                "获得 3 次免费 Pro 品质生成！",
+                "3回の無料Pro生成を獲得しました！",
+                "3회 무료 Pro 생성을 받았습니다!",
+                vi: "Bạn nhận được 3 lần tạo ảnh Pro miễn phí!",
+                id: "Anda mendapat 3 generasi Pro gratis!",
+                pt: "Você ganhou 3 gerações Pro grátis!"
+            ))
+        }
+        .alert(
+            sectionTitle("Error", "错误", "エラー", "오류",
+                         vi: "Lỗi", id: "Kesalahan", pt: "Erro"),
+            isPresented: Binding(
+                get: { referralManager.redeemError != nil },
+                set: { if !$0 { referralManager.redeemError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(referralManager.redeemError ?? "")
         }
     }
 
@@ -341,11 +441,72 @@ struct SettingsView: View {
         let ds = fmt.string(from: date)
         return sectionTitle("Renews \(ds)", "续期日期：\(ds)", "更新日：\(ds)", "갱신일: \(ds)", vi: "Gia hạn \(ds)", id: "Perpanjang \(ds)", pt: "Renova \(ds)")
     }
+
+    // MARK: - Referral Strings & Actions
+
+    private var inviteLabel:       String { sectionTitle("Invite Friends", "邀请好友", "友達を招待", "친구 초대", vi: "Mời bạn bè", id: "Undang Teman", pt: "Convidar Amigos") }
+    private var codeLabel:         String { sectionTitle("Code", "邀请码", "コード", "코드", vi: "Mã", id: "Kode", pt: "Código") }
+    private var bonusLabel:        String { sectionTitle("Bonus Generations", "奖励次数", "ボーナス回数", "보너스 횟수", vi: "Lượt thưởng", id: "Bonus", pt: "Gerações Bônus") }
+    private var redeemPlaceholder: String { sectionTitle("Enter code", "输入邀请码", "コードを入力", "코드 입력", vi: "Nhập mã", id: "Masukkan kode", pt: "Inserir código") }
+    private var redeemLabel:       String { sectionTitle("Redeem", "兑换", "引き換え", "사용", vi: "Đổi", id: "Tukar", pt: "Resgatar") }
+    private var referralFooter:    String {
+        sectionTitle(
+            "Share your code with friends. You both get 3 free Pro generations when they redeem it.",
+            "分享邀请码给朋友，双方各得 3 次 Pro 品质生成。",
+            "友達にコードをシェア。引き換えると双方に3回の無料Pro生成が付与されます。",
+            "친구에게 코드를 공유하세요. 사용 시 양쪽 모두 3회 Pro 생성을 받습니다.",
+            vi: "Chia sẻ mã cho bạn bè. Cả hai nhận 3 lần tạo ảnh Pro miễn phí.",
+            id: "Bagikan kode ke teman. Keduanya dapat 3 kali generasi Pro gratis.",
+            pt: "Compartilhe seu código. Ambos ganham 3 gerações Pro grátis."
+        )
+    }
+
+    private func shareReferralCode() {
+        guard let code = referralManager.referralCode else { return }
+        let message = sectionTitle(
+            "用我的邀请码 \(code) 下载 AI ID Photo，我们都能获得 3 次免费 Pro 生成！",
+            "Use my referral code \(code) on AI ID Photo — we both get 3 free Pro generations!",
+            "AI証明写真アプリで招待コード \(code) を使うと、お互いに3回無料Pro生成がもらえます！",
+            "AI 증명사진 앱에서 추천 코드 \(code) 을 사용하면 서로 3회 Pro 생성을 받아요!",
+            vi: "Dùng mã giới thiệu \(code) trên AI ID Photo — cả hai nhận 3 lần Pro miễn phí!",
+            id: "Gunakan kode referral \(code) di AI ID Photo — kita berdua dapat 3 kali gratis!",
+            pt: "Use o código \(code) no AI ID Photo — nós dois ganhamos 3 gerações Pro grátis!"
+        )
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.keyWindow?.rootViewController {
+            let ac = UIActivityViewController(activityItems: [message], applicationActivities: nil)
+            if let popover = ac.popoverPresentationController {
+                popover.sourceView = root.view
+                popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
+            }
+            root.present(ac, animated: true)
+        }
+    }
+
+    private func redeemCode() async {
+        isRedeeming = true
+        defer { isRedeeming = false }
+        let success = await referralManager.redeemCode(redeemCodeInput)
+        if success {
+            redeemCodeInput = ""
+            showRedeemSuccess = true
+        }
+    }
 }
 
 // MARK: - Legal URLs
 
 private enum LegalURLs {
-    static let privacyPolicy  = URL(string: "https://example.com/privacy")!
-    static let termsOfService = URL(string: "https://example.com/terms")!
+    static let baseURL = "https://aiidphoto-backend-616059029156.asia-northeast1.run.app/legal"
+
+    static func privacyPolicy(lang: String) -> URL {
+        URL(string: "\(baseURL)/privacy/\(legalLang(lang)).html")!
+    }
+    static func termsOfService(lang: String) -> URL {
+        URL(string: "\(baseURL)/terms/\(legalLang(lang)).html")!
+    }
+
+    private static func legalLang(_ code: String) -> String {
+        ["zh", "ja", "ko", "vi", "id", "pt"].contains(code) ? code : "en"
+    }
 }

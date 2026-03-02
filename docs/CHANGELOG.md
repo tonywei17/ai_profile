@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.4.0] — 2026-03-02
+
+### 新增
+- 新用户引导 Onboarding（4 页 TabView，Glass UI，7 语言）
+- App Store 评分引导（第 3 次生成成功后触发，按版本去重）
+- 轻量级 Analytics Manager（11 事件，本地 JSON 持久化，无 SDK 依赖）
+- 社交分享功能（UIActivityViewController，免费用户水印，Pro 无水印）
+- 生成历史画廊（LazyVGrid，Documents 目录存储，50 条自动清理）
+- 推荐邀请机制（后端邀请码 API + iOS 客户端，兑换得 3 次 Pro 生成）
+- 法律文档静态托管（Cloud Run express.static，7 语言 × 2 文档）
+- 后端推荐 API（`/api/referral/register` + `/api/referral/redeem`）
+
+### 修复
+- 设置页 & 订阅页法律文档 URL 从 `example.com` 占位符替换为真实后端 URL
+- Cloud Run 部署失败：Compute SA 缺少 `artifactregistry.writer` 权限
+
+### 改进
+- ContentView 集成：历史按钮、分享按钮、Analytics 埋点、推荐次数消耗
+- SettingsView 新增邀请好友区块（邀请码展示、分享、兑换输入框）
+- Dockerfile 新增 `COPY public/` 打包静态资源
+
+---
+
 ## [0.3.0] — 2026-03-02
 
 ### 新增

@@ -383,10 +383,19 @@ struct SubscriptionSheetView: View {
 
 // MARK: - Legal Links
 
-// TODO: 替换为正式的隐私政策和服务条款 URL
 private enum LegalURLs {
-    static let privacyPolicy  = URL(string: "https://example.com/privacy")!
-    static let termsOfService = URL(string: "https://example.com/terms")!
+    static let baseURL = "https://aiidphoto-backend-616059029156.asia-northeast1.run.app/legal"
+
+    static func privacyPolicy(lang: String) -> URL {
+        URL(string: "\(baseURL)/privacy/\(legalLang(lang)).html")!
+    }
+    static func termsOfService(lang: String) -> URL {
+        URL(string: "\(baseURL)/terms/\(legalLang(lang)).html")!
+    }
+
+    private static func legalLang(_ code: String) -> String {
+        ["zh", "ja", "ko", "vi", "id", "pt"].contains(code) ? code : "en"
+    }
 }
 
 struct LegalLinksView: View {
@@ -420,9 +429,9 @@ struct LegalLinksView: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            Link(privacyLabel, destination: LegalURLs.privacyPolicy)
+            Link(privacyLabel, destination: LegalURLs.privacyPolicy(lang: lang))
             Text("·").foregroundStyle(.secondary)
-            Link(termsLabel, destination: LegalURLs.termsOfService)
+            Link(termsLabel, destination: LegalURLs.termsOfService(lang: lang))
         }
         .font(.footnote)
         .foregroundStyle(.secondary)

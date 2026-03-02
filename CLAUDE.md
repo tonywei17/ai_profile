@@ -22,12 +22,16 @@ ios/AIIDPhoto/
 ├── Managers/
 │   ├── SubscriptionManager.swift   # StoreKit 2
 │   ├── AdManager.swift             # Google AdMob
-│   ├── LanguageManager.swift       # 4-language switcher (zh/en/ja/ko)
-│   └── UsageManager.swift          # Free/premium usage limits
+│   ├── LanguageManager.swift       # 7-language switcher (zh/en/ja/ko/vi/id/pt)
+│   ├── UsageManager.swift          # Free/premium usage limits
+│   ├── AnalyticsManager.swift      # Lightweight event tracking (local JSON)
+│   ├── HistoryManager.swift        # Generation history (Documents dir)
+│   └── ReferralManager.swift       # Referral invite system
 ├── Models/
 │   ├── IDPhotoSpec.swift       # Photo specs (10+ presets) + CustomSizeSpec
 │   ├── PhotoOptions.swift      # Beauty level & outfit style (Pro)
-│   └── PrintLayout.swift       # PrintPaperSize + PrintLayoutInfo grid calc
+│   ├── PrintLayout.swift       # PrintPaperSize + PrintLayoutInfo grid calc
+│   └── GenerationRecord.swift  # History record model
 ├── Resources/
 │   ├── Fonts/                  # Plus Jakarta Sans (Bold, SemiBold)
 │   └── {en,ja,ko,zh-Hans}.lproj/Localizable.strings
@@ -37,7 +41,9 @@ ios/AIIDPhoto/
 └── Views/
     ├── SubscriptionSheetView.swift
     ├── PrintLayoutSheetView.swift  # Print preview + save
-    ├── SettingsView.swift          # Language, privacy, version
+    ├── SettingsView.swift          # Language, privacy, referral, version
+    ├── OnboardingView.swift        # 4-page first-run onboarding
+    ├── HistoryView.swift           # Generation history gallery
     └── Components/
         ├── GlassBackground.swift       # Liquid Glass backgrounds
         ├── ImagePickers.swift
@@ -54,10 +60,10 @@ ios/AIIDPhoto/
 xcodegen generate
 
 # Build via command line
-xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
 # Run tests
-xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' test
+xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
 ## Swift / iOS Conventions
@@ -111,8 +117,10 @@ xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -
 backend/
 ├── src/index.ts              # Express entry point
 ├── src/routes/gemini.ts      # POST /api/gemini/generate
+├── src/routes/referral.ts    # POST /api/referral/register & /redeem
 ├── src/middleware/rateLimit.ts
 ├── src/config.ts
+├── public/legal/             # Static legal docs (7 languages × 2 docs)
 └── Dockerfile
 ```
 

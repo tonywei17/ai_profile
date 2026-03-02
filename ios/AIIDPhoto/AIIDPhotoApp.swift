@@ -7,6 +7,10 @@ struct AIIDPhotoApp: App {
     @StateObject private var usage = UsageManager()
     @StateObject private var adManager = AdManager()
     @StateObject private var langManager = LanguageManager()
+    @StateObject private var historyManager = HistoryManager()
+    @StateObject private var referralManager = ReferralManager()
+
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     var body: some Scene {
         WindowGroup {
@@ -15,7 +19,21 @@ struct AIIDPhotoApp: App {
                 .environmentObject(usage)
                 .environmentObject(adManager)
                 .environmentObject(langManager)
+                .environmentObject(historyManager)
+                .environmentObject(referralManager)
                 .preferredColorScheme(langManager.appearance.colorScheme)
+                .fullScreenCover(isPresented: Binding(
+                    get: { !hasSeenOnboarding },
+                    set: { if !$0 { hasSeenOnboarding = true } }
+                )) {
+                    OnboardingView(hasSeenOnboarding: $hasSeenOnboarding)
+                        .environmentObject(langManager)
+                        .preferredColorScheme(langManager.appearance.colorScheme)
+                }
+                .task {
+                    AnalyticsManager.shared.track(AnalyticsManager.Event.appOpen)
+                    await referralManager.registerCode()
+                }
         }
     }
 }
