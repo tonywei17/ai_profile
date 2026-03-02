@@ -50,43 +50,47 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
     func displayName(language: String) -> String {
         switch self {
         case .chinaID:
-            return names(zh: "居民身份证", en: "China ID Card",  ja: "中国居民身份証", ko: "중국 신분증", lang: language)
+            return names(zh: "居民身份证", en: "China ID Card",  ja: "中国居民身份証", ko: "중국 신분증", vi: "CMND Trung Quốc", id: "KTP Tiongkok", pt: "RG China", lang: language)
         case .chinaPassport:
-            return names(zh: "中国护照",   en: "China Passport", ja: "中国旅券",       ko: "중국 여권",   lang: language)
+            return names(zh: "中国护照",   en: "China Passport", ja: "中国旅券",       ko: "중국 여권",   vi: "Hộ chiếu TQ", id: "Paspor Tiongkok", pt: "Passaporte China", lang: language)
         case .chinaMarriage:
-            return names(zh: "结婚登记照", en: "Marriage Photo",  ja: "結婚届写真",     ko: "결혼 등록 사진", lang: language)
+            return names(zh: "结婚登记照", en: "Marriage Photo",  ja: "結婚届写真",     ko: "결혼 등록 사진", vi: "Ảnh kết hôn", id: "Foto Nikah", pt: "Foto Casamento", lang: language)
         case .japanMyNumber:
-            return names(zh: "My Number", en: "My Number Card", ja: "マイナンバー",   ko: "마이넘버 카드", lang: language)
+            return names(zh: "My Number", en: "My Number Card", ja: "マイナンバー",   ko: "마이넘버 카드", vi: "My Number", id: "My Number", pt: "My Number", lang: language)
         case .japanPassport:
-            return names(zh: "日本护照",   en: "Japan Passport", ja: "日本旅券",       ko: "일본 여권",    lang: language)
+            return names(zh: "日本护照",   en: "Japan Passport", ja: "日本旅券",       ko: "일본 여권",    vi: "Hộ chiếu Nhật", id: "Paspor Jepang", pt: "Passaporte Japão", lang: language)
         case .japanResume:
-            return names(zh: "日本履历书", en: "Japan Resume",   ja: "履歴書",         ko: "일본 이력서",  lang: language)
+            return names(zh: "日本履历书", en: "Japan Resume",   ja: "履歴書",         ko: "일본 이력서",  vi: "Sơ yếu lý lịch JP", id: "Resume Jepang", pt: "Currículo Japão", lang: language)
         case .japanDriverLicense:
-            return names(zh: "日本驾照",   en: "JP License",     ja: "運転免許証",     ko: "일본 운전면허", lang: language)
+            return names(zh: "日本驾照",   en: "JP License",     ja: "運転免許証",     ko: "일본 운전면허", vi: "Bằng lái Nhật", id: "SIM Jepang", pt: "CNH Japão", lang: language)
         case .japanResidenceCard:
-            return names(zh: "日本在留卡", en: "Residence Card",  ja: "在留カード",     ko: "재류 카드",    lang: language)
+            return names(zh: "日本在留卡", en: "Residence Card",  ja: "在留カード",     ko: "재류 카드",    vi: "Thẻ lưu trú", id: "Kartu Tinggal", pt: "Cartão Residência", lang: language)
         case .koreaID:
-            return names(zh: "韩国身份证", en: "Korea ID Card",  ja: "韓国住民票",     ko: "주민등록증",   lang: language)
+            return names(zh: "韩国身份证", en: "Korea ID Card",  ja: "韓国住民票",     ko: "주민등록증",   vi: "CMND Hàn Quốc", id: "KTP Korea", pt: "RG Coreia", lang: language)
         case .koreaResume:
-            return names(zh: "韩国履历书", en: "Korea Resume",   ja: "韓国履歴書",     ko: "이력서",       lang: language)
+            return names(zh: "韩国履历书", en: "Korea Resume",   ja: "韓国履歴書",     ko: "이력서",       vi: "Lý lịch Hàn Quốc", id: "Resume Korea", pt: "Currículo Coreia", lang: language)
         case .usPassport:
-            return names(zh: "美国护照",   en: "US Passport",    ja: "アメリカ旅券",   ko: "미국 여권",    lang: language)
+            return names(zh: "美国护照",   en: "US Passport",    ja: "アメリカ旅券",   ko: "미국 여권",    vi: "Hộ chiếu Mỹ", id: "Paspor AS", pt: "Passaporte EUA", lang: language)
         case .ukPassport:
-            return names(zh: "英国护照",   en: "UK Passport",    ja: "英国旅券",       ko: "영국 여권",    lang: language)
+            return names(zh: "英国护照",   en: "UK Passport",    ja: "英国旅券",       ko: "영국 여권",    vi: "Hộ chiếu Anh", id: "Paspor Inggris", pt: "Passaporte Reino Unido", lang: language)
         case .schengenVisa:
-            return names(zh: "欧洲申根",   en: "Schengen Visa",  ja: "シェンゲンVISA", ko: "쉥겐 비자",    lang: language)
+            return names(zh: "欧洲申根",   en: "Schengen Visa",  ja: "シェンゲンVISA", ko: "쉥겐 비자",    vi: "Visa Schengen", id: "Visa Schengen", pt: "Visto Schengen", lang: language)
         case .ausPassport:
-            return names(zh: "澳洲护照",   en: "AU Passport",    ja: "オーストラリア旅券", ko: "호주 여권", lang: language)
+            return names(zh: "澳洲护照",   en: "AU Passport",    ja: "オーストラリア旅券", ko: "호주 여권", vi: "Hộ chiếu Úc", id: "Paspor Australia", pt: "Passaporte Austrália", lang: language)
         case .exam:
-            return names(zh: "考试证件照", en: "Exam / Test",    ja: "試験用写真",     ko: "시험용 증명사진", lang: language)
+            return names(zh: "考试证件照", en: "Exam / Test",    ja: "試験用写真",     ko: "시험용 증명사진", vi: "Ảnh thi cử", id: "Foto Ujian", pt: "Foto p/ Prova", lang: language)
         }
     }
 
-    private func names(zh: String, en: String, ja: String, ko: String, lang: String) -> String {
+    private func names(zh: String, en: String, ja: String, ko: String,
+                       vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
         switch lang {
         case "zh": return zh
         case "ja": return ja
         case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
         default:   return en
         }
     }
@@ -168,7 +172,7 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
         case .japanPassport:      ["JP"]
         case .japanResume:        ["JP"]
         case .japanDriverLicense: ["JP"]
-        case .japanResidenceCard: ["JP"]
+        case .japanResidenceCard: ["JP", "VN"]
         case .koreaID:            ["KR"]
         case .koreaResume:        ["KR"]
         case .usPassport:         ["US"]

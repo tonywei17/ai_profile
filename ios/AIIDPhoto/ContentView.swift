@@ -394,49 +394,58 @@ struct ContentView: View {
 
     // MARK: - Localized Strings
 
-    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String) -> String {
+    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String,
+                    vi: String? = nil, id: String? = nil, pt: String? = nil) -> String {
         switch lang {
         case "zh": return zh
         case "ja": return ja
         case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
         default:   return en
         }
     }
 
-    private var appTitle:        String { l("AI证件照", "AI ID Photo", "AI証明写真", "AI 증명사진") }
-    private var memberSubtitle:  String { l("会员：每天可用20次", "Member: 20/day", "会員：1日20回利用可", "회원: 하루 20회 이용 가능") }
-    private var memberLabel:     String { l("会员", "Member", "会員", "회원") }
-    private var subscribedLabel: String { l("已订阅", "Subscribed", "購読中", "구독중") }
-    private var uploadHint:      String { l("上传一张正面清晰的生活照", "Upload a clear front-facing photo", "正面の鮮明な写真をアップロード", "정면이 선명한 사진을 업로드하세요") }
-    private var albumLabel:      String { l("从相册选择", "Photo Library", "フォトライブラリ", "사진 보관함") }
-    private var cameraLabel:     String { l("拍摄照片", "Take Photo", "カメラで撮影", "사진 촬영") }
+    private var appTitle:        String { l("AI证件照", "AI ID Photo", "AI証明写真", "AI 증명사진", vi: "AI Ảnh Thẻ", id: "AI Foto ID", pt: "AI Foto Documento") }
+    private var memberSubtitle:  String { l("会员：每天可用20次", "Member: 20/day", "会員：1日20回利用可", "회원: 하루 20회 이용 가능", vi: "Thành viên: 20 lần/ngày", id: "Member: 20/hari", pt: "Membro: 20/dia") }
+    private var memberLabel:     String { l("会员", "Member", "会員", "회원", vi: "Thành viên", id: "Member", pt: "Membro") }
+    private var subscribedLabel: String { l("已订阅", "Subscribed", "購読中", "구독중", vi: "Đã đăng ký", id: "Berlangganan", pt: "Assinante") }
+    private var uploadHint:      String { l("上传一张正面清晰的生活照", "Upload a clear front-facing photo", "正面の鮮明な写真をアップロード", "정면이 선명한 사진을 업로드하세요", vi: "Tải lên ảnh chính diện rõ nét", id: "Unggah foto wajah depan yang jelas", pt: "Envie uma foto frontal nítida") }
+    private var albumLabel:      String { l("从相册选择", "Photo Library", "フォトライブラリ", "사진 보관함", vi: "Thư viện ảnh", id: "Galeri Foto", pt: "Biblioteca") }
+    private var cameraLabel:     String { l("拍摄照片", "Take Photo", "カメラで撮影", "사진 촬영", vi: "Chụp ảnh", id: "Ambil Foto", pt: "Tirar Foto") }
     private var generateLabel:   String {
         if isCustomSize {
             let size = customSize.sizeLabel
-            return l("生成自定义 \(size)", "Generate Custom \(size)", "カスタム \(size) を生成", "사용자 정의 \(size) 생성")
+            return l("生成自定义 \(size)", "Generate Custom \(size)", "カスタム \(size) を生成", "사용자 정의 \(size) 생성",
+                     vi: "Tạo tùy chỉnh \(size)", id: "Buat Kustom \(size)", pt: "Gerar Personalizado \(size)")
         }
         let specName = selectedSpec.displayName(language: lang)
-        return l("生成\(specName)", "Generate \(specName)", "\(specName)を生成", "\(specName) 생성")
+        return l("生成\(specName)", "Generate \(specName)", "\(specName)を生成", "\(specName) 생성",
+                 vi: "Tạo \(specName)", id: "Buat \(specName)", pt: "Gerar \(specName)")
     }
-    private var freeSubtitle:    String { l("首次免费", "First gen free", "初回無料", "첫 생성 무료") }
-    private var freeUsageNote:   String { l("非会员：首次免费，再次需观看30秒广告", "Free: 1st gen free, then watch a 30s ad", "無料：初回無料、次回から30秒広告視聴が必要", "무료: 첫 생성 무료, 이후 30초 광고 시청 필요") }
+    private var freeSubtitle:    String { l("首次免费", "First gen free", "初回無料", "첫 생성 무료", vi: "Lần đầu miễn phí", id: "Pertama gratis", pt: "1ª vez grátis") }
+    private var freeUsageNote:   String { l("非会员：首次免费，再次需观看30秒广告", "Free: 1st gen free, then watch a 30s ad", "無料：初回無料、次回から30秒広告視聴が必要", "무료: 첫 생성 무료, 이후 30초 광고 시청 필요", vi: "Miễn phí: lần đầu miễn phí, sau đó xem QC 30s", id: "Gratis: pertama gratis, lalu tonton iklan 30d", pt: "Grátis: 1ª grátis, depois assista anúncio 30s") }
     private var remainingCountText: String {
         switch lang {
         case "zh": return "今日剩余次数：\(usage.subscriberUsesLeft)"
         case "ja": return "本日残り：\(usage.subscriberUsesLeft)回"
         case "ko": return "오늘 남은 횟수: \(usage.subscriberUsesLeft)회"
+        case "vi": return "Còn lại hôm nay: \(usage.subscriberUsesLeft)"
+        case "id": return "Sisa hari ini: \(usage.subscriberUsesLeft)"
+        case "pt": return "Restantes hoje: \(usage.subscriberUsesLeft)"
         default:   return "Today's remaining: \(usage.subscriberUsesLeft)"
         }
     }
-    private var comparisonTitle: String { l("效果对比", "Before & After", "効果比較", "전후 비교") }
-    private var saveLabel:       String { l("保存到相册", "Save to Photos", "写真を保存", "사진 저장") }
-    private var regenerateLabel: String { l("重新生成", "Regenerate", "再生成", "재생성") }
-    private var retakeLabel:     String { l("换一张照片", "Try Another Photo", "別の写真で試す", "다른 사진으로") }
-    private var savedMessage:    String { l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료") }
-    private var printLayoutLabel: String { l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃") }
-    private var printLayoutDesc:  String { l("生成排版照片，到便利店直接打印", "Print-ready layout for convenience stores", "プリント用レイアウトを生成、コンビニで印刷", "편의점에서 바로 인쇄할 수 있는 레이아웃") }
-    private var errorTitle:      String { l("错误", "Error", "エラー", "오류") }
-    private var okLabel:         String { l("好的", "OK", "OK", "확인") }
+    private var comparisonTitle: String { l("效果对比", "Before & After", "効果比較", "전후 비교", vi: "Trước & Sau", id: "Sebelum & Sesudah", pt: "Antes & Depois") }
+    private var saveLabel:       String { l("保存到相册", "Save to Photos", "写真を保存", "사진 저장", vi: "Lưu vào Ảnh", id: "Simpan ke Foto", pt: "Salvar em Fotos") }
+    private var regenerateLabel: String { l("重新生成", "Regenerate", "再生成", "재생성", vi: "Tạo lại", id: "Buat Ulang", pt: "Regerar") }
+    private var retakeLabel:     String { l("换一张照片", "Try Another Photo", "別の写真で試す", "다른 사진으로", vi: "Thử ảnh khác", id: "Coba Foto Lain", pt: "Outra Foto") }
+    private var savedMessage:    String { l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료", vi: "Đã lưu vào Ảnh", id: "Tersimpan ke Foto", pt: "Salvo em Fotos") }
+    private var printLayoutLabel: String { l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃", vi: "In ảnh tại cửa hàng", id: "Layout Cetak Konbini", pt: "Layout p/ Impressão") }
+    private var printLayoutDesc:  String { l("生成排版照片，到便利店直接打印", "Print-ready layout for convenience stores", "プリント用レイアウトを生成、コンビニで印刷", "편의점에서 바로 인쇄할 수 있는 레이아웃", vi: "Tạo bố cục, in tại cửa hàng tiện lợi", id: "Layout siap cetak untuk toko serba ada", pt: "Layout pronto para lojas de conveniência") }
+    private var errorTitle:      String { l("错误", "Error", "エラー", "오류", vi: "Lỗi", id: "Kesalahan", pt: "Erro") }
+    private var okLabel:         String { l("好的", "OK", "OK", "확인", vi: "OK", id: "OK", pt: "OK") }
 
     // MARK: - Actions
 
@@ -468,7 +477,10 @@ struct ContentView: View {
             errorMessage = l("未完成广告观看，无法继续生成。",
                              "Ad not completed. Generation cancelled.",
                              "広告が完了しませんでした。生成をキャンセルしました。",
-                             "광고가 완료되지 않았습니다. 생성이 취소되었습니다.")
+                             "광고가 완료되지 않았습니다. 생성이 취소되었습니다.",
+                             vi: "Chưa xem xong quảng cáo. Đã hủy tạo ảnh.",
+                             id: "Iklan belum selesai. Pembuatan dibatalkan.",
+                             pt: "Anúncio não concluído. Geração cancelada.")
         }
     }
 
@@ -478,9 +490,11 @@ struct ContentView: View {
         do {
             let basePrompt = isCustomSize ? customSize.prompt : selectedSpec.prompt
             let finalPrompt = basePrompt + photoOptions.buildPromptSuffix()
+            let tier: GeminiService.OutputTier = subscription.isSubscribed ? .pro : .free
             let result = try await GeminiService.shared.generateIDPhoto(
                 from: input,
-                prompt: finalPrompt
+                prompt: finalPrompt,
+                tier: tier
             )
             self.outputImage = result
             usage.markUsed(isSubscribed: subscription.isSubscribed)
@@ -520,6 +534,9 @@ private struct GeneratingLabel: View {
         case "ja": return ["写真を解析中…", "顔を処理中…", "証明写真を生成中…", "もうすぐ完成…"]
         case "ko": return ["사진 분석 중…", "얼굴 처리 중…", "증명사진 생성 중…", "거의 완료…"]
         case "zh": return ["AI 正在分析照片…", "AI 正在处理人像…", "AI 正在生成证件照…", "即将完成，请稍候…"]
+        case "vi": return ["Đang phân tích ảnh…", "Đang xử lý khuôn mặt…", "Đang tạo ảnh thẻ…", "Sắp hoàn thành…"]
+        case "id": return ["Menganalisis foto…", "Memproses wajah…", "Membuat foto ID…", "Hampir selesai…"]
+        case "pt": return ["Analisando foto…", "Processando rosto…", "Gerando foto documento…", "Quase pronto…"]
         default:   return ["Analyzing photo…", "Processing face…", "Generating ID photo…", "Almost done…"]
         }
     }

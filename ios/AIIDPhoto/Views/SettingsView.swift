@@ -26,7 +26,7 @@ struct SettingsView: View {
                         }
                         restoreRow
                     } header: {
-                        sectionHeader(icon: "crown.fill", title: sectionTitle("Membership", "会员", "会員", "멤버십"))
+                        sectionHeader(icon: "crown.fill", title: sectionTitle("Membership", "会员", "会員", "멤버십", vi: "Thành viên", id: "Keanggotaan", pt: "Assinatura"))
                     }
                     .listRowBackground(Color.primary.opacity(0.06))
 
@@ -52,7 +52,7 @@ struct SettingsView: View {
                             }
                         }
                     } header: {
-                        sectionHeader(icon: "paintbrush.fill", title: sectionTitle("Appearance", "外观", "外観", "외관"))
+                        sectionHeader(icon: "paintbrush.fill", title: sectionTitle("Appearance", "外观", "外観", "외관", vi: "Giao diện", id: "Tampilan", pt: "Aparência"))
                     }
                     .listRowBackground(Color.primary.opacity(0.06))
 
@@ -63,8 +63,11 @@ struct SettingsView: View {
                         langRow(.english)
                         langRow(.japanese)
                         langRow(.korean)
+                        langRow(.vietnamese)
+                        langRow(.indonesian)
+                        langRow(.portuguese)
                     } header: {
-                        sectionHeader(icon: "globe", title: sectionTitle("Language", "语言", "言語", "언어"))
+                        sectionHeader(icon: "globe", title: sectionTitle("Language", "语言", "言語", "언어", vi: "Ngôn ngữ", id: "Bahasa", pt: "Idioma"))
                     } footer: {
                         Text(footerNote).font(.caption)
                     }
@@ -83,7 +86,7 @@ struct SettingsView: View {
                                 .font(.callout.monospacedDigit())
                         }
                     } header: {
-                        sectionHeader(icon: "map", title: sectionTitle("Region / Spec Order", "地区 / 规格排序", "地域 / 規格順序", "지역 / 규격 순서"))
+                        sectionHeader(icon: "map", title: sectionTitle("Region / Spec Order", "地区 / 规格排序", "地域 / 規格順序", "지역 / 규격 순서", vi: "Vùng / Thứ tự quy cách", id: "Wilayah / Urutan Spek", pt: "Região / Ordem de Formato"))
                     } footer: {
                         Text(regionFooter).font(.caption)
                     }
@@ -94,7 +97,7 @@ struct SettingsView: View {
                         infoRow(icon: "info.circle.fill", color: .blue,
                                 label: versionLabel, value: appVersion)
                     } header: {
-                        sectionHeader(icon: "info.circle", title: sectionTitle("App", "应用", "アプリ", "앱"))
+                        sectionHeader(icon: "info.circle", title: sectionTitle("App", "应用", "アプリ", "앱", vi: "Ứng dụng", id: "Aplikasi", pt: "Aplicativo"))
                     }
                     .listRowBackground(Color.primary.opacity(0.06))
 
@@ -107,7 +110,7 @@ struct SettingsView: View {
                             legalRow(icon: "doc.text.fill", color: .orange, title: termsLabel)
                         }
                     } header: {
-                        sectionHeader(icon: "lock.shield", title: sectionTitle("Legal", "法律", "法的情報", "법적 정보"))
+                        sectionHeader(icon: "lock.shield", title: sectionTitle("Legal", "法律", "法的情報", "법적 정보", vi: "Pháp lý", id: "Hukum", pt: "Legal"))
                     }
                     .listRowBackground(Color.primary.opacity(0.06))
                 }
@@ -279,54 +282,64 @@ struct SettingsView: View {
 
     private var lang: String { langManager.effectiveCode }
 
-    private func sectionTitle(_ en: String, _ zh: String, _ ja: String, _ ko: String) -> String {
+    private func sectionTitle(_ en: String, _ zh: String, _ ja: String, _ ko: String,
+                              vi: String? = nil, id: String? = nil, pt: String? = nil) -> String {
         switch lang {
         case "zh": return zh
         case "ja": return ja
         case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
         default:   return en
         }
     }
 
     // MARK: - Localized Strings
 
-    private var navTitle:     String { sectionTitle("Settings", "设置", "設定", "설정") }
+    private var navTitle:     String { sectionTitle("Settings", "设置", "設定", "설정", vi: "Cài đặt", id: "Pengaturan", pt: "Configurações") }
     private var footerNote:   String {
         sectionTitle(
             "App display language. Spec ordering is always based on device region.",
             "应用界面语言。规格排序始终根据设备地区自动调整。",
             "アプリの表示言語。規格の並び順はデバイスの地域設定に従います。",
-            "앱 표시 언어입니다. 규격 순서는 기기 지역 설정을 따릅니다."
+            "앱 표시 언어입니다. 규격 순서는 기기 지역 설정을 따릅니다.",
+            vi: "Ngôn ngữ hiển thị ứng dụng. Thứ tự quy cách luôn theo vùng thiết bị.",
+            id: "Bahasa tampilan aplikasi. Urutan spek selalu berdasarkan wilayah perangkat.",
+            pt: "Idioma do aplicativo. A ordem dos formatos segue a região do dispositivo."
         )
     }
-    private var regionLabel:  String { sectionTitle("Device Region", "设备地区", "デバイス地域", "기기 지역") }
+    private var regionLabel:  String { sectionTitle("Device Region", "设备地区", "デバイス地域", "기기 지역", vi: "Vùng thiết bị", id: "Wilayah Perangkat", pt: "Região do Dispositivo") }
     private var regionFooter: String {
         sectionTitle(
             "ID photo formats are sorted by your device region. To change, go to iOS Settings → General → Language & Region.",
             "证件照规格按设备地区自动排序。在 iOS 设置 → 通用 → 语言与地区 中更改。",
             "規格の並び順はデバイスの地域設定で変わります。iOS設定 → 一般 → 言語と地域 で変更できます。",
-            "규격 순서는 기기 지역에 따라 정렬됩니다. iOS 설정 → 일반 → 언어 및 지역에서 변경하세요."
+            "규격 순서는 기기 지역에 따라 정렬됩니다. iOS 설정 → 일반 → 언어 및 지역에서 변경하세요.",
+            vi: "Quy cách ảnh thẻ được sắp xếp theo vùng thiết bị. Để thay đổi, vào Cài đặt iOS → Cài đặt chung → Ngôn ngữ & Vùng.",
+            id: "Format foto ID diurutkan berdasarkan wilayah perangkat. Untuk mengubah, buka Pengaturan iOS → Umum → Bahasa & Wilayah.",
+            pt: "Os formatos são ordenados pela região do dispositivo. Para alterar, vá em Ajustes iOS → Geral → Idioma e Região."
         )
     }
-    private var versionLabel:      String { sectionTitle("Version", "版本", "バージョン", "버전") }
-    private var privacyLabel:      String { sectionTitle("Privacy Policy", "隐私政策", "プライバシーポリシー", "개인정보 처리방침") }
-    private var termsLabel:        String { sectionTitle("Terms of Service", "服务条款", "利用規約", "이용약관") }
-    private var subscribedLabel:   String { sectionTitle("Pro Member", "专业会员", "プロ会員", "프로 회원") }
-    private var notSubscribedLabel:String { sectionTitle("Free Plan", "免费版", "無料プラン", "무료 플랜") }
-    private var upgradeLabel:      String { sectionTitle("Upgrade to Pro", "升级为会员", "プロにアップグレード", "프로로 업그레이드") }
-    private var manageLabel:       String { sectionTitle("Manage Subscription", "管理订阅", "サブスクリプション管理", "구독 관리") }
-    private var restoreLabel:      String { sectionTitle("Restore Purchases", "恢复购买", "購入を復元", "구매 복원") }
-    private var freeUserDesc:      String { sectionTitle("First gen free, then watch a 30s ad", "首次免费，此后需观看30秒广告", "初回無料、次回から30秒広告視聴", "첫 생성 무료, 이후 30초 광고") }
+    private var versionLabel:      String { sectionTitle("Version", "版本", "バージョン", "버전", vi: "Phiên bản", id: "Versi", pt: "Versão") }
+    private var privacyLabel:      String { sectionTitle("Privacy Policy", "隐私政策", "プライバシーポリシー", "개인정보 처리방침", vi: "Chính sách Bảo mật", id: "Kebijakan Privasi", pt: "Política de Privacidade") }
+    private var termsLabel:        String { sectionTitle("Terms of Service", "服务条款", "利用規約", "이용약관", vi: "Điều khoản Dịch vụ", id: "Ketentuan Layanan", pt: "Termos de Serviço") }
+    private var subscribedLabel:   String { sectionTitle("Pro Member", "专业会员", "プロ会員", "프로 회원", vi: "Thành viên Pro", id: "Anggota Pro", pt: "Membro Pro") }
+    private var notSubscribedLabel:String { sectionTitle("Free Plan", "免费版", "無料プラン", "무료 플랜", vi: "Gói Miễn phí", id: "Paket Gratis", pt: "Plano Gratuito") }
+    private var upgradeLabel:      String { sectionTitle("Upgrade to Pro", "升级为会员", "プロにアップグレード", "프로로 업그레이드", vi: "Nâng cấp Pro", id: "Upgrade ke Pro", pt: "Assinar Pro") }
+    private var manageLabel:       String { sectionTitle("Manage Subscription", "管理订阅", "サブスクリプション管理", "구독 관리", vi: "Quản lý đăng ký", id: "Kelola Langganan", pt: "Gerenciar Assinatura") }
+    private var restoreLabel:      String { sectionTitle("Restore Purchases", "恢复购买", "購入を復元", "구매 복원", vi: "Khôi phục mua hàng", id: "Pulihkan Pembelian", pt: "Restaurar Compras") }
+    private var freeUserDesc:      String { sectionTitle("First gen free, then watch a 30s ad", "首次免费，此后需观看30秒广告", "初回無料、次回から30秒広告視聴", "첫 생성 무료, 이후 30초 광고", vi: "Lần đầu miễn phí, sau đó xem QC 30 giây", id: "Pertama gratis, lalu tonton iklan 30 detik", pt: "1ª grátis, depois assista anúncio de 30s") }
     private var todayRemainingText: String {
         let n = usage.subscriberUsesLeft
-        return sectionTitle("Today's remaining: \(n)", "今日剩余：\(n) 次", "本日残り：\(n)回", "오늘 남은 횟수: \(n)회")
+        return sectionTitle("Today's remaining: \(n)", "今日剩余：\(n) 次", "本日残り：\(n)回", "오늘 남은 횟수: \(n)회", vi: "Còn lại hôm nay: \(n)", id: "Sisa hari ini: \(n)", pt: "Restantes hoje: \(n)")
     }
     private func expiryText(_ date: Date) -> String {
         let fmt = DateFormatter()
         fmt.dateStyle = .medium
         fmt.timeStyle = .none
         let ds = fmt.string(from: date)
-        return sectionTitle("Renews \(ds)", "续期日期：\(ds)", "更新日：\(ds)", "갱신일: \(ds)")
+        return sectionTitle("Renews \(ds)", "续期日期：\(ds)", "更新日：\(ds)", "갱신일: \(ds)", vi: "Gia hạn \(ds)", id: "Perpanjang \(ds)", pt: "Renova \(ds)")
     }
 }
 

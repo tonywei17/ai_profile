@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chính sách Bảo mật — AI ID Photo</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.6em; border-bottom: 2px solid #007AFF; padding-bottom: 8px; }
+  h2 { font-size: 1.2em; margin-top: 2em; color: #007AFF; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f7; }
+  .lang-nav { text-align: right; margin-bottom: 16px; font-size: 0.9em; }
+  .lang-nav a { margin-left: 12px; color: #007AFF; text-decoration: none; }
+  .contact { background: #f5f5f7; padding: 16px; border-radius: 8px; margin-top: 24px; }
+  .update { color: #888; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="lang-nav">
+  <a href="en.html">English</a>
+  <a href="ja.html">日本語</a>
+  <a href="zh.html">中文</a>
+  <a href="ko.html">한국어</a>
+  <a href="id.html">Indonesia</a>
+  <a href="pt.html">Português</a>
+</div>
+
+<h1>Chính sách Bảo mật</h1>
+<p class="update">Cập nhật lần cuối: Ngày 2 tháng 3 năm 2026</p>
+
+<p>Chính sách Bảo mật này giải thích cách <strong>Wei Wenxin</strong> ("Nhà phát triển", "chúng tôi") thu thập, sử dụng và bảo vệ thông tin của bạn khi bạn sử dụng ứng dụng di động <strong>AI ID Photo</strong> ("Ứng dụng").</p>
+
+<h2>1. Thông tin chúng tôi thu thập</h2>
+
+<table>
+<tr><th>Loại dữ liệu</th><th>Mục đích</th><th>Lưu trữ</th></tr>
+<tr><td><strong>Ảnh bạn tải lên</strong></td><td>Tạo ảnh thẻ bằng AI</td><td>Không lưu trữ — xử lý theo thời gian thực và xóa ngay lập tức</td></tr>
+<tr><td><strong>Ảnh đã tạo</strong></td><td>Hiển thị trong ứng dụng để bạn lưu</td><td>Chỉ lưu trên thiết bị của bạn</td></tr>
+<tr><td><strong>Dữ liệu sử dụng</strong></td><td>Quản lý giới hạn tạo ảnh hàng ngày</td><td>Chỉ trên thiết bị (UserDefaults)</td></tr>
+<tr><td><strong>Trạng thái đăng ký</strong></td><td>Quản lý thành viên Pro</td><td>Do Apple quản lý (StoreKit 2)</td></tr>
+<tr><td><strong>Mã nhận dạng quảng cáo</strong></td><td>Hiển thị quảng cáo (chỉ gói miễn phí)</td><td>Do Google AdMob quản lý</td></tr>
+</table>
+
+<p><strong>Chúng tôi KHÔNG thu thập:</strong> tên, địa chỉ email, số điện thoại, dữ liệu vị trí, danh bạ hoặc bất kỳ thông tin nhận dạng cá nhân nào khác ngoài những thông tin được liệt kê ở trên.</p>
+
+<h2>2. Cách chúng tôi xử lý ảnh của bạn</h2>
+
+<p>Khi bạn tải ảnh lên, quy trình xử lý như sau:</p>
+<ol>
+  <li>Nén và thay đổi kích thước trên thiết bị của bạn (512px cho người dùng miễn phí, 1024px cho người dùng Pro)</li>
+  <li>Truyền qua HTTPS đến máy chủ backend của chúng tôi (được lưu trữ trên <strong>Google Cloud Platform, khu vực Tokyo</strong>)</li>
+  <li>Chuyển tiếp đến <strong>Google Gemini API</strong> để tạo ảnh thẻ bằng AI</li>
+  <li>Kết quả được trả về cho bạn và ảnh gốc được <strong>xóa ngay lập tức</strong></li>
+</ol>
+
+<p><strong>Chúng tôi không lưu trữ, ghi nhận hoặc giữ lại ảnh của bạn trên máy chủ.</strong> Ảnh chỉ tồn tại trong bộ nhớ máy chủ trong thời gian xử lý ngắn (thường dưới 30 giây).</p>
+
+<h2>3. Dịch vụ bên thứ ba</h2>
+
+<table>
+<tr><th>Dịch vụ</th><th>Nhà cung cấp</th><th>Dữ liệu chia sẻ</th><th>Mục đích</th></tr>
+<tr><td><strong>Gemini API</strong></td><td>Google LLC</td><td>Ảnh tải lên + câu lệnh văn bản</td><td>Tạo ảnh bằng AI</td></tr>
+<tr><td><strong>AdMob</strong></td><td>Google LLC</td><td>Mã nhận dạng quảng cáo, thông tin thiết bị</td><td>Hiển thị quảng cáo (chỉ gói miễn phí)</td></tr>
+<tr><td><strong>StoreKit 2</strong></td><td>Apple Inc.</td><td>Dữ liệu giao dịch đăng ký</td><td>Xử lý thanh toán</td></tr>
+</table>
+
+<p>Bằng việc sử dụng Ứng dụng này, bạn đồng ý rằng ảnh của bạn sẽ được gửi đến <strong>Google Gemini API</strong> để tạo ảnh thẻ bằng AI. Google xử lý dữ liệu theo <a href="https://policies.google.com/privacy" target="_blank">Chính sách Bảo mật của Google</a>.</p>
+
+<h2>4. Bảo mật dữ liệu</h2>
+
+<ul>
+  <li>Tất cả truyền dữ liệu sử dụng <strong>mã hóa HTTPS/TLS</strong></li>
+  <li>Máy chủ backend chạy trên <strong>Google Cloud Run</strong> khu vực Tokyo (asia-northeast1)</li>
+  <li>Không lưu trữ ảnh hoặc dữ liệu cá nhân của người dùng trong cơ sở dữ liệu</li>
+  <li>Khóa API được lưu trữ trong Google Cloud Secret Manager</li>
+</ul>
+
+<h2>5. Lưu giữ dữ liệu</h2>
+
+<ul>
+  <li><strong>Ảnh:</strong> Không lưu giữ — xử lý theo thời gian thực và xóa ngay</li>
+  <li><strong>Dữ liệu sử dụng:</strong> Chỉ trên thiết bị; bị xóa khi gỡ cài đặt Ứng dụng</li>
+  <li><strong>Dữ liệu đăng ký:</strong> Do Apple quản lý</li>
+  <li><strong>Dữ liệu quảng cáo:</strong> Do Google AdMob quản lý</li>
+</ul>
+
+<h2>6. Quyền của bạn</h2>
+
+<ul>
+  <li><strong>Xóa dữ liệu:</strong> Vì chúng tôi không lưu trữ ảnh hoặc dữ liệu cá nhân trên máy chủ, không có dữ liệu phía máy chủ cần xóa. Gỡ cài đặt Ứng dụng sẽ xóa tất cả dữ liệu trên thiết bị.</li>
+  <li><strong>Từ chối quảng cáo cá nhân hóa:</strong> Bạn có thể giới hạn theo dõi quảng cáo trong Cài đặt thiết bị > Quyền riêng tư > Theo dõi.</li>
+  <li><strong>Rút lại đồng ý:</strong> Bạn có thể ngừng sử dụng Ứng dụng bất cứ lúc nào.</li>
+</ul>
+
+<h2>7. Quyền riêng tư trẻ em</h2>
+
+<p>Ứng dụng này không dành cho trẻ em dưới 13 tuổi. Chúng tôi không cố ý thu thập thông tin cá nhân từ trẻ em.</p>
+
+<h2>8. Thay đổi chính sách</h2>
+
+<p>Chúng tôi có thể cập nhật Chính sách Bảo mật này theo thời gian. Các thay đổi sẽ được đăng trên trang này với ngày sửa đổi cập nhật.</p>
+
+<div class="contact">
+<h2>9. Liên hệ</h2>
+<p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ:</p>
+<p>
+  <strong>Wei Wenxin</strong><br>
+  Email: <a href="mailto:nexuswei.dev@gmail.com">nexuswei.dev@gmail.com</a>
+</p>
+</div>
+
+</body>
+</html>

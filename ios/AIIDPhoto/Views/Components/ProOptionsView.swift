@@ -148,15 +148,30 @@ struct ProOptionsView: View {
 
     // MARK: - Localized Strings
 
-    private var sectionTitle:      String { l("AI 自定义", "AI Customize", "AI カスタマイズ", "AI 커스터마이즈") }
-    private var beautyTitle:       String { l("美颜",      "Beauty",       "美肌",           "뷰티") }
-    private var attireTitle:       String { l("服装",      "Attire",       "服装",           "복장") }
-    private var hairTitle:         String { l("发型",      "Hair",         "髪型",           "헤어") }
-    private var backgroundTitle:   String { l("背景色",    "Background",   "背景色",         "배경색") }
-    private var accessoriesTitle:  String { l("配饰",      "Accessories",  "アクセサリー",   "액세서리") }
+    private var sectionTitle:      String { l("AI 自定义", "AI Customize", "AI カスタマイズ", "AI 커스터마이즈",
+                                              vi: "AI Tùy chỉnh", id: "AI Kustomisasi", pt: "AI Personalizar") }
+    private var beautyTitle:       String { l("美颜",      "Beauty",       "美肌",           "뷰티",
+                                              vi: "Làm đẹp", id: "Kecantikan", pt: "Beleza") }
+    private var attireTitle:       String { l("服装",      "Attire",       "服装",           "복장",
+                                              vi: "Trang phục", id: "Pakaian", pt: "Traje") }
+    private var hairTitle:         String { l("发型",      "Hair",         "髪型",           "헤어",
+                                              vi: "Tóc", id: "Rambut", pt: "Cabelo") }
+    private var backgroundTitle:   String { l("背景色",    "Background",   "背景色",         "배경색",
+                                              vi: "Nền", id: "Latar", pt: "Fundo") }
+    private var accessoriesTitle:  String { l("配饰",      "Accessories",  "アクセサリー",   "액세서리",
+                                              vi: "Phụ kiện", id: "Aksesori", pt: "Acessórios") }
 
-    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String) -> String {
-        switch language { case "zh": zh; case "ja": ja; case "ko": ko; default: en }
+    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil) -> String {
+        switch language {
+        case "zh": return zh
+        case "ja": return ja
+        case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
+        default:   return en
+        }
     }
 }
 

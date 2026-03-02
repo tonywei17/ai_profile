@@ -74,6 +74,9 @@ struct SpecSelectorView: View {
         case "ja": return "規格を選択"
         case "ko": return "규격 선택"
         case "zh": return "选择规格"
+        case "vi": return "Chọn quy cách"
+        case "id": return "Pilih Format"
+        case "pt": return "Selecionar Formato"
         default:   return "Select Format"
         }
     }
@@ -83,6 +86,9 @@ struct SpecSelectorView: View {
         case "ja": return "カスタム"
         case "ko": return "사용자 정의"
         case "zh": return "自定义"
+        case "vi": return "Tùy chỉnh"
+        case "id": return "Kustom"
+        case "pt": return "Personalizado"
         default:   return "Custom"
         }
     }

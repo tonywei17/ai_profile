@@ -67,28 +67,42 @@ struct CustomSizePickerView: View {
 
     // MARK: - Localized Strings
 
-    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String) -> String {
+    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil) -> String {
         switch language {
         case "zh": return zh
         case "ja": return ja
         case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
         default:   return en
         }
     }
 
     private var title: String {
-        l("自定义尺寸", "Custom Size", "カスタムサイズ", "사용자 정의 크기")
+        l("自定义尺寸", "Custom Size", "カスタムサイズ", "사용자 정의 크기",
+          vi: "Kích thước tùy chỉnh", id: "Ukuran Kustom", pt: "Tamanho Personalizado")
     }
     private var widthLabel: String {
-        l("宽度", "Width", "幅", "너비")
+        l("宽度", "Width", "幅", "너비",
+          vi: "Chiều rộng", id: "Lebar", pt: "Largura")
     }
     private var heightLabel: String {
-        l("高度", "Height", "高さ", "높이")
+        l("高度", "Height", "高さ", "높이",
+          vi: "Chiều cao", id: "Tinggi", pt: "Altura")
     }
     private var rangeHint: String {
-        l("范围：宽 \(Int(CustomSizeSpec.minWidth))–\(Int(CustomSizeSpec.maxWidth))mm，高 \(Int(CustomSizeSpec.minHeight))–\(Int(CustomSizeSpec.maxHeight))mm",
-          "Range: W \(Int(CustomSizeSpec.minWidth))–\(Int(CustomSizeSpec.maxWidth))mm, H \(Int(CustomSizeSpec.minHeight))–\(Int(CustomSizeSpec.maxHeight))mm",
-          "範囲：幅 \(Int(CustomSizeSpec.minWidth))–\(Int(CustomSizeSpec.maxWidth))mm、高さ \(Int(CustomSizeSpec.minHeight))–\(Int(CustomSizeSpec.maxHeight))mm",
-          "범위: 너비 \(Int(CustomSizeSpec.minWidth))–\(Int(CustomSizeSpec.maxWidth))mm, 높이 \(Int(CustomSizeSpec.minHeight))–\(Int(CustomSizeSpec.maxHeight))mm")
+        let minW = Int(CustomSizeSpec.minWidth)
+        let maxW = Int(CustomSizeSpec.maxWidth)
+        let minH = Int(CustomSizeSpec.minHeight)
+        let maxH = Int(CustomSizeSpec.maxHeight)
+        return l("范围：宽 \(minW)–\(maxW)mm，高 \(minH)–\(maxH)mm",
+          "Range: W \(minW)–\(maxW)mm, H \(minH)–\(maxH)mm",
+          "範囲：幅 \(minW)–\(maxW)mm、高さ \(minH)–\(maxH)mm",
+          "범위: 너비 \(minW)–\(maxW)mm, 높이 \(minH)–\(maxH)mm",
+          vi: "Phạm vi: R \(minW)–\(maxW)mm, C \(minH)–\(maxH)mm",
+          id: "Rentang: L \(minW)–\(maxW)mm, T \(minH)–\(maxH)mm",
+          pt: "Faixa: L \(minW)–\(maxW)mm, A \(minH)–\(maxH)mm")
     }
 }

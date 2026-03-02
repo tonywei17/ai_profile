@@ -18,11 +18,15 @@ struct PrintLayoutSheetView: View {
 
     private var lang: String { langManager.effectiveCode }
 
-    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String) -> String {
+    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil) -> String {
         switch lang {
         case "zh": return zh
         case "ja": return ja
         case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
         default:   return en
         }
     }
@@ -316,56 +320,80 @@ struct PrintLayoutSheetView: View {
     // MARK: - Localized Strings
 
     private var sheetTitle: String {
-        l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃")
+        l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃",
+          vi: "In ảnh tại cửa hàng", id: "Cetak di Konbini", pt: "Layout p/ Impressão")
     }
     private var sheetSubtitle: String {
         l("一键生成排版照片，直接到便利店打印",
           "Export a print-ready layout for convenience store printing",
           "コンビニで印刷できるレイアウト写真を一発生成",
-          "편의점에서 바로 인쇄할 수 있는 레이아웃 생성")
+          "편의점에서 바로 인쇄할 수 있는 레이아웃 생성",
+          vi: "Tạo bố cục in ảnh, in tại cửa hàng tiện lợi",
+          id: "Ekspor layout siap cetak untuk toko serba ada",
+          pt: "Exporte um layout pronto para impressão em lojas")
     }
     private var paperSizeLabel: String {
-        l("用纸尺寸", "Paper Size", "用紙サイズ", "용지 크기")
+        l("用纸尺寸", "Paper Size", "用紙サイズ", "용지 크기",
+          vi: "Khổ giấy", id: "Ukuran Kertas", pt: "Tamanho do Papel")
     }
     private var photoCountUnit: String {
-        l("张", " photos", "枚", "장")
+        l("张", " photos", "枚", "장",
+          vi: " ảnh", id: " foto", pt: " fotos")
     }
     private var guidesLabel: String {
-        l("裁剪参考线", "Cutting Guides", "カットガイド", "재단 가이드")
+        l("裁剪参考线", "Cutting Guides", "カットガイド", "재단 가이드",
+          vi: "Đường cắt", id: "Panduan Potong", pt: "Guias de Corte")
     }
     private var compatLabel: String {
-        l("便利店兼容", "Konbini Compatible", "コンビニ対応", "편의점 호환")
+        l("便利店兼容", "Konbini Compatible", "コンビニ対応", "편의점 호환",
+          vi: "Tương thích cửa hàng", id: "Kompatibel Konbini", pt: "Compatível com Lojas")
     }
     private var saveLayoutLabel: String {
-        l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장")
+        l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장",
+          vi: "Lưu ảnh bố cục", id: "Simpan Layout Cetak", pt: "Salvar Layout")
     }
     private var unlockLabel: String {
-        l("解锁排版打印", "Unlock Print Layout", "コンビニプリントを解除", "인쇄 레이아웃 잠금 해제")
+        l("解锁排版打印", "Unlock Print Layout", "コンビニプリントを解除", "인쇄 레이아웃 잠금 해제",
+          vi: "Mở khóa in ảnh", id: "Buka Layout Cetak", pt: "Desbloquear Impressão")
     }
     private var savedLabel: String {
-        l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료")
+        l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료",
+          vi: "Đã lưu vào Ảnh", id: "Tersimpan ke Foto", pt: "Salvo em Fotos")
     }
     private var howToTitle: String {
-        l("使用方法", "How to Print", "印刷手順", "인쇄 방법")
+        l("使用方法", "How to Print", "印刷手順", "인쇄 방법",
+          vi: "Hướng dẫn in", id: "Cara Cetak", pt: "Como Imprimir")
     }
     private var howToSteps: [String] {
         [
             l("保存排版照片到相册",
               "Save the layout image to Photos",
               "レイアウト写真をカメラロールに保存",
-              "레이아웃 사진을 사진 앱에 저장"),
+              "레이아웃 사진을 사진 앱에 저장",
+              vi: "Lưu ảnh bố cục vào album",
+              id: "Simpan foto layout ke Galeri",
+              pt: "Salve a imagem de layout em Fotos"),
             l("将照片传输到便利店多功能复合机（USB、Wi-Fi或LINE等）",
               "Transfer the image to the konbini multi-function printer (USB, Wi-Fi, or LINE)",
               "USBやWi-Fi、LINEなどでコンビニのマルチコピー機に転送",
-              "USB, Wi-Fi 또는 LINE으로 편의점 복합기에 전송"),
+              "USB, Wi-Fi 또는 LINE으로 편의점 복합기에 전송",
+              vi: "Chuyển ảnh sang máy in cửa hàng (USB, Wi-Fi hoặc LINE)",
+              id: "Transfer gambar ke printer konbini (USB, Wi-Fi, atau LINE)",
+              pt: "Transfira a imagem para a impressora (USB, Wi-Fi ou LINE)"),
             l("选择\"照片打印\" → L判或2L判",
               "Select \"Photo Print\" → L or 2L size",
               "「写真プリント」→ L判または2L判を選択",
-              "\"사진 인쇄\" → L 또는 2L 사이즈 선택"),
+              "\"사진 인쇄\" → L 또는 2L 사이즈 선택",
+              vi: "Chọn \"In ảnh\" → L hoặc 2L",
+              id: "Pilih \"Cetak Foto\" → ukuran L atau 2L",
+              pt: "Selecione \"Imprimir Foto\" → tamanho L ou 2L"),
             l("打印后沿参考线裁剪即可使用",
               "Cut along the guide lines after printing",
               "印刷後、ガイドラインに沿って切り取り",
-              "인쇄 후 가이드라인을 따라 자르기"),
+              "인쇄 후 가이드라인을 따라 자르기",
+              vi: "Cắt theo đường hướng dẫn sau khi in",
+              id: "Potong sesuai garis panduan setelah dicetak",
+              pt: "Corte ao longo das linhas guia após imprimir"),
         ]
     }
 }

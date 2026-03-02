@@ -41,14 +41,15 @@ enum BeautyLevel: String, CaseIterable, Identifiable {
 
     func displayName(language: String) -> String {
         switch self {
-        case .natural:      return l(zh: "自然",     en: "Natural",       ja: "ナチュラル",   ko: "내추럴",      lang: language)
-        case .lightEnhance: return l(zh: "轻微美颜", en: "Light Enhance", ja: "ライト補正",   ko: "라이트 보정", lang: language)
-        case .professional: return l(zh: "专业精修", en: "Pro Retouch",   ja: "プロ補正",     ko: "프로 보정",   lang: language)
+        case .natural:      return l(zh: "自然",     en: "Natural",       ja: "ナチュラル",   ko: "내추럴",      vi: "Tự nhiên", id: "Natural", pt: "Natural", lang: language)
+        case .lightEnhance: return l(zh: "轻微美颜", en: "Light Enhance", ja: "ライト補正",   ko: "라이트 보정", vi: "Làm đẹp nhẹ", id: "Perbaikan Ringan", pt: "Retoque Leve", lang: language)
+        case .professional: return l(zh: "专业精修", en: "Pro Retouch",   ja: "プロ補正",     ko: "프로 보정",   vi: "Chỉnh sửa Pro", id: "Retouching Pro", pt: "Retoque Pro", lang: language)
         }
     }
 
-    private func l(zh: String, en: String, ja: String, ko: String, lang: String) -> String {
-        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; default: en }
+    private func l(zh: String, en: String, ja: String, ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
+        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; case "vi": vi ?? en; case "id": id ?? en; case "pt": pt ?? en; default: en }
     }
 }
 
@@ -86,16 +87,17 @@ enum Attire: String, CaseIterable, Identifiable {
 
     func displayName(language: String) -> String {
         switch self {
-        case .keepOriginal:       return l(zh: "保持原样", en: "Original",       ja: "そのまま",       ko: "원본 유지",  lang: language)
-        case .darkSuit:           return l(zh: "深色西装", en: "Dark Suit",      ja: "ダークスーツ",   ko: "다크 수트",  lang: language)
-        case .navySuit:           return l(zh: "藏蓝西装", en: "Navy Suit",      ja: "ネイビースーツ", ko: "네이비 수트", lang: language)
-        case .whiteShirt:         return l(zh: "白衬衫",   en: "White Shirt",    ja: "白シャツ",       ko: "흰 셔츠",    lang: language)
-        case .professionalBlouse: return l(zh: "正装上衣", en: "Blouse/Blazer", ja: "ブレザー",       ko: "블레이저",   lang: language)
+        case .keepOriginal:       return l(zh: "保持原样", en: "Original",       ja: "そのまま",       ko: "원본 유지",  vi: "Giữ nguyên", id: "Asli", pt: "Original", lang: language)
+        case .darkSuit:           return l(zh: "深色西装", en: "Dark Suit",      ja: "ダークスーツ",   ko: "다크 수트",  vi: "Vest tối", id: "Jas Gelap", pt: "Terno Escuro", lang: language)
+        case .navySuit:           return l(zh: "藏蓝西装", en: "Navy Suit",      ja: "ネイビースーツ", ko: "네이비 수트", vi: "Vest xanh navy", id: "Jas Navy", pt: "Terno Azul", lang: language)
+        case .whiteShirt:         return l(zh: "白衬衫",   en: "White Shirt",    ja: "白シャツ",       ko: "흰 셔츠",    vi: "Áo trắng", id: "Kemeja Putih", pt: "Camisa Branca", lang: language)
+        case .professionalBlouse: return l(zh: "正装上衣", en: "Blouse/Blazer", ja: "ブレザー",       ko: "블레이저",   vi: "Áo blazer", id: "Blazer", pt: "Blazer", lang: language)
         }
     }
 
-    private func l(zh: String, en: String, ja: String, ko: String, lang: String) -> String {
-        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; default: en }
+    private func l(zh: String, en: String, ja: String, ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
+        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; case "vi": vi ?? en; case "id": id ?? en; case "pt": pt ?? en; default: en }
     }
 }
 
@@ -124,13 +126,14 @@ enum HairGrooming: String, CaseIterable, Identifiable {
 
     func displayName(language: String) -> String {
         switch self {
-        case .keepOriginal: return l(zh: "保持原样", en: "Original",  ja: "そのまま", ko: "원본 유지", lang: language)
-        case .tidyUp:       return l(zh: "整理发型", en: "Tidy Up",   ja: "整える",   ko: "정돈",      lang: language)
+        case .keepOriginal: return l(zh: "保持原样", en: "Original",  ja: "そのまま", ko: "원본 유지", vi: "Giữ nguyên", id: "Asli", pt: "Original", lang: language)
+        case .tidyUp:       return l(zh: "整理发型", en: "Tidy Up",   ja: "整える",   ko: "정돈",      vi: "Chỉnh tóc", id: "Rapikan", pt: "Arrumar", lang: language)
         }
     }
 
-    private func l(zh: String, en: String, ja: String, ko: String, lang: String) -> String {
-        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; default: en }
+    private func l(zh: String, en: String, ja: String, ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
+        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; case "vi": vi ?? en; case "id": id ?? en; case "pt": pt ?? en; default: en }
     }
 }
 
@@ -179,16 +182,17 @@ enum BackgroundColorOption: String, CaseIterable, Identifiable {
 
     func displayName(language: String) -> String {
         switch self {
-        case .specDefault: return l(zh: "规格默认", en: "Default",     ja: "規格標準",       ko: "규격 기본",    lang: language)
-        case .pureWhite:   return l(zh: "纯白",     en: "White",       ja: "白",             ko: "흰색",        lang: language)
-        case .lightBlue:   return l(zh: "浅蓝",     en: "Light Blue",  ja: "ライトブルー",   ko: "라이트 블루", lang: language)
-        case .lightGray:   return l(zh: "浅灰",     en: "Light Gray",  ja: "ライトグレー",   ko: "라이트 그레이", lang: language)
-        case .red:         return l(zh: "红色",     en: "Red",          ja: "赤",             ko: "빨간색",      lang: language)
+        case .specDefault: return l(zh: "规格默认", en: "Default",     ja: "規格標準",       ko: "규격 기본",    vi: "Mặc định", id: "Default", pt: "Padrão", lang: language)
+        case .pureWhite:   return l(zh: "纯白",     en: "White",       ja: "白",             ko: "흰색",        vi: "Trắng", id: "Putih", pt: "Branco", lang: language)
+        case .lightBlue:   return l(zh: "浅蓝",     en: "Light Blue",  ja: "ライトブルー",   ko: "라이트 블루", vi: "Xanh nhạt", id: "Biru Muda", pt: "Azul Claro", lang: language)
+        case .lightGray:   return l(zh: "浅灰",     en: "Light Gray",  ja: "ライトグレー",   ko: "라이트 그레이", vi: "Xám nhạt", id: "Abu Muda", pt: "Cinza Claro", lang: language)
+        case .red:         return l(zh: "红色",     en: "Red",          ja: "赤",             ko: "빨간색",      vi: "Đỏ", id: "Merah", pt: "Vermelho", lang: language)
         }
     }
 
-    private func l(zh: String, en: String, ja: String, ko: String, lang: String) -> String {
-        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; default: en }
+    private func l(zh: String, en: String, ja: String, ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
+        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; case "vi": vi ?? en; case "id": id ?? en; case "pt": pt ?? en; default: en }
     }
 }
 
@@ -217,13 +221,14 @@ enum AccessoriesCleanup: String, CaseIterable, Identifiable {
 
     func displayName(language: String) -> String {
         switch self {
-        case .keepAsIs:      return l(zh: "保持原样", en: "Original",         ja: "そのまま",   ko: "원본 유지", lang: language)
-        case .removeGlasses: return l(zh: "去眼镜",   en: "Remove Glasses",   ja: "メガネ除去", ko: "안경 제거", lang: language)
+        case .keepAsIs:      return l(zh: "保持原样", en: "Original",         ja: "そのまま",   ko: "원본 유지", vi: "Giữ nguyên", id: "Asli", pt: "Original", lang: language)
+        case .removeGlasses: return l(zh: "去眼镜",   en: "Remove Glasses",   ja: "メガネ除去", ko: "안경 제거", vi: "Bỏ kính", id: "Hapus Kacamata", pt: "Remover Óculos", lang: language)
         }
     }
 
-    private func l(zh: String, en: String, ja: String, ko: String, lang: String) -> String {
-        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; default: en }
+    private func l(zh: String, en: String, ja: String, ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
+        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; case "vi": vi ?? en; case "id": id ?? en; case "pt": pt ?? en; default: en }
     }
 }
 

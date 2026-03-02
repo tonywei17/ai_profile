@@ -40,6 +40,9 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
             case "zh": return "L判"
             case "ja": return "L判"
             case "ko": return "L 사이즈"
+            case "vi": return "Cỡ L"
+            case "id": return "Ukuran L"
+            case "pt": return "Tamanho L"
             default:   return "L Size"
             }
         case .twoL:
@@ -47,6 +50,9 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
             case "zh": return "2L判"
             case "ja": return "2L判"
             case "ko": return "2L 사이즈"
+            case "vi": return "Cỡ 2L"
+            case "id": return "Ukuran 2L"
+            case "pt": return "Tamanho 2L"
             default:   return "2L Size"
             }
         }
@@ -59,6 +65,9 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
             case "zh": return "约30~40日元"
             case "ja": return "約30〜40円"
             case "ko": return "약 30~40엔"
+            case "vi": return "~¥30-40"
+            case "id": return "~¥30-40"
+            case "pt": return "~¥30-40"
             default:   return "~¥30-40"
             }
         case .twoL:
@@ -66,6 +75,9 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
             case "zh": return "约80日元"
             case "ja": return "約80円"
             case "ko": return "약 80엔"
+            case "vi": return "~¥80"
+            case "id": return "~¥80"
+            case "pt": return "~¥80"
             default:   return "~¥80"
             }
         }

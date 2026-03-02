@@ -140,8 +140,19 @@ final class GeminiService {
 
     // MARK: - Public API
 
-    func generateIDPhoto(from image: UIImage, prompt: String) async throws -> UIImage {
-        guard let jpegData = image.jpegData(compressionQuality: 0.9) else {
+    /// Maximum output dimension for each tier.
+    /// Free users get 512px (fewer tokens → lower API cost).
+    /// Pro users get 1024px (high quality for printing).
+    enum OutputTier {
+        case free   // 512px max dimension
+        case pro    // 1024px max dimension
+
+        var maxDimension: CGFloat { self == .free ? 512 : 1024 }
+    }
+
+    func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro) async throws -> UIImage {
+        let processed = image.capped(to: tier.maxDimension)
+        guard let jpegData = processed.jpegData(compressionQuality: tier == .free ? 0.85 : 0.9) else {
             throw GeminiError.invalidImage
         }
 
@@ -232,5 +243,23 @@ final class GeminiService {
         }
 
         throw GeminiError.decodeFailed
+    }
+}
+
+// MARK: - UIImage Resize Helper
+
+private extension UIImage {
+    /// Returns a new image whose longest edge is at most `maxDimension` px.
+    /// If the image is already within bounds, returns `self` (no copy).
+    func capped(to maxDimension: CGFloat) -> UIImage {
+        let maxSide = max(size.width, size.height)
+        guard maxSide > maxDimension else { return self }
+        let scale = maxDimension / maxSide
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: newSize, format: format).image { _ in
+            draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
 }

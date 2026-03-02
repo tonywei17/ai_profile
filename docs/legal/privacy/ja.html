@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プライバシーポリシー — AI証明写真</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.6em; border-bottom: 2px solid #007AFF; padding-bottom: 8px; }
+  h2 { font-size: 1.2em; margin-top: 2em; color: #007AFF; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f7; }
+  .lang-nav { text-align: right; margin-bottom: 16px; font-size: 0.9em; }
+  .lang-nav a { margin-left: 12px; color: #007AFF; text-decoration: none; }
+  .contact { background: #f5f5f7; padding: 16px; border-radius: 8px; margin-top: 24px; }
+  .update { color: #888; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="lang-nav">
+  <a href="en.html">English</a>
+  <a href="zh.html">中文</a>
+  <a href="ko.html">한국어</a>
+  <a href="vi.html">Tiếng Việt</a>
+  <a href="id.html">Indonesia</a>
+  <a href="pt.html">Português</a>
+</div>
+
+<h1>プライバシーポリシー</h1>
+<p class="update">最終更新日：2026年3月2日</p>
+
+<p>本プライバシーポリシーは、<strong>Wei Wenxin</strong>（以下「開発者」「当方」）が提供するモバイルアプリケーション<strong>「AI証明写真」</strong>（以下「本アプリ」）において、利用者の情報をどのように収集・利用・保護するかを説明するものです。</p>
+
+<h2>1. 収集する情報</h2>
+
+<table>
+<tr><th>データの種類</th><th>目的</th><th>保存場所</th></tr>
+<tr><td><strong>アップロードされた写真</strong></td><td>AI証明写真の生成</td><td>保存しません — リアルタイム処理後即座に破棄</td></tr>
+<tr><td><strong>生成された写真</strong></td><td>アプリ内で表示・保存用</td><td>お客様の端末のみ</td></tr>
+<tr><td><strong>利用データ</strong></td><td>1日の生成回数管理</td><td>端末内のみ（UserDefaults）</td></tr>
+<tr><td><strong>サブスクリプション状態</strong></td><td>Pro会員の管理</td><td>Apple管理（StoreKit 2）</td></tr>
+<tr><td><strong>広告識別子</strong></td><td>広告配信（無料プランのみ）</td><td>Google AdMob管理</td></tr>
+</table>
+
+<p><strong>収集しない情報：</strong>氏名、メールアドレス、電話番号、位置情報、連絡先、その他の個人を特定できる情報。</p>
+
+<h2>2. 写真の取り扱い</h2>
+
+<p>写真をアップロードすると、以下の処理が行われます：</p>
+<ol>
+  <li>お客様の端末上で圧縮・リサイズ（無料ユーザー：512px、Proユーザー：1024px）</li>
+  <li>HTTPS経由で当方のバックエンドサーバー（<strong>Google Cloud Platform 東京リージョン</strong>）に送信</li>
+  <li><strong>GoogleのGemini API</strong>に転送し、AI証明写真を生成</li>
+  <li>生成結果をお客様に返却し、元の写真は<strong>即座に破棄</strong></li>
+</ol>
+
+<p><strong>当方のサーバーに写真を保存・記録・保持することはありません。</strong>写真は処理中（通常30秒以内）のみサーバーメモリ上に存在します。</p>
+
+<h2>3. 第三者サービス</h2>
+
+<p>以下の第三者サービスとデータを共有します。各サービスはそれぞれのプライバシーポリシーに従ってデータを処理します。</p>
+
+<table>
+<tr><th>サービス</th><th>提供者</th><th>共有データ</th><th>目的</th></tr>
+<tr><td><strong>Gemini API</strong></td><td>Google LLC</td><td>アップロード写真 + テキストプロンプト</td><td>AI画像生成</td></tr>
+<tr><td><strong>AdMob</strong></td><td>Google LLC</td><td>広告識別子、端末情報</td><td>広告配信（無料プランのみ）</td></tr>
+<tr><td><strong>StoreKit 2</strong></td><td>Apple Inc.</td><td>サブスクリプション取引データ</td><td>決済処理</td></tr>
+</table>
+
+<p>本アプリを使用することにより、AI証明写真生成を目的として、お客様の写真が<strong>GoogleのGemini API</strong>に送信されることに同意したものとします。Googleは<a href="https://policies.google.com/privacy" target="_blank">Googleプライバシーポリシー</a>に従ってデータを処理します。</p>
+
+<h2>4. データセキュリティ</h2>
+
+<ul>
+  <li>すべてのデータ送信は<strong>HTTPS/TLS暗号化</strong>を使用</li>
+  <li>バックエンドサーバーは<strong>Google Cloud Run</strong>東京リージョン（asia-northeast1）で稼働</li>
+  <li>利用者の写真や個人データはデータベースに保存されません</li>
+  <li>APIキーはGoogle Cloud Secret Managerに保管され、クライアントコードには含まれません</li>
+</ul>
+
+<h2>5. データ保持期間</h2>
+
+<ul>
+  <li><strong>写真：</strong>保持しません — リアルタイム処理後即座に破棄</li>
+  <li><strong>利用データ：</strong>端末内のみに保存。アプリをアンインストールすると削除されます</li>
+  <li><strong>サブスクリプションデータ：</strong>Apple管理。Appleのデータ保持ポリシーに準拠</li>
+  <li><strong>広告データ：</strong>Google AdMob管理。Googleのデータ保持ポリシーに準拠</li>
+</ul>
+
+<h2>6. お客様の権利</h2>
+
+<ul>
+  <li><strong>データの削除：</strong>当方のサーバーに写真や個人データを保存していないため、サーバー側で削除すべきデータはありません。アプリをアンインストールすると、端末内のすべてのデータが削除されます。</li>
+  <li><strong>パーソナライズド広告のオプトアウト：</strong>端末の「設定 > プライバシーとセキュリティ > トラッキング」で制限できます。</li>
+  <li><strong>同意の撤回：</strong>いつでもアプリの使用を中止できます。</li>
+  <li><strong>情報の照会：</strong>データの取り扱いについてお問い合わせください。</li>
+</ul>
+
+<h2>7. 児童のプライバシー</h2>
+
+<p>本アプリは13歳未満（またはお客様の管轄区域で適用される同意年齢未満）の児童を対象としていません。児童から意図的に個人情報を収集することはありません。</p>
+
+<h2>8. 個人情報保護法（APPI）に基づく対応</h2>
+
+<p>当方は顔写真を機微な個人情報として取り扱い、お客様が写真をアップロードする行為をもって明示的な同意とします。写真は証明写真の生成以外の目的には使用されず、処理後に保存されることはありません。</p>
+
+<h2>9. ポリシーの変更</h2>
+
+<p>本プライバシーポリシーは随時更新される場合があります。変更は本ページに掲載され、更新日が改定されます。変更後も本アプリを継続して使用された場合、改定されたポリシーに同意したものとみなされます。</p>
+
+<div class="contact">
+<h2>10. お問い合わせ</h2>
+<p>本プライバシーポリシーに関するご質問がございましたら、以下までご連絡ください。</p>
+<p>
+  <strong>Wei Wenxin</strong><br>
+  メール：<a href="mailto:nexuswei.dev@gmail.com">nexuswei.dev@gmail.com</a>
+</p>
+</div>
+
+</body>
+</html>

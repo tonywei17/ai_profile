@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐私政策 — AI证件照</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.6em; border-bottom: 2px solid #007AFF; padding-bottom: 8px; }
+  h2 { font-size: 1.2em; margin-top: 2em; color: #007AFF; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f7; }
+  .lang-nav { text-align: right; margin-bottom: 16px; font-size: 0.9em; }
+  .lang-nav a { margin-left: 12px; color: #007AFF; text-decoration: none; }
+  .contact { background: #f5f5f7; padding: 16px; border-radius: 8px; margin-top: 24px; }
+  .update { color: #888; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="lang-nav">
+  <a href="en.html">English</a>
+  <a href="ja.html">日本語</a>
+  <a href="ko.html">한국어</a>
+  <a href="vi.html">Tiếng Việt</a>
+  <a href="id.html">Indonesia</a>
+  <a href="pt.html">Português</a>
+</div>
+
+<h1>隐私政策</h1>
+<p class="update">最后更新：2026年3月2日</p>
+
+<p>本隐私政策说明了 <strong>Wei Wenxin</strong>（以下简称"开发者"、"我们"）在您使用 <strong>AI证件照</strong> 移动应用程序（以下简称"本应用"）时，如何收集、使用和保护您的信息。</p>
+
+<h2>1. 收集的信息</h2>
+
+<table>
+<tr><th>数据类型</th><th>用途</th><th>存储方式</th></tr>
+<tr><td><strong>您上传的照片</strong></td><td>AI证件照生成</td><td>不存储 — 实时处理后立即销毁</td></tr>
+<tr><td><strong>生成的照片</strong></td><td>在应用内展示供您保存</td><td>仅存储在您的设备上</td></tr>
+<tr><td><strong>使用数据</strong></td><td>管理每日生成次数限制</td><td>仅存储在设备上（UserDefaults）</td></tr>
+<tr><td><strong>订阅状态</strong></td><td>管理Pro会员</td><td>由Apple管理（StoreKit 2）</td></tr>
+<tr><td><strong>广告标识符</strong></td><td>展示广告（仅免费用户）</td><td>由Google AdMob管理</td></tr>
+</table>
+
+<p><strong>我们不收集：</strong>您的姓名、电子邮箱、电话号码、位置信息、通讯录或上述以外的任何个人身份信息。</p>
+
+<h2>2. 照片的处理方式</h2>
+
+<p>当您上传照片时，将经历以下处理流程：</p>
+<ol>
+  <li>在您的设备上进行压缩和缩放（免费用户：512px，Pro用户：1024px）</li>
+  <li>通过HTTPS加密传输至我们的后端服务器（托管于 <strong>Google Cloud Platform 东京区域</strong>）</li>
+  <li>转发至 <strong>Google Gemini API</strong> 进行AI证件照生成</li>
+  <li>将生成结果返回给您，原始照片<strong>立即销毁</strong></li>
+</ol>
+
+<p><strong>我们不会在服务器上存储、记录或保留您的照片。</strong>照片仅在处理期间（通常不超过30秒）存在于服务器内存中。</p>
+
+<h2>3. 第三方服务</h2>
+
+<p>我们与以下第三方服务共享数据。各服务按照其各自的隐私政策处理数据：</p>
+
+<table>
+<tr><th>服务</th><th>提供商</th><th>共享的数据</th><th>用途</th></tr>
+<tr><td><strong>Gemini API</strong></td><td>Google LLC</td><td>您上传的照片 + 文本提示词</td><td>AI图像生成</td></tr>
+<tr><td><strong>AdMob</strong></td><td>Google LLC</td><td>广告标识符、设备信息</td><td>展示广告（仅免费用户）</td></tr>
+<tr><td><strong>StoreKit 2</strong></td><td>Apple Inc.</td><td>订阅交易数据</td><td>支付处理</td></tr>
+</table>
+
+<p>使用本应用即表示您知悉并同意您的照片将被发送至 <strong>Google Gemini API</strong> 用于AI证件照生成。Google按照 <a href="https://policies.google.com/privacy" target="_blank">Google隐私政策</a> 处理数据。</p>
+
+<h2>4. 数据安全</h2>
+
+<ul>
+  <li>所有数据传输均使用 <strong>HTTPS/TLS加密</strong></li>
+  <li>后端服务器运行于 <strong>Google Cloud Run</strong> 东京区域（asia-northeast1）</li>
+  <li>用户照片和个人数据不存储在数据库中</li>
+  <li>API密钥存储在Google Cloud Secret Manager中，不包含在客户端代码中</li>
+</ul>
+
+<h2>5. 数据保留</h2>
+
+<ul>
+  <li><strong>照片：</strong>不保留 — 实时处理后立即销毁</li>
+  <li><strong>使用数据：</strong>仅存储在设备上；卸载应用后删除</li>
+  <li><strong>订阅数据：</strong>由Apple管理，遵循Apple的数据保留政策</li>
+  <li><strong>广告数据：</strong>由Google AdMob管理，遵循Google的数据保留政策</li>
+</ul>
+
+<h2>6. 您的权利</h2>
+
+<ul>
+  <li><strong>删除数据：</strong>由于我们不在服务器上存储您的照片或个人数据，因此没有需要删除的服务器端数据。卸载应用将删除设备上的所有数据。</li>
+  <li><strong>退出个性化广告：</strong>您可以在设备的"设置 > 隐私与安全 > 跟踪"中进行限制。</li>
+  <li><strong>撤回同意：</strong>您可以随时停止使用本应用。</li>
+  <li><strong>信息查询：</strong>联系我们了解数据处理方式。</li>
+</ul>
+
+<h2>7. 儿童隐私</h2>
+
+<p>本应用不面向13岁以下（或您所在司法管辖区适用的同意年龄以下）的儿童。我们不会故意收集儿童的个人信息。</p>
+
+<h2>8. 地区合规</h2>
+
+<h3>中国个人信息保护法（PIPL）</h3>
+<p>面部照片属于敏感个人信息。我们仅在您明确同意（通过上传照片的行为）的情况下处理您的面部照片，且仅用于生成证件照。照片处理后不予保存。</p>
+
+<h3>日本个人信息保护法（APPI）</h3>
+<p>我们将面部照片视为敏感个人信息，仅在获得您的明确同意后处理。</p>
+
+<h2>9. 政策变更</h2>
+
+<p>我们可能会不时更新本隐私政策。变更将发布在本页面并更新修订日期。变更后继续使用本应用即视为接受修订后的政策。</p>
+
+<div class="contact">
+<h2>10. 联系我们</h2>
+<p>如果您对本隐私政策有任何疑问，请联系：</p>
+<p>
+  <strong>Wei Wenxin</strong><br>
+  邮箱：<a href="mailto:nexuswei.dev@gmail.com">nexuswei.dev@gmail.com</a>
+</p>
+</div>
+
+</body>
+</html>

@@ -10,11 +10,15 @@ struct SubscriptionSheetView: View {
 
     private var lang: String { langManager.effectiveCode }
 
-    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String) -> String {
+    private func l(_ zh: String, _ en: String, _ ja: String, _ ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil) -> String {
         switch lang {
         case "zh": return zh
         case "ja": return ja
         case "ko": return ko
+        case "vi": return vi ?? en
+        case "id": return id ?? en
+        case "pt": return pt ?? en
         default:   return en
         }
     }
@@ -98,28 +102,40 @@ struct SubscriptionSheetView: View {
     private var benefitsCard: some View {
         VStack(spacing: 0) {
             benefitRow(icon: "nosign",              color: .red,
-                       title: l("纯净无广告体验",    "No Ads, Ever",           "広告なし",         "광고 없음"),
-                       desc:  l("专注生成，不受打扰", "Create without interruption", "邪魔なく生成に集中", "방해 없이 생성에 집중"))
+                       title: l("纯净无广告体验",    "No Ads, Ever",           "広告なし",         "광고 없음",
+                                vi: "Không quảng cáo", id: "Tanpa Iklan", pt: "Sem Anúncios"),
+                       desc:  l("专注生成，不受打扰", "Create without interruption", "邪魔なく生成に集中", "방해 없이 생성에 집중",
+                                vi: "Tạo ảnh không bị gián đoạn", id: "Buat tanpa gangguan", pt: "Crie sem interrupção"))
             Divider().padding(.leading, 56)
             benefitRow(icon: "bolt.fill",           color: .yellow,
-                       title: l("每天20次随拍随用",  "20 Generations / Day",   "1日20回生成",      "하루 20회 생성"),
-                       desc:  l("证件照自由，再也不用排队", "No more waiting in line", "もう列に並ばなくていい", "더 이상 줄 서지 않아도 됩니다"))
+                       title: l("每天20次随拍随用",  "20 Generations / Day",   "1日20回生成",      "하루 20회 생성",
+                                vi: "20 lần/ngày", id: "20 Kali/Hari", pt: "20 Gerações/Dia"),
+                       desc:  l("证件照自由，再也不用排队", "No more waiting in line", "もう列に並ばなくていい", "더 이상 줄 서지 않아도 됩니다",
+                                vi: "Tự do tạo ảnh thẻ, không cần xếp hàng", id: "Tak perlu antre lagi", pt: "Sem mais filas"))
             Divider().padding(.leading, 56)
             benefitRow(icon: "doc.text.image.fill", color: .blue,
-                       title: l("10种规格一键覆盖",  "10 Global Formats",      "10種類の規格対応",  "10가지 규격 지원"),
-                       desc:  l("身份证、护照、签证全搞定", "ID, Passport, Visa & more", "身分証・旅券・ビザなど", "신분증・여권・비자 등"))
+                       title: l("10种规格一键覆盖",  "10 Global Formats",      "10種類の規格対応",  "10가지 규격 지원",
+                                vi: "10 quy cách toàn cầu", id: "10 Format Global", pt: "10 Formatos Globais"),
+                       desc:  l("身份证、护照、签证全搞定", "ID, Passport, Visa & more", "身分証・旅券・ビザなど", "신분증・여권・비자 등",
+                                vi: "Thẻ, hộ chiếu, visa và nhiều hơn", id: "KTP, Paspor, Visa & lainnya", pt: "RG, Passaporte, Visto e mais"))
             Divider().padding(.leading, 56)
             benefitRow(icon: "slider.horizontal.3", color: .indigo,
-                       title: l("专业自定义选项",    "Pro Customization",      "プロカスタマイズ",  "프로 커스터마이징"),
-                       desc:  l("美颜、换装、背景色等高级选项", "Beauty, attire, background & more", "美肌・服装・背景色など", "뷰티・복장・배경색 등"))
+                       title: l("专业自定义选项",    "Pro Customization",      "プロカスタマイズ",  "프로 커스터마이징",
+                                vi: "Tùy chỉnh Pro", id: "Kustomisasi Pro", pt: "Personalização Pro"),
+                       desc:  l("美颜、换装、背景色等高级选项", "Beauty, attire, background & more", "美肌・服装・背景色など", "뷰티・복장・배경색 등",
+                                vi: "Làm đẹp, trang phục, nền và hơn thế", id: "Kecantikan, pakaian, latar & lainnya", pt: "Beleza, traje, fundo e mais"))
             Divider().padding(.leading, 56)
             benefitRow(icon: "printer.fill",         color: .cyan,
-                       title: l("便利店排版打印",    "Konbini Print Layout",   "コンビニプリント",     "편의점 인쇄 레이아웃"),
-                       desc:  l("一键排版，到便利店直接打印", "Print-ready layout for convenience stores", "レイアウト写真を一発生成、コンビニで印刷", "편의점에서 바로 인쇄 가능"))
+                       title: l("便利店排版打印",    "Konbini Print Layout",   "コンビニプリント",     "편의점 인쇄 레이아웃",
+                                vi: "In ảnh tại cửa hàng", id: "Cetak di Konbini", pt: "Impressão em Loja"),
+                       desc:  l("一键排版，到便利店直接打印", "Print-ready layout for convenience stores", "レイアウト写真を一発生成、コンビニで印刷", "편의점에서 바로 인쇄 가능",
+                                vi: "Tạo bố cục, in tại cửa hàng tiện lợi", id: "Layout siap cetak untuk toko serba ada", pt: "Layout pronto para lojas de conveniência"))
             Divider().padding(.leading, 56)
             benefitRow(icon: "sparkles",            color: .purple,
-                       title: l("新功能优先体验",    "Priority New Features",  "新機能を優先体験",  "신기능 우선 체험"),
-                       desc:  l("抢先享受每次重大更新", "First access to every major update", "毎回の大型アップデートを先取り", "모든 주요 업데이트를 먼저"))
+                       title: l("新功能优先体验",    "Priority New Features",  "新機能を優先体験",  "신기능 우선 체험",
+                                vi: "Ưu tiên tính năng mới", id: "Fitur Baru Prioritas", pt: "Novidades em Primeira Mão"),
+                       desc:  l("抢先享受每次重大更新", "First access to every major update", "毎回の大型アップデートを先取り", "모든 주요 업데이트를 먼저",
+                                vi: "Trải nghiệm sớm mỗi cập nhật lớn", id: "Akses pertama ke setiap update besar", pt: "Primeiro acesso a cada grande atualização"))
         }
         .glassEffect(.regular, in: .rect(cornerRadius: 18))
     }
@@ -239,9 +255,9 @@ struct SubscriptionSheetView: View {
                         .padding(.vertical, 6)
                 } else {
                     VStack(spacing: 4) {
-                        Text(subscription.isTrialEligible ? ctaTitle : ctaTitleNoTrial)
+                        Text(ctaTitleNoTrial)
                             .font(.headline)
-                        Text(subscription.isTrialEligible ? ctaSubtitle : ctaSubtitleNoTrial)
+                        Text(ctaSubtitleNoTrial)
                             .font(.caption)
                             .opacity(0.85)
                     }
@@ -293,61 +309,76 @@ struct SubscriptionSheetView: View {
 
     // MARK: - Localized Strings
 
-    private var heroTitle:      String { l("解锁专业版",             "Unlock Pro",                    "プロ版を解除",           "프로 잠금 해제") }
-    private var heroSubtitle:   String { l("让每一张证件照都完美无瑕", "Perfect ID photos, every time", "すべての証明写真を完璧に", "모든 증명사진을 완벽하게") }
+    private var heroTitle:      String { l("解锁专业版",             "Unlock Pro",                    "プロ版を解除",           "프로 잠금 해제",
+                                           vi: "Mở khóa Pro", id: "Buka Pro", pt: "Desbloquear Pro") }
+    private var heroSubtitle:   String { l("让每一张证件照都完美无瑕", "Perfect ID photos, every time", "すべての証明写真を完璧に", "모든 증명사진을 완벽하게",
+                                           vi: "Mọi ảnh thẻ đều hoàn hảo", id: "Foto ID sempurna, setiap saat", pt: "Fotos perfeitas, sempre") }
 
     // Plan titles
-    private var annualPlanTitle:  String { l("年付方案", "Annual Plan",  "年間プラン", "연간 플랜") }
-    private var monthlyPlanTitle: String { l("月付方案", "Monthly Plan", "月額プラン", "월간 플랜") }
+    private var annualPlanTitle:  String { l("年付方案", "Annual Plan",  "年間プラン", "연간 플랜",
+                                            vi: "Gói Năm", id: "Paket Tahunan", pt: "Plano Anual") }
+    private var monthlyPlanTitle: String { l("月付方案", "Monthly Plan", "月額プラン", "월간 플랜",
+                                            vi: "Gói Tháng", id: "Paket Bulanan", pt: "Plano Mensal") }
 
     // Period labels
-    private var perYearLabel:   String { l("/ 年",  "/ yr",    "/ 年",  "/ 년") }
-    private var perMonthLabel:  String { l("/ 月",  "/ mo",    "/ 月",  "/ 월") }
+    private var perYearLabel:   String { l("/ 年",  "/ yr",    "/ 年",  "/ 년",
+                                          vi: "/ năm", id: "/ thn", pt: "/ ano") }
+    private var perMonthLabel:  String { l("/ 月",  "/ mo",    "/ 月",  "/ 월",
+                                          vi: "/ tháng", id: "/ bln", pt: "/ mês") }
 
     // Badge & footnotes
-    private var saveBadgeLabel: String { l("省46%", "Save 46%", "46%お得", "46% 절약") }
+    private var saveBadgeLabel: String { l("省46%", "Save 46%", "46%お得", "46% 절약",
+                                          vi: "Tiết kiệm 46%", id: "Hemat 46%", pt: "Economize 46%") }
     private var annualFootnote: String { l("按年计费，随时可取消",
                                            "Billed annually. Cancel anytime.",
                                            "年間課金。いつでもキャンセル可。",
-                                           "연간 결제. 언제든지 취소 가능.") }
+                                           "연간 결제. 언제든지 취소 가능.",
+                                           vi: "Thanh toán hàng năm. Hủy bất cứ lúc nào.",
+                                           id: "Ditagih per tahun. Batalkan kapan saja.",
+                                           pt: "Cobrado anualmente. Cancele a qualquer momento.") }
     private var monthlyFootnote: String { l("按月计费，灵活订阅",
                                             "Billed monthly. Flexible plan.",
                                             "月額課金。柔軟なプラン。",
-                                            "월간 결제. 유연한 플랜.") }
+                                            "월간 결제. 유연한 플랜.",
+                                            vi: "Thanh toán hàng tháng. Linh hoạt.",
+                                            id: "Ditagih per bulan. Fleksibel.",
+                                            pt: "Cobrado mensalmente. Flexível.") }
 
     // CTA
-    private var ctaTitle:       String { l("开始免费试用",         "Start Free Trial",         "無料トライアルを開始",         "무료 체험 시작") }
-    private var ctaSubtitle:    String {
-        subscription.selectedPlan == .annual
-            ? l("试用期结束后自动订阅，随时取消",
-                "Auto-renews after trial. Cancel anytime.",
-                "トライアル後に自動購読。いつでもキャンセル可。",
-                "체험 후 자동 구독. 언제든지 취소 가능.")
-            : l("试用期结束后按月扣费，随时取消",
-                "Auto-renews monthly after trial. Cancel anytime.",
-                "トライアル後に月額で自動購読。いつでもキャンセル可。",
-                "체험 후 월간 자동 구독. 언제든지 취소 가능.")
-    }
-    private var ctaTitleNoTrial:    String { l("立即订阅", "Subscribe Now", "今すぐ購読", "지금 구독") }
+    private var ctaTitleNoTrial:    String { l("立即订阅", "Subscribe Now", "今すぐ購読", "지금 구독",
+                                               vi: "Đăng ký ngay", id: "Langganan Sekarang", pt: "Assinar Agora") }
     private var ctaSubtitleNoTrial: String {
         subscription.selectedPlan == .annual
             ? l("按年计费，随时取消",
                 "Billed annually. Cancel anytime.",
                 "年間課金。いつでもキャンセル可。",
-                "연간 결제. 언제든지 취소 가능.")
+                "연간 결제. 언제든지 취소 가능.",
+                vi: "Thanh toán hàng năm. Hủy bất cứ lúc nào.",
+                id: "Ditagih per tahun. Batalkan kapan saja.",
+                pt: "Cobrado anualmente. Cancele a qualquer momento.")
             : l("按月计费，随时取消",
                 "Billed monthly. Cancel anytime.",
                 "月額課金。いつでもキャンセル可。",
-                "월간 결제. 언제든지 취소 가능.")
+                "월간 결제. 언제든지 취소 가능.",
+                vi: "Thanh toán hàng tháng. Hủy bất cứ lúc nào.",
+                id: "Ditagih per bulan. Batalkan kapan saja.",
+                pt: "Cobrado mensalmente. Cancele a qualquer momento.")
     }
-    private var socialProofLabel: String { l("10,000+ 用户信赖", "Trusted by 10,000+ users", "10,000人以上が信頼", "10,000명 이상이 신뢰") }
-    private var restoreLabel:   String { l("恢复购买", "Restore Purchases", "購入を復元", "구매 복원") }
+    private var socialProofLabel: String { l("10,000+ 用户信赖", "Trusted by 10,000+ users", "10,000人以上が信頼", "10,000명 이상이 신뢰",
+                                            vi: "Được 10.000+ người tin dùng", id: "Dipercaya 10.000+ pengguna", pt: "Confiado por 10.000+ usuários") }
+    private var restoreLabel:   String { l("恢复购买", "Restore Purchases", "購入を復元", "구매 복원",
+                                           vi: "Khôi phục mua hàng", id: "Pulihkan Pembelian", pt: "Restaurar Compras") }
     private var legalNote:      String { l("订阅将自动续期，可随时在 iPhone 设置 › App Store 中取消。",
                                            "Subscription auto-renews. Cancel in iPhone Settings › App Store.",
                                            "サブスクリプションは自動更新されます。iPhone設定 › App Storeでキャンセル可。",
-                                           "구독이 자동 갱신됩니다. iPhone 설정 › App Store에서 취소하세요.") }
-    private var errorAlertTitle: String { l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패") }
-    private var okLabel:         String { l("好的", "OK", "OK", "확인") }
+                                           "구독이 자동 갱신됩니다. iPhone 설정 › App Store에서 취소하세요.",
+                                           vi: "Đăng ký tự động gia hạn. Hủy trong Cài đặt iPhone › App Store.",
+                                           id: "Langganan diperpanjang otomatis. Batalkan di Pengaturan iPhone › App Store.",
+                                           pt: "Assinatura renovada automaticamente. Cancele em Ajustes iPhone › App Store.") }
+    private var errorAlertTitle: String { l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패",
+                                           vi: "Mua thất bại", id: "Pembelian Gagal", pt: "Compra Falhou") }
+    private var okLabel:         String { l("好的", "OK", "OK", "확인",
+                                           vi: "OK", id: "OK", pt: "OK") }
 }
 
 // MARK: - Legal Links
@@ -368,6 +399,9 @@ struct LegalLinksView: View {
         case "zh": return "隐私政策"
         case "ja": return "プライバシーポリシー"
         case "ko": return "개인정보 처리방침"
+        case "vi": return "Chính sách Bảo mật"
+        case "id": return "Kebijakan Privasi"
+        case "pt": return "Política de Privacidade"
         default:   return "Privacy Policy"
         }
     }
@@ -377,6 +411,9 @@ struct LegalLinksView: View {
         case "zh": return "服务条款"
         case "ja": return "利用規約"
         case "ko": return "이용약관"
+        case "vi": return "Điều khoản Dịch vụ"
+        case "id": return "Ketentuan Layanan"
+        case "pt": return "Termos de Serviço"
         default:   return "Terms of Service"
         }
     }

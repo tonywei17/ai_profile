@@ -20,11 +20,6 @@
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "pro_monthly_001",
-          "introductoryOffer" : {
-            "period" : "1 Week",
-            "periodCount" : 1,
-            "type" : "FreeTrial"
-          },
           "localizations" : [
             {
               "description" : "20 AI generations per day, no ads, all photo formats worldwide.",
@@ -58,11 +53,6 @@
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "pro_annual_001",
-          "introductoryOffer" : {
-            "period" : "1 Week",
-            "periodCount" : 1,
-            "type" : "FreeTrial"
-          },
           "localizations" : [
             {
               "description" : "20 AI generations per day, no ads, all photo formats worldwide.",

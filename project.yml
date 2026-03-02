@@ -43,6 +43,9 @@ targets:
       - path: ios/AIIDPhoto/Resources/zh-Hans.lproj
       - path: ios/AIIDPhoto/Resources/ja.lproj
       - path: ios/AIIDPhoto/Resources/ko.lproj
+      - path: ios/AIIDPhoto/Resources/vi.lproj
+      - path: ios/AIIDPhoto/Resources/id.lproj
+      - path: ios/AIIDPhoto/Resources/pt-BR.lproj
 
     info:
       # 让 XcodeGen 在此路径生成 Info.plist（目录已存在）
@@ -57,6 +60,9 @@ targets:
           - zh-Hans
           - ja
           - ko
+          - vi
+          - id
+          - pt-BR
         CFBundleDisplayName: AIIDPhoto
         CFBundleIdentifier: com.nexus.aiidphoto
         CFBundleName: AIIDPhoto

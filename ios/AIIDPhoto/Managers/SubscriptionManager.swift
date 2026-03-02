@@ -27,7 +27,6 @@ final class SubscriptionManager: ObservableObject {
 
     @Published private(set) var isSubscribed: Bool = false
     @Published private(set) var expirationDate: Date?
-    @Published private(set) var isTrialEligible: Bool = false
     @Published private(set) var isPurchasing: Bool = false
     @Published private(set) var isRestoring: Bool = false
     @Published var purchaseError: String?
@@ -77,13 +76,6 @@ final class SubscriptionManager: ObservableObject {
                 print("[SubscriptionManager] loaded: \(p.id) → \(price)")
             }
 
-            // Trial eligibility (check annual first, then monthly)
-            if let annual = products[.annual] {
-                isTrialEligible = await isEligibleForTrial(annual)
-            } else if let monthly = products[.monthly] {
-                isTrialEligible = await isEligibleForTrial(monthly)
-            }
-
             // Fallback prices
             if monthlyDisplayPrice == nil {
                 monthlyDisplayPrice = Self.fallbackMonthlyPrice
@@ -106,13 +98,6 @@ final class SubscriptionManager: ObservableObject {
         case .monthly: return monthlyDisplayPrice
         case .annual:  return annualDisplayPrice
         }
-    }
-
-    private func isEligibleForTrial(_ p: Product) async -> Bool {
-        guard let sub = p.subscription,
-              let intro = sub.introductoryOffer,
-              intro.paymentMode == .freeTrial else { return false }
-        return await sub.isEligibleForIntroOffer
     }
 
     // MARK: - Entitlement Checking
