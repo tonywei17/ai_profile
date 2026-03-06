@@ -8,7 +8,8 @@ echo "==> Generating Xcode project..."
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 xcodegen generate
 
-echo "==> Resolving SPM dependencies..."
-xcodebuild -resolvePackageDependencies -project AIIDPhoto.xcodeproj -scheme AIIDPhoto
+echo "==> Copying Package.resolved into generated xcodeproj..."
+mkdir -p AIIDPhoto.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+cp Package.resolved AIIDPhoto.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
 echo "==> Done."
