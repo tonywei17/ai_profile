@@ -9,19 +9,13 @@ import GoogleMobileAds
 @MainActor
 final class AdManager: ObservableObject {
     #if canImport(GoogleMobileAds)
-    private var rewardedAd: GADRewardedAd?
+    private var rewardedAd: RewardedAd?
     #endif
 
     func loadRewarded() async {
         #if canImport(GoogleMobileAds)
         do {
-            rewardedAd = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<GADRewardedAd, Error>) in
-                GADRewardedAd.load(withAdUnitID: AdUnits.rewarded, request: GADRequest()) { ad, error in
-                    if let error = error { cont.resume(throwing: error); return }
-                    guard let ad = ad else { cont.resume(throwing: NSError(domain: "Ad", code: -1)); return }
-                    cont.resume(returning: ad)
-                }
-            }
+            rewardedAd = try await RewardedAd.load(with: AdUnits.rewarded, request: Request())
         } catch {
             print("Failed to load rewarded: \(error)")
         }
@@ -35,12 +29,11 @@ final class AdManager: ObservableObject {
             .first?.keyWindow?.rootViewController,
               let ad = rewardedAd else { return false }
         return await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            ad.present(fromRootViewController: root) {
+            ad.present(from: root) {
                 cont.resume(returning: true)
             }
         }
         #else
-        // Fallback in simulator/no SDK: grant reward instantly
         return true
         #endif
     }
@@ -51,23 +44,23 @@ struct AdUnits {
     static let banner = "ca-app-pub-3940256099942544/2934735716" // test
     static let rewarded = "ca-app-pub-3940256099942544/5224354917" // test
     #else
-    static let banner = "YOUR_PRODUCTION_BANNER_UNIT_ID"     // TODO: 替换为正式 Banner Ad Unit ID
-    static let rewarded = "YOUR_PRODUCTION_REWARDED_UNIT_ID" // TODO: 替换为正式 Rewarded Ad Unit ID
+    static let banner = "ca-app-pub-4720104330290543/5918173790"
+    static let rewarded = "ca-app-pub-4720104330290543/8097944140"
     #endif
 }
 
 #if canImport(GoogleMobileAds)
 struct AdBannerView: UIViewRepresentable {
-    func makeUIView(context: Context) -> GADBannerView {
-        let view = GADBannerView(adSize: GADAdSizeBanner)
+    func makeUIView(context: Context) -> BannerView {
+        let view = BannerView(adSize: AdSizeBanner)
         view.adUnitID = AdUnits.banner
         view.rootViewController = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.keyWindow?.rootViewController
-        view.load(GADRequest())
+        view.load(Request())
         return view
     }
-    func updateUIView(_ uiView: GADBannerView, context: Context) {}
+    func updateUIView(_ uiView: BannerView, context: Context) {}
 }
 #endif
 

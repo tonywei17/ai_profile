@@ -18,7 +18,7 @@ final class SubscriptionManager: ObservableObject {
 
     /// Set to `true` to simulate a subscribed state on device (DEBUG only).
     #if DEBUG
-    static let forceSubscribed = true
+    static let forceSubscribed = false
     #else
     static let forceSubscribed = false
     #endif

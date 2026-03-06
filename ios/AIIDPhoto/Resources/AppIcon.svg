@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="lensRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.19"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Sparkle dots -->
+  <circle cx="98" cy="94" r="6" fill="#FFFFFF" opacity="0.33"/>
+  <circle cx="72" cy="379" r="4" fill="#FFFFFF" opacity="0.27"/>
+
+  <!-- AI Sparkle stars (top-right) -->
+  <path d="M409 107 L413 95 L417 107 L429 111 L417 115 L413 127 L409 115 L397 111Z" fill="#FFFFFF" opacity="0.8"/>
+  <path d="M423 98 L425 92 L427 98 L433 100 L427 102 L425 108 L423 102 L417 100Z" fill="#FFFFFF" opacity="0.6"/>
+
+  <!-- Viewfinder -->
+  <rect x="206" y="138" width="100" height="34" rx="14" fill="#FFFFFF"/>
+
+  <!-- Camera Body -->
+  <rect x="86" y="166" width="340" height="220" rx="50" fill="#FFFFFF" filter="url(#shadow)"/>
+
+  <!-- Lens Outer -->
+  <circle cx="256" cy="276" r="80" fill="#1E1B4B"/>
+
+  <!-- Lens Ring -->
+  <circle cx="256" cy="276" r="65" fill="url(#lensRing)"/>
+
+  <!-- Lens Core -->
+  <circle cx="256" cy="276" r="40" fill="#0F0A2E"/>
+
+  <!-- Lens Highlights -->
+  <circle cx="240" cy="257" r="12" fill="#FFFFFF" opacity="0.53"/>
+  <circle cx="274" cy="286" r="6" fill="#FFFFFF" opacity="0.27"/>
+
+  <!-- Shutter Button -->
+  <circle cx="379" cy="193" r="13" fill="#F43F5E"/>
+</svg>

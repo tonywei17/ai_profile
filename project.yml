@@ -8,9 +8,10 @@ options:
 settings:
   BASE_SDK: iphoneos
 
-# 不引入 AdMob 包，代码里已用 `#if canImport(GoogleMobileAds)` 保护，可直接在模拟器运行
-
-packages: {}
+packages:
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads
+    from: "12.0.0"
 
 schemes:
   AIIDPhoto:
@@ -32,11 +33,22 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - path: ios/AIIDPhoto
+        excludes:
+          - "AppIcon.icon"
+      - path: ios/AIIDPhoto/AppIcon.icon
+        type: folder
+        buildPhase: resources
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.nexus.aiidphoto
       SWIFT_VERSION: 5.9
       IPHONEOS_DEPLOYMENT_TARGET: 26.0
       TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: K2ZG73WM9X
+    dependencies:
+      - package: GoogleMobileAds
     resources:
       - path: ios/AIIDPhoto/Resources/Fonts
       - path: ios/AIIDPhoto/Resources/en.lproj
@@ -83,5 +95,4 @@ targets:
         # 以下为开发环境直连 Gemini 的配置（生产环境应留空，通过后端代理）
         GEMINI_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
         GEMINI_API_KEY: ""  # FIXME: 仅限开发环境，生产环境必须使用后端代理
-        # 如需广告，后续在此加入：
-        # GADApplicationIdentifier: ""  # TODO: 替换为正式 AdMob App ID
+        GADApplicationIdentifier: "ca-app-pub-4720104330290543~3080111676"
