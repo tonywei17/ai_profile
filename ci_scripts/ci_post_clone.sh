@@ -8,4 +8,7 @@ echo "==> Generating Xcode project..."
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 xcodegen generate
 
-echo "==> Project generated successfully."
+echo "==> Resolving SPM dependencies..."
+xcodebuild -resolvePackageDependencies -project AIIDPhoto.xcodeproj -scheme AIIDPhoto
+
+echo "==> Done."
