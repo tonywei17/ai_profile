@@ -409,6 +409,7 @@ struct ContentView: View {
                     }
                 )
                 .environmentObject(langManager)
+                .environmentObject(subscription)
                 .presentationDetents([.large])
                 .preferredColorScheme(sheetColorScheme)
             }
@@ -442,7 +443,7 @@ struct ContentView: View {
     }
 
     private var appTitle:        String { l("AI证件照", "AI ID Photo", "AI証明写真", "AI 증명사진", vi: "AI Ảnh Thẻ", id: "AI Foto ID", pt: "AI Foto Documento") }
-    private var memberSubtitle:  String { l("会员：每天可用20次", "Member: 20/day", "会員：1日20回利用可", "회원: 하루 20회 이용 가능", vi: "Thành viên: 20 lần/ngày", id: "Member: 20/hari", pt: "Membro: 20/dia") }
+    private var memberSubtitle:  String { l("会员：无限生成 · 无广告 · 含排版打印", "Member: Unlimited · No Ads · Print Layout", "会員：無制限生成・広告なし・プリント込み", "회원: 무제한 · 광고 없음 · 인쇄 포함", vi: "Thành viên: Không giới hạn · Không QC · In ảnh", id: "Member: Tanpa batas · Tanpa iklan · Cetak", pt: "Membro: Ilimitado · Sem anúncios · Impressão") }
     private var memberLabel:     String { l("会员", "Member", "会員", "회원", vi: "Thành viên", id: "Member", pt: "Membro") }
     private var subscribedLabel: String { l("已订阅", "Subscribed", "購読中", "구독중", vi: "Đã đăng ký", id: "Berlangganan", pt: "Assinante") }
     private var uploadHint:      String { l("上传一张正面清晰的生活照", "Upload a clear front-facing photo", "正面の鮮明な写真をアップロード", "정면이 선명한 사진을 업로드하세요", vi: "Tải lên ảnh chính diện rõ nét", id: "Unggah foto wajah depan yang jelas", pt: "Envie uma foto frontal nítida") }
@@ -459,7 +460,18 @@ struct ContentView: View {
                  vi: "Tạo \(specName)", id: "Buat \(specName)", pt: "Gerar \(specName)")
     }
     private var freeSubtitle:    String { l("首次免费", "First gen free", "初回無料", "첫 생성 무료", vi: "Lần đầu miễn phí", id: "Pertama gratis", pt: "1ª vez grátis") }
-    private var freeUsageNote:   String { l("非会员：首次免费，再次需观看30秒广告", "Free: 1st gen free, then watch a 30s ad", "無料：初回無料、次回から30秒広告視聴が必要", "무료: 첫 생성 무료, 이후 30초 광고 시청 필요", vi: "Miễn phí: lần đầu miễn phí, sau đó xem QC 30s", id: "Gratis: pertama gratis, lalu tonton iklan 30d", pt: "Grátis: 1ª grátis, depois assista anúncio 30s") }
+    private var freeUsageNote: String {
+        let left = usage.freeUsesRemaining
+        switch lang {
+        case "zh": return "今日剩余 \(left)/\(UsageManager.freeDailyLimit) 次 · 需观看广告"
+        case "ja": return "本日残り \(left)/\(UsageManager.freeDailyLimit)回 · 広告視聴が必要"
+        case "ko": return "오늘 남은 \(left)/\(UsageManager.freeDailyLimit)회 · 광고 시청 필요"
+        case "vi": return "Còn \(left)/\(UsageManager.freeDailyLimit) lần · Cần xem QC"
+        case "id": return "Sisa \(left)/\(UsageManager.freeDailyLimit) · Perlu tonton iklan"
+        case "pt": return "Restam \(left)/\(UsageManager.freeDailyLimit) · Requer anúncio"
+        default:   return "\(left)/\(UsageManager.freeDailyLimit) left today · Ad required"
+        }
+    }
     private var remainingCountText: String {
         switch lang {
         case "zh": return "今日剩余次数：\(usage.subscriberUsesLeft)"
@@ -501,6 +513,9 @@ struct ContentView: View {
                 return
             }
             await presentRewardedThenGenerate(input: input)
+        case .reachedDailyLimit:
+            showSubscriptionSheet = true
+            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedDailyLimit"])
         case .reachedLimit:
             showSubscriptionSheet = true
             AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedLimit"])

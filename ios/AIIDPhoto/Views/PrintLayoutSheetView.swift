@@ -8,6 +8,7 @@ struct PrintLayoutSheetView: View {
     let onLockedTap: () -> Void
 
     @EnvironmentObject var langManager: LanguageManager
+    @EnvironmentObject var subscription: SubscriptionManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
@@ -232,10 +233,9 @@ struct PrintLayoutSheetView: View {
     private var saveButton: some View {
         Group {
             if isSubscribed {
+                // Subscriber: free save
                 Button {
-                    guard let img = renderedImage else { return }
-                    UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
-                    showSavedToastBriefly()
+                    savePrintLayout()
                 } label: {
                     Label(saveLayoutLabel, systemImage: "square.and.arrow.down")
                         .font(.headline)
@@ -244,20 +244,85 @@ struct PrintLayoutSheetView: View {
                         .foregroundStyle(.white)
                 }
                 .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
-            } else {
-                Button { onLockedTap() } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "lock.fill")
-                        Text(unlockLabel)
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .foregroundStyle(.white)
+            } else if subscription.printLayoutCredits > 0 {
+                // Has credits: use credit to save
+                Button {
+                    subscription.consumePrintLayoutCredit()
+                    savePrintLayout()
+                } label: {
+                    Label(saveWithCreditLabel, systemImage: "square.and.arrow.down")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .foregroundStyle(.white)
                 }
-                .glassEffect(.regular.tint(.orange).interactive(), in: .rect(cornerRadius: 16))
+                .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+            } else {
+                // No access: show purchase options
+                VStack(spacing: 12) {
+                    // Single purchase
+                    Button {
+                        Task { await subscription.purchasePrintLayout() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "cart.fill")
+                                .font(.body)
+                            Text(singlePurchaseLabel)
+                                .font(.headline)
+                            Spacer()
+                            Text(subscription.printLayoutSingleDisplayPrice ?? "---")
+                                .font(.callout.bold())
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .foregroundStyle(.white)
+                    }
+                    .disabled(subscription.isPurchasing)
+                    .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+
+                    // Subscribe hint
+                    Button { onLockedTap() } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "crown.fill")
+                                .font(.body)
+                                .foregroundStyle(.yellow)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(subscribeHintLabel)
+                                    .font(.callout.bold())
+                                Text(subscribeHintDesc)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .foregroundStyle(.primary)
+                    }
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                }
             }
         }
+        .alert(errorAlertTitle, isPresented: Binding(
+            get: { subscription.purchaseError != nil },
+            set: { if !$0 { subscription.purchaseError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(subscription.purchaseError ?? "")
+        }
+    }
+
+    private func savePrintLayout() {
+        guard let img = renderedImage else { return }
+        UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
+        showSavedToastBriefly()
     }
 
     // MARK: - Instructions
@@ -352,9 +417,31 @@ struct PrintLayoutSheetView: View {
         l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장",
           vi: "Lưu ảnh bố cục", id: "Simpan Layout Cetak", pt: "Salvar Layout")
     }
-    private var unlockLabel: String {
-        l("解锁排版打印", "Unlock Print Layout", "コンビニプリントを解除", "인쇄 레이아웃 잠금 해제",
-          vi: "Mở khóa in ảnh", id: "Buka Layout Cetak", pt: "Desbloquear Impressão")
+    private var saveWithCreditLabel: String {
+        let c = subscription.printLayoutCredits
+        return l("使用额度保存（剩余\(c)次）", "Save with Credit (\(c) left)", "クレジットで保存（残り\(c)回）", "크레딧으로 저장 (\(c)회 남음)",
+                 vi: "Lưu bằng credit (\(c) còn lại)", id: "Simpan dengan kredit (\(c) sisa)", pt: "Salvar com crédito (\(c) restante)")
+    }
+    private var singlePurchaseLabel: String {
+        l("单次购买排版", "Buy Single Print", "1回分を購入", "1회 인쇄 구매",
+          vi: "Mua 1 lần in", id: "Beli 1x Cetak", pt: "Comprar 1 Impressão")
+    }
+    private var subscribeHintLabel: String {
+        l("订阅更划算", "Subscribe & Save", "定額でもっとお得", "구독하면 더 저렴",
+          vi: "Đăng ký tiết kiệm hơn", id: "Langganan Lebih Hemat", pt: "Assine e Economize")
+    }
+    private var subscribeHintDesc: String {
+        l("同样价格享受一整月无限次排版 + 无限生成 + 无广告",
+          "Same price for a full month: unlimited prints + generations + no ads",
+          "同じ金額で1ヶ月間：無制限プリント＋生成＋広告なし",
+          "같은 가격으로 한 달간: 무제한 인쇄 + 생성 + 광고 없음",
+          vi: "Cùng giá cho 1 tháng: in không giới hạn + tạo ảnh + không QC",
+          id: "Harga sama untuk sebulan: cetak + buat tanpa batas + tanpa iklan",
+          pt: "Mesmo preço por 1 mês: impressão + geração ilimitada + sem anúncios")
+    }
+    private var errorAlertTitle: String {
+        l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패",
+          vi: "Mua thất bại", id: "Pembelian Gagal", pt: "Compra Falhou")
     }
     private var savedLabel: String {
         l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료",

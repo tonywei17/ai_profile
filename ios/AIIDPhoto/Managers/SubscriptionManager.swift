@@ -11,12 +11,15 @@ enum SubscriptionPlan: String, CaseIterable, Identifiable {
     static let allProductIDs: Set<String> = Set(allCases.map(\.rawValue))
 }
 
+enum ConsumableProduct: String {
+    case printLayoutSingle = "com.nexus.aiidphoto.print_layout_single"
+}
+
 @MainActor
 final class SubscriptionManager: ObservableObject {
 
     // MARK: - Debug Override
 
-    /// Set to `true` to simulate a subscribed state on device (DEBUG only).
     #if DEBUG
     static let forceSubscribed = false
     #else
@@ -31,26 +34,32 @@ final class SubscriptionManager: ObservableObject {
     @Published private(set) var isRestoring: Bool = false
     @Published var purchaseError: String?
 
-    /// Currently selected plan for purchase.
     @Published var selectedPlan: SubscriptionPlan = .annual
 
-    /// Per-plan display prices (localized with currency code).
     @Published private(set) var monthlyDisplayPrice: String?
     @Published private(set) var annualDisplayPrice: String?
+    @Published private(set) var printLayoutSingleDisplayPrice: String?
+
+    /// Print layout credits (consumable purchases)
+    @Published private(set) var printLayoutCredits: Int = 0
 
     // MARK: - Private
 
     private var products: [SubscriptionPlan: Product] = [:]
+    private var consumableProducts: [ConsumableProduct: Product] = [:]
     private var updateListenerTask: Task<Void, Never>?
 
-    /// Fallback prices when StoreKit products aren't available.
-    private static let fallbackMonthlyPrice = "$1.99 USD"
-    private static let fallbackAnnualPrice  = "$12.99 USD"
+    private static let fallbackMonthlyPrice = "$3.99 USD"
+    private static let fallbackAnnualPrice  = "$22.99 USD"
+    private static let fallbackPrintSinglePrice = "$3.49 USD"
+
+    private let kPrintLayoutCredits = "aiid.printLayout.credits"
 
     // MARK: - Init / Deinit
 
     init() {
         if Self.forceSubscribed { isSubscribed = true }
+        printLayoutCredits = UserDefaults.standard.integer(forKey: kPrintLayoutCredits)
         updateListenerTask = Task { await listenForUpdates() }
         Task { await refreshProducts() }
         Task { await checkCurrentEntitlements() }
@@ -61,43 +70,63 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Product Loading
 
     func refreshProducts() async {
+        let allIDs = SubscriptionPlan.allProductIDs.union([ConsumableProduct.printLayoutSingle.rawValue])
         do {
-            let loaded = try await Product.products(for: SubscriptionPlan.allProductIDs)
+            let loaded = try await Product.products(for: allIDs)
             let currencyCode = Locale.current.currency?.identifier ?? ""
 
             for p in loaded {
-                guard let plan = SubscriptionPlan(rawValue: p.id) else { continue }
-                products[plan] = p
                 let price = "\(p.displayPrice) \(currencyCode)"
-                switch plan {
-                case .monthly: monthlyDisplayPrice = price
-                case .annual:  annualDisplayPrice = price
+
+                if let plan = SubscriptionPlan(rawValue: p.id) {
+                    products[plan] = p
+                    switch plan {
+                    case .monthly: monthlyDisplayPrice = price
+                    case .annual:  annualDisplayPrice = price
+                    }
+                } else if let consumable = ConsumableProduct(rawValue: p.id) {
+                    consumableProducts[consumable] = p
+                    switch consumable {
+                    case .printLayoutSingle: printLayoutSingleDisplayPrice = price
+                    }
                 }
-                print("[SubscriptionManager] loaded: \(p.id) → \(price)")
+                print("[SubscriptionManager] loaded: \(p.id) -> \(price)")
             }
 
-            // Fallback prices
             if monthlyDisplayPrice == nil {
                 monthlyDisplayPrice = Self.fallbackMonthlyPrice
-                print("[SubscriptionManager] no monthly product returned, using fallback")
             }
             if annualDisplayPrice == nil {
                 annualDisplayPrice = Self.fallbackAnnualPrice
-                print("[SubscriptionManager] no annual product returned, using fallback")
+            }
+            if printLayoutSingleDisplayPrice == nil {
+                printLayoutSingleDisplayPrice = Self.fallbackPrintSinglePrice
             }
         } catch {
             print("[SubscriptionManager] products error: \(error)")
             if monthlyDisplayPrice == nil { monthlyDisplayPrice = Self.fallbackMonthlyPrice }
             if annualDisplayPrice == nil  { annualDisplayPrice = Self.fallbackAnnualPrice }
+            if printLayoutSingleDisplayPrice == nil { printLayoutSingleDisplayPrice = Self.fallbackPrintSinglePrice }
         }
     }
 
-    /// Display price for the currently selected plan.
     var displayPrice: String? {
         switch selectedPlan {
         case .monthly: return monthlyDisplayPrice
         case .annual:  return annualDisplayPrice
         }
+    }
+
+    // MARK: - Print Layout Access
+
+    var canUsePrintLayout: Bool {
+        isSubscribed || printLayoutCredits > 0
+    }
+
+    func consumePrintLayoutCredit() {
+        guard !isSubscribed, printLayoutCredits > 0 else { return }
+        printLayoutCredits -= 1
+        UserDefaults.standard.set(printLayoutCredits, forKey: kPrintLayoutCredits)
     }
 
     // MARK: - Entitlement Checking
@@ -133,16 +162,22 @@ final class SubscriptionManager: ObservableObject {
     }
 
     private func handle(_ result: VerificationResult<Transaction>) async {
-        guard case .verified(let t) = result,
-              SubscriptionPlan.allProductIDs.contains(t.productID) else { return }
-        let active = t.revocationDate == nil &&
-                     (t.expirationDate ?? .distantFuture) > Date()
-        isSubscribed = active
-        expirationDate = active ? t.expirationDate : nil
+        guard case .verified(let t) = result else { return }
+
+        if SubscriptionPlan.allProductIDs.contains(t.productID) {
+            let active = t.revocationDate == nil &&
+                         (t.expirationDate ?? .distantFuture) > Date()
+            isSubscribed = active
+            expirationDate = active ? t.expirationDate : nil
+        } else if t.productID == ConsumableProduct.printLayoutSingle.rawValue {
+            printLayoutCredits += 1
+            UserDefaults.standard.set(printLayoutCredits, forKey: kPrintLayoutCredits)
+        }
+
         await t.finish()
     }
 
-    // MARK: - Purchase
+    // MARK: - Purchase Subscription
 
     func purchase() async {
         guard let p = products[selectedPlan], !isPurchasing else { return }
@@ -158,7 +193,29 @@ final class SubscriptionManager: ObservableObject {
             @unknown default:                break
             }
         } catch StoreKitError.userCancelled {
-            // user dismissed sheet — no error needed
+            // user dismissed — no error
+        } catch {
+            purchaseError = error.localizedDescription
+        }
+    }
+
+    // MARK: - Purchase Consumable
+
+    func purchasePrintLayout() async {
+        guard let p = consumableProducts[.printLayoutSingle], !isPurchasing else { return }
+        isPurchasing = true
+        purchaseError = nil
+        defer { isPurchasing = false }
+        do {
+            let result = try await p.purchase()
+            switch result {
+            case .success(let verification): await handle(verification)
+            case .userCancelled:             break
+            case .pending:                   break
+            @unknown default:                break
+            }
+        } catch StoreKitError.userCancelled {
+            // user dismissed — no error
         } catch {
             purchaseError = error.localizedDescription
         }

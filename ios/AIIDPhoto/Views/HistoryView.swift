@@ -63,19 +63,24 @@ struct HistoryView: View {
         VStack(spacing: 6) {
             if let data = try? Data(contentsOf: record.thumbnailURL),
                let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 140)
+                Color.clear
+                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                    .overlay {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                    }
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             } else {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(.secondary.opacity(0.15))
-                    .frame(height: 140)
+                Color.clear
+                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
                     .overlay {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(.secondary.opacity(0.15))
                         Image(systemName: "photo")
                             .foregroundStyle(.secondary)
                     }
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
             }
 
             Text(record.sizeLabel)

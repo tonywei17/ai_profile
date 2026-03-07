@@ -2,24 +2,28 @@ import Foundation
 
 @MainActor
 final class UsageManager: ObservableObject {
-    enum Decision { case allowed, requireRewardedAd, reachedLimit }
+    enum Decision { case allowed, requireRewardedAd, reachedDailyLimit, reachedLimit }
 
     @Published private(set) var subscriberUsesLeft: Int = 20
+    @Published private(set) var freeUsesToday: Int = 0
 
     private let defaults = UserDefaults.standard
     private let kFirstUseDone = "aiid.firstUseDone"
     private let kLastReset = "aiid.lastReset"
     private let kSubscriberLeft = "aiid.subscriber.left"
+    private let kFreeUsesToday = "aiid.free.usesToday"
+
+    static let freeDailyLimit = 5
 
     init() {
         resetIfNeeded()
         subscriberUsesLeft = defaults.integer(forKey: kSubscriberLeft)
         if subscriberUsesLeft == 0 { subscriberUsesLeft = 20 }
+        freeUsesToday = defaults.integer(forKey: kFreeUsesToday)
     }
 
-    var freeTitle: String {
-        let firstUsed = defaults.bool(forKey: kFirstUseDone)
-        return firstUsed ? "再次使用需观看广告" : "首次免费"
+    var freeUsesRemaining: Int {
+        max(0, Self.freeDailyLimit - freeUsesToday)
     }
 
     func canGenerate(isSubscribed: Bool) -> Decision {
@@ -27,6 +31,9 @@ final class UsageManager: ObservableObject {
         if isSubscribed {
             return subscriberUsesLeft > 0 ? .allowed : .reachedLimit
         } else {
+            if freeUsesToday >= Self.freeDailyLimit {
+                return .reachedDailyLimit
+            }
             let firstUsed = defaults.bool(forKey: kFirstUseDone)
             return firstUsed ? .requireRewardedAd : .allowed
         }
@@ -40,6 +47,8 @@ final class UsageManager: ObservableObject {
             }
         } else {
             defaults.set(true, forKey: kFirstUseDone)
+            freeUsesToday += 1
+            defaults.set(freeUsesToday, forKey: kFreeUsesToday)
         }
     }
 
@@ -50,6 +59,8 @@ final class UsageManager: ObservableObject {
             defaults.set(today, forKey: kLastReset)
             defaults.set(20, forKey: kSubscriberLeft)
             subscriberUsesLeft = 20
+            defaults.set(0, forKey: kFreeUsesToday)
+            freeUsesToday = 0
         }
     }
 

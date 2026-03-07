@@ -2,7 +2,38 @@
   "identifier" : "com.nexus.aiidphoto.storekit",
   "nonConsumableProducts" : [],
   "nonRenewingSubscriptionProducts" : [],
-  "products" : [],
+  "products" : [
+    {
+      "displayPrice" : "3.49",
+      "familyShareable" : false,
+      "internalID" : "print_layout_single_001",
+      "localizations" : [
+        {
+          "description" : "Save one print-ready layout for convenience store printing.",
+          "displayName" : "Print Layout (1 Use)",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "コンビニプリント用レイアウトを1回保存できます。",
+          "displayName" : "コンビニプリント（1回）",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "便利店排版照片单次保存。",
+          "displayName" : "便利店排版（1次）",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "편의점 인쇄용 레이아웃 1회 저장.",
+          "displayName" : "편의점 인쇄 (1회)",
+          "locale" : "ko_KR"
+        }
+      ],
+      "productID" : "com.nexus.aiidphoto.print_layout_single",
+      "referenceName" : "Print Layout Single Use",
+      "type" : "Consumable"
+    }
+  ],
   "settings" : {
     "_applicationInternalID" : "aiidphoto",
     "_storefront" : "USA,840",
@@ -16,28 +47,28 @@
       "subscriptions" : [
         {
           "adHocOfferCodesEnabled" : false,
-          "displayPrice" : "1.99",
+          "displayPrice" : "3.99",
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "pro_monthly_001",
           "localizations" : [
             {
-              "description" : "20 AI generations per day, no ads, all photo formats worldwide.",
+              "description" : "Unlimited AI generations, no ads, all formats, print layout included.",
               "displayName" : "AI ID Photo Pro (Monthly)",
               "locale" : "en_US"
             },
             {
-              "description" : "1日20回AI生成、広告なし、全フォーマット対応。",
+              "description" : "無制限AI生成、広告なし、全フォーマット、コンビニプリント込み。",
               "displayName" : "AI証明写真 Pro（月額）",
               "locale" : "ja_JP"
             },
             {
-              "description" : "每日20次AI生成，无广告，支持所有证件规格。",
+              "description" : "无限AI生成，无广告，全规格，含便利店排版。",
               "displayName" : "AI证件照 Pro（月付）",
               "locale" : "zh_CN"
             },
             {
-              "description" : "하루 20회 AI 생성, 광고 없음, 모든 규격 지원.",
+              "description" : "무제한 AI 생성, 광고 없음, 모든 규격, 편의점 인쇄 포함.",
               "displayName" : "AI 증명사진 Pro (월간)",
               "locale" : "ko_KR"
             }
@@ -49,28 +80,28 @@
         },
         {
           "adHocOfferCodesEnabled" : false,
-          "displayPrice" : "12.99",
+          "displayPrice" : "22.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "pro_annual_001",
           "localizations" : [
             {
-              "description" : "20 AI generations per day, no ads, all photo formats worldwide.",
+              "description" : "Unlimited AI generations, no ads, all formats, print layout included.",
               "displayName" : "AI ID Photo Pro",
               "locale" : "en_US"
             },
             {
-              "description" : "1日20回AI生成、広告なし、全フォーマット対応。",
+              "description" : "無制限AI生成、広告なし、全フォーマット、コンビニプリント込み。",
               "displayName" : "AI証明写真 Pro",
               "locale" : "ja_JP"
             },
             {
-              "description" : "每日20次AI生成，无广告，支持所有证件规格。",
+              "description" : "无限AI生成，无广告，全规格，含便利店排版。",
               "displayName" : "AI证件照 Pro",
               "locale" : "zh_CN"
             },
             {
-              "description" : "하루 20회 AI 생성, 광고 없음, 모든 규격 지원.",
+              "description" : "무제한 AI 생성, 광고 없음, 모든 규격, 편의점 인쇄 포함.",
               "displayName" : "AI 증명사진 Pro",
               "locale" : "ko_KR"
             }
