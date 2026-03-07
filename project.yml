@@ -95,4 +95,5 @@ targets:
         # 以下为开发环境直连 Gemini 的配置（生产环境应留空，通过后端代理）
         GEMINI_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
         GEMINI_API_KEY: ""  # FIXME: 仅限开发环境，生产环境必须使用后端代理
+        CFBundleIconName: AppIcon
         GADApplicationIdentifier: "ca-app-pub-4720104330290543~3080111676"
