@@ -2,7 +2,12 @@
 set -e
 
 echo "==> Installing XcodeGen via Homebrew..."
-brew install xcodegen
+# Retry up to 3 times to handle transient network failures on Xcode Cloud
+for i in 1 2 3; do
+    brew install xcodegen && break
+    echo "==> Retry $i: brew install xcodegen failed, retrying in 5s..."
+    sleep 5
+done
 
 echo "==> Generating Xcode project..."
 cd "$CI_PRIMARY_REPOSITORY_PATH"

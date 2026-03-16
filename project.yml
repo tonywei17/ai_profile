@@ -78,8 +78,8 @@ targets:
         CFBundleDisplayName: AIIDPhoto
         CFBundleIdentifier: com.nexus.aiidphoto
         CFBundleName: AIIDPhoto
-        CFBundleVersion: "2"
-        CFBundleShortVersionString: "1.1"
+        CFBundleVersion: "11"
+        CFBundleShortVersionString: "1.0"
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
