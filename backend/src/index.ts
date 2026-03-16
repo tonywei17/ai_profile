@@ -8,8 +8,8 @@ import referralRouter from "./routes/referral";
 
 const app = express();
 
-// 50MB limit for base64 image payloads
-app.use(express.json({ limit: "50mb" }));
+// 20MB limit for base64 image payloads
+app.use(express.json({ limit: "20mb" }));
 app.use(cors());
 
 // Static files (legal docs, etc.)

@@ -18,10 +18,10 @@ final class HistoryManager: ObservableObject {
         let filename = "\(id.uuidString).jpg"
         let fileURL = GenerationRecord.historyDirectory.appendingPathComponent(filename)
 
-        // Save compressed thumbnail (max 512px, JPEG 0.7 quality)
+        // Save compressed thumbnail (max 512px, JPEG 0.7 quality) with data protection
         if let thumbnail = resized(image, maxDimension: 512),
            let data = thumbnail.jpegData(compressionQuality: 0.7) {
-            try? data.write(to: fileURL)
+            try? data.write(to: fileURL, options: .completeFileProtection)
         }
 
         let record = GenerationRecord(
@@ -60,7 +60,7 @@ final class HistoryManager: ObservableObject {
 
     private func saveRecords() {
         if let data = try? JSONEncoder().encode(records) {
-            try? data.write(to: metadataURL)
+            try? data.write(to: metadataURL, options: .completeFileProtection)
         }
     }
 

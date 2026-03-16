@@ -90,7 +90,9 @@ final class SubscriptionManager: ObservableObject {
                     case .printLayoutSingle: printLayoutSingleDisplayPrice = price
                     }
                 }
+                #if DEBUG
                 print("[SubscriptionManager] loaded: \(p.id) -> \(price)")
+                #endif
             }
 
             if monthlyDisplayPrice == nil {
@@ -103,7 +105,9 @@ final class SubscriptionManager: ObservableObject {
                 printLayoutSingleDisplayPrice = Self.fallbackPrintSinglePrice
             }
         } catch {
+            #if DEBUG
             print("[SubscriptionManager] products error: \(error)")
+            #endif
             if monthlyDisplayPrice == nil { monthlyDisplayPrice = Self.fallbackMonthlyPrice }
             if annualDisplayPrice == nil  { annualDisplayPrice = Self.fallbackAnnualPrice }
             if printLayoutSingleDisplayPrice == nil { printLayoutSingleDisplayPrice = Self.fallbackPrintSinglePrice }

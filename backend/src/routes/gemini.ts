@@ -22,12 +22,25 @@ interface GeminiAPIResponse {
   error?: { code: number; message: string };
 }
 
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024; // ~20MB base64 (~15MB raw JPEG)
+const MAX_PROMPT_LENGTH = 2000;
+
 router.post("/generate", async (req: Request, res: Response) => {
   try {
     const { image, prompt, tier } = req.body as GenerateRequest;
 
     if (!image || !prompt) {
       res.status(400).json({ error: "Missing required fields: image, prompt" });
+      return;
+    }
+
+    if (typeof image !== "string" || image.length > MAX_IMAGE_SIZE) {
+      res.status(413).json({ error: "Image too large" });
+      return;
+    }
+
+    if (typeof prompt !== "string" || prompt.length > MAX_PROMPT_LENGTH) {
+      res.status(413).json({ error: "Prompt too long" });
       return;
     }
 
@@ -95,9 +108,7 @@ router.post("/generate", async (req: Request, res: Response) => {
     res.status(502).json({ error: "No image in Gemini response" });
   } catch (err) {
     console.error("Generate error:", err);
-    res.status(500).json({
-      error: err instanceof Error ? err.message : "Internal server error",
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

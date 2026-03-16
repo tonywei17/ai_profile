@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import crypto from "crypto";
 
 const router = Router();
 
@@ -6,11 +7,16 @@ const router = Router();
 const referralCodes = new Map<string, { redeemCount: number; createdAt: number }>();
 const redeemedDevices = new Map<string, Set<string>>(); // deviceId -> Set<codes used>
 
+// Per-device rate limiting for redeem endpoint (max 5 attempts per minute)
+const redeemAttempts = new Map<string, { count: number; resetAt: number }>();
+const REDEEM_WINDOW_MS = 60 * 1000;
+const REDEEM_MAX_ATTEMPTS = 5;
+
 // POST /api/referral/register — generate a referral code for a device
 router.post("/register", (req: Request, res: Response) => {
   const { deviceId } = req.body;
-  if (!deviceId || typeof deviceId !== "string") {
-    res.status(400).json({ error: "Missing deviceId" });
+  if (!deviceId || typeof deviceId !== "string" || deviceId.length > 200) {
+    res.status(400).json({ error: "Invalid deviceId" });
     return;
   }
 
@@ -24,9 +30,28 @@ router.post("/register", (req: Request, res: Response) => {
 // POST /api/referral/redeem — redeem a referral code
 router.post("/redeem", (req: Request, res: Response) => {
   const { code, deviceId } = req.body;
-  if (!code || !deviceId) {
+  if (!code || !deviceId || typeof code !== "string" || typeof deviceId !== "string") {
     res.status(400).json({ error: "Missing code or deviceId" });
     return;
+  }
+
+  // Validate code format (6 alphanumeric chars)
+  if (!/^[A-Z0-9]{6}$/i.test(code)) {
+    res.status(400).json({ error: "Invalid code format" });
+    return;
+  }
+
+  // Per-device rate limiting
+  const now = Date.now();
+  const attempt = redeemAttempts.get(deviceId);
+  if (attempt && now < attempt.resetAt) {
+    if (attempt.count >= REDEEM_MAX_ATTEMPTS) {
+      res.status(429).json({ error: "Too many attempts, try again later" });
+      return;
+    }
+    attempt.count++;
+  } else {
+    redeemAttempts.set(deviceId, { count: 1, resetAt: now + REDEEM_WINDOW_MS });
   }
 
   // Cannot redeem own code
@@ -58,12 +83,8 @@ router.post("/redeem", (req: Request, res: Response) => {
 });
 
 function generateCode(deviceId: string): string {
-  let hash = 0;
-  for (let i = 0; i < deviceId.length; i++) {
-    hash = (hash << 5) - hash + deviceId.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(36).substring(0, 6).toUpperCase();
+  const hash = crypto.createHash("sha256").update(deviceId).digest("hex");
+  return hash.substring(0, 6).toUpperCase();
 }
 
 export default router;
