@@ -10,6 +10,8 @@
 	<string>AIIDPhoto</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.nexus.aiidphoto</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -29,9 +31,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.1</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-4720104330290543~3080111676</string>
 	<key>GEMINI_API_KEY</key>
@@ -44,6 +46,8 @@
 	<string>Allow saving generated photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to pick photos.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>We use your advertising identifier to show relevant ads and measure ad performance. You can change this in Settings at any time.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>PlusJakartaSans-SemiBold.ttf</string>

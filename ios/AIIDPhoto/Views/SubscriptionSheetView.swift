@@ -529,7 +529,7 @@ struct SubscriptionSheetView: View {
 // MARK: - Legal Links
 
 private enum LegalURLs {
-    static let baseURL = "https://aiidphoto-backend-616059029156.asia-northeast1.run.app/legal"
+    static let baseURL = "https://nexus-wei.space/aiidphoto"
 
     static func privacyPolicy(lang: String) -> URL {
         URL(string: "\(baseURL)/privacy/\(legalLang(lang)).html")!

@@ -6,6 +6,7 @@ const router = Router();
 interface GenerateRequest {
   image: string; // base64
   prompt: string;
+  tier?: string; // "free" = Nano Banana (2.5 Flash), "pro" = Nano Banana 2 (3.1 Flash)
 }
 
 interface GeminiAPIResponse {
@@ -23,7 +24,7 @@ interface GeminiAPIResponse {
 
 router.post("/generate", async (req: Request, res: Response) => {
   try {
-    const { image, prompt } = req.body as GenerateRequest;
+    const { image, prompt, tier } = req.body as GenerateRequest;
 
     if (!image || !prompt) {
       res.status(400).json({ error: "Missing required fields: image, prompt" });
@@ -35,8 +36,13 @@ router.post("/generate", async (req: Request, res: Response) => {
       return;
     }
 
-    // Forward to Gemini API (Nano Banana 2 / gemini-3.1-flash-image-preview requires
-    // explicit responseModalities to enable image output)
+    // Route to model based on tier:
+    // "pro"  → Nano Banana 2 (gemini-3.1-flash-image-preview) ~¥10
+    // "free" → Nano Banana   (gemini-2.5-flash-preview-image) ~¥6
+    const endpoint = tier === "free"
+      ? config.geminiEndpointFree
+      : config.geminiEndpointPro;
+
     const geminiBody = {
       contents: [
         {
@@ -51,7 +57,7 @@ router.post("/generate", async (req: Request, res: Response) => {
       },
     };
 
-    const geminiRes = await fetch(config.geminiEndpoint, {
+    const geminiRes = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

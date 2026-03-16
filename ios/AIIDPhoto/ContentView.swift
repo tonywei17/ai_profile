@@ -51,6 +51,11 @@ struct ContentView: View {
     @AppStorage("successfulGenerations") private var successfulGenerations: Int = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion: String = ""
 
+    // AI data sharing consent
+    @AppStorage("hasGivenAIConsent") private var hasGivenAIConsent: Bool = false
+    @State private var showAIConsent = false
+    @State private var pendingGenerateAfterConsent = false
+
     var body: some View {
         ZStack {
             GlassBackground.gradient.ignoresSafeArea()
@@ -96,6 +101,24 @@ struct ContentView: View {
         }
         .overlay(alignment: .bottom) {
             if showSavedToast { savedToast }
+        }
+        .fullScreenCover(isPresented: $showAIConsent) {
+            AIConsentView(
+                onAgree: {
+                    hasGivenAIConsent = true
+                    showAIConsent = false
+                    if pendingGenerateAfterConsent {
+                        pendingGenerateAfterConsent = false
+                        Task { await generateTapped() }
+                    }
+                },
+                onDecline: {
+                    showAIConsent = false
+                    pendingGenerateAfterConsent = false
+                }
+            )
+            .environmentObject(langManager)
+            .preferredColorScheme(sheetColorScheme)
         }
     }
 
@@ -498,6 +521,13 @@ struct ContentView: View {
 
     private func generateTapped() async {
         guard let input = inputImage else { return }
+
+        // Show AI consent dialog on first generation
+        if !hasGivenAIConsent {
+            pendingGenerateAfterConsent = true
+            showAIConsent = true
+            return
+        }
         // Defense: reset pro options if free user somehow selected them
         if !subscription.isSubscribed && photoOptions.hasProSelection {
             photoOptions = .defaults

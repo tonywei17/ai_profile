@@ -90,6 +90,7 @@ targets:
         NSCameraUsageDescription: "We need camera access for selfies."
         NSPhotoLibraryUsageDescription: "Allow access to pick photos."
         NSPhotoLibraryAddUsageDescription: "Allow saving generated photos."
+        NSUserTrackingUsageDescription: "We use your advertising identifier to show relevant ads and measure ad performance. You can change this in Settings at any time."
         # 后端代理地址（GCP Cloud Run，API Key 存储在服务端 Secret Manager）
         BACKEND_BASE_URL: "https://aiidphoto-backend-616059029156.asia-northeast1.run.app"
         # 以下为开发环境直连 Gemini 的配置（生产环境应留空，通过后端代理）

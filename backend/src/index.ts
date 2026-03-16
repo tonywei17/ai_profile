@@ -15,6 +15,16 @@ app.use(cors());
 // Static files (legal docs, etc.)
 app.use("/legal", express.static(path.join(__dirname, "../public/legal")));
 
+// Legacy URL redirects (old format: /legal/:lang/terms-of-service.html)
+app.get("/legal/:lang/terms-of-service.html", (req, res) => {
+  const { lang } = req.params;
+  res.redirect(301, `/legal/terms/${lang}.html`);
+});
+app.get("/legal/:lang/privacy-policy.html", (req, res) => {
+  const { lang } = req.params;
+  res.redirect(301, `/legal/privacy/${lang}.html`);
+});
+
 app.use(rateLimit);
 
 // Health check
