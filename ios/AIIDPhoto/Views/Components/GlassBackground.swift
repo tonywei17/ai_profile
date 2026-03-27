@@ -126,6 +126,12 @@ extension Color {
             ? UIColor(red: 230/255, green: 230/255, blue: 230/255, alpha: 1)
             : UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
     })
+    /// Subtle border — matches inkBlack in light mode, very subtle in dark mode
+    static let inkBorder = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 1, alpha: 0.12)
+            : UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
+    })
     static let branchGray = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark
             ? UIColor(red: 185/255, green: 185/255, blue: 185/255, alpha: 1)

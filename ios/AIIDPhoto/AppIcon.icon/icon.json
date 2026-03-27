@@ -1,8 +1,8 @@
 {
   "fill" : {
     "linear-gradient" : [
-      "display-p3:1.00000,0.72640,0.73810,1.00000",
-      "display-p3:0.39180,0.61044,0.96783,1.00000"
+      "display-p3:0.07819,0.12195,0.22388,1.00000",
+      "display-p3:0.06720,0.10693,0.20300,1.00000"
     ],
     "orientation" : {
       "start" : {
@@ -19,13 +19,24 @@
     {
       "layers" : [
         {
-          "image-name" : "Group.png",
-          "name" : "Group",
+          "image-name" : "logo.png",
+          "name" : "logo",
           "position" : {
-            "scale" : 0.74,
+            "scale" : 0.94,
             "translation-in-points" : [
               0,
               0
+            ]
+          }
+        },
+        {
+          "image-name" : "背景虚线.png",
+          "name" : "背景虚线",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0.5873015873016811,
+              -3.7857142857142208
             ]
           }
         }
