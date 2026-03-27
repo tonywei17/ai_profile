@@ -78,8 +78,8 @@ targets:
         CFBundleDisplayName: AIIDPhoto
         CFBundleIdentifier: com.nexus.aiidphoto
         CFBundleName: AIIDPhoto
-        CFBundleVersion: "11"
-        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "21"
+        CFBundleShortVersionString: "1.1"
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
@@ -93,5 +93,6 @@ targets:
         NSUserTrackingUsageDescription: "We use your advertising identifier to show relevant ads and measure ad performance. You can change this in Settings at any time."
         # 后端代理地址（GCP Cloud Run，API Key 存储在服务端 Secret Manager）
         BACKEND_BASE_URL: "https://aiidphoto-backend-616059029156.asia-northeast1.run.app"
+        APP_API_KEY: "1cce8f8bb9e33377925ae7798457c36fdf3e46945fe32db3cea04db3bd8175f2"
         CFBundleIconName: AppIcon
         GADApplicationIdentifier: "ca-app-pub-4720104330290543~3080111676"

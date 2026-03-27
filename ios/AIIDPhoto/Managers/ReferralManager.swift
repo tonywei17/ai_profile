@@ -7,17 +7,38 @@ final class ReferralManager: ObservableObject {
     @Published private(set) var bonusGenerations: Int = 0
     @Published var redeemError: String?
 
-    private let defaults = UserDefaults.standard
     private let kBonusKey = "aiid.referral.bonus"
     private let kCodeKey = "aiid.referral.code"
 
+    // Migration flag (UserDefaults → Keychain, one-time)
+    private let kMigrated = "aiid.referral.keychainMigrated"
+
     init() {
-        bonusGenerations = defaults.integer(forKey: kBonusKey)
-        referralCode = defaults.string(forKey: kCodeKey)
+        migrateToKeychainIfNeeded()
+        bonusGenerations = KeychainHelper.readInt(key: kBonusKey) ?? 0
+        referralCode = KeychainHelper.readString(key: kCodeKey)
     }
 
     var deviceId: String {
         UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+    }
+
+    // MARK: - Migration
+
+    private func migrateToKeychainIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: kMigrated) else { return }
+        // Migrate bonus count
+        let bonus = defaults.integer(forKey: kBonusKey)
+        if bonus > 0 { KeychainHelper.saveInt(key: kBonusKey, value: bonus) }
+        // Migrate code
+        if let code = defaults.string(forKey: kCodeKey) {
+            KeychainHelper.saveString(key: kCodeKey, value: code)
+        }
+        // Clean up UserDefaults
+        defaults.removeObject(forKey: kBonusKey)
+        defaults.removeObject(forKey: kCodeKey)
+        defaults.set(true, forKey: kMigrated)
     }
 
     // MARK: - Register
@@ -26,15 +47,14 @@ final class ReferralManager: ObservableObject {
         guard referralCode == nil else { return }
         guard let backendURL = Config.backendBaseURL else { return }
         let url = backendURL.appendingPathComponent("api/referral/register")
-        var request = URLRequest(url: url)
+        var request = Config.authenticatedRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONEncoder().encode(["deviceId": deviceId])
 
         guard let (data, _) = try? await URLSession.shared.data(for: request),
               let response = try? JSONDecoder().decode(RegisterResponse.self, from: data) else { return }
         referralCode = response.code
-        defaults.set(response.code, forKey: kCodeKey)
+        KeychainHelper.saveString(key: kCodeKey, value: response.code)
     }
 
     // MARK: - Redeem
@@ -42,9 +62,8 @@ final class ReferralManager: ObservableObject {
     func redeemCode(_ code: String) async -> Bool {
         guard let backendURL = Config.backendBaseURL else { return false }
         let url = backendURL.appendingPathComponent("api/referral/redeem")
-        var request = URLRequest(url: url)
+        var request = Config.authenticatedRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONEncoder().encode(["code": code, "deviceId": deviceId])
 
         guard let (data, response) = try? await URLSession.shared.data(for: request),
@@ -56,7 +75,7 @@ final class ReferralManager: ObservableObject {
         if http.statusCode == 200,
            let result = try? JSONDecoder().decode(RedeemResponse.self, from: data) {
             bonusGenerations += result.granted
-            defaults.set(bonusGenerations, forKey: kBonusKey)
+            KeychainHelper.saveInt(key: kBonusKey, value: bonusGenerations)
             redeemError = nil
             return true
         } else if let errorResp = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
@@ -72,7 +91,7 @@ final class ReferralManager: ObservableObject {
     func useBonusGeneration() -> Bool {
         guard bonusGenerations > 0 else { return false }
         bonusGenerations -= 1
-        defaults.set(bonusGenerations, forKey: kBonusKey)
+        KeychainHelper.saveInt(key: kBonusKey, value: bonusGenerations)
         return true
     }
 

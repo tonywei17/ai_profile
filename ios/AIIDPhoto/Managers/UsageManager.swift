@@ -10,16 +10,21 @@ final class UsageManager: ObservableObject {
     private let defaults = UserDefaults.standard
     private let kFirstUseDone = "aiid.firstUseDone"
     private let kLastReset = "aiid.lastReset"
+    // Keychain keys for sensitive counters
     private let kSubscriberLeft = "aiid.subscriber.left"
     private let kFreeUsesToday = "aiid.free.usesToday"
+
+    // Migration flag
+    private let kMigrated = "aiid.usage.keychainMigrated"
 
     static let freeDailyLimit = 5
 
     init() {
+        migrateToKeychainIfNeeded()
         resetIfNeeded()
-        subscriberUsesLeft = defaults.integer(forKey: kSubscriberLeft)
+        subscriberUsesLeft = KeychainHelper.readInt(key: kSubscriberLeft) ?? 20
         if subscriberUsesLeft == 0 { subscriberUsesLeft = 20 }
-        freeUsesToday = defaults.integer(forKey: kFreeUsesToday)
+        freeUsesToday = KeychainHelper.readInt(key: kFreeUsesToday) ?? 0
     }
 
     var freeUsesRemaining: Int {
@@ -43,25 +48,40 @@ final class UsageManager: ObservableObject {
         if isSubscribed {
             if subscriberUsesLeft > 0 {
                 subscriberUsesLeft -= 1
-                defaults.set(subscriberUsesLeft, forKey: kSubscriberLeft)
+                KeychainHelper.saveInt(key: kSubscriberLeft, value: subscriberUsesLeft)
             }
         } else {
             defaults.set(true, forKey: kFirstUseDone)
             freeUsesToday += 1
-            defaults.set(freeUsesToday, forKey: kFreeUsesToday)
+            KeychainHelper.saveInt(key: kFreeUsesToday, value: freeUsesToday)
         }
     }
+
+    // MARK: - Daily Reset
 
     private func resetIfNeeded() {
         let today = Self.dayString(Date())
         let last = defaults.string(forKey: kLastReset)
         if last != today {
             defaults.set(today, forKey: kLastReset)
-            defaults.set(20, forKey: kSubscriberLeft)
             subscriberUsesLeft = 20
-            defaults.set(0, forKey: kFreeUsesToday)
+            KeychainHelper.saveInt(key: kSubscriberLeft, value: 20)
             freeUsesToday = 0
+            KeychainHelper.saveInt(key: kFreeUsesToday, value: 0)
         }
+    }
+
+    // MARK: - Migration (UserDefaults → Keychain, one-time)
+
+    private func migrateToKeychainIfNeeded() {
+        guard !defaults.bool(forKey: kMigrated) else { return }
+        let oldSub = defaults.integer(forKey: kSubscriberLeft)
+        if oldSub > 0 { KeychainHelper.saveInt(key: kSubscriberLeft, value: oldSub) }
+        let oldFree = defaults.integer(forKey: kFreeUsesToday)
+        if oldFree > 0 { KeychainHelper.saveInt(key: kFreeUsesToday, value: oldFree) }
+        defaults.removeObject(forKey: kSubscriberLeft)
+        defaults.removeObject(forKey: kFreeUsesToday)
+        defaults.set(true, forKey: kMigrated)
     }
 
     private static let dayFormatter: DateFormatter = {

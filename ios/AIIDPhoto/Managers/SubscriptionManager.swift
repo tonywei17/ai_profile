@@ -19,8 +19,13 @@ enum ConsumableProduct: String {
 final class SubscriptionManager: ObservableObject {
 
     // MARK: - Debug Override
-    // Set to `true` in DEBUG builds to test subscription UI without real purchase
-    static let forceSubscribed = false
+    static var forceSubscribed: Bool {
+        #if DEBUG
+        return false  // Flip to true for local testing only
+        #else
+        return false  // Always false in release builds
+        #endif
+    }
 
     // MARK: - Published State
 

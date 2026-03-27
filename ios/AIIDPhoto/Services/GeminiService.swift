@@ -12,13 +12,13 @@ enum GeminiError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidConfig:
-            return "API 配置无效，请检查网络设置"
+            return "API 配置无効、ネットワーク設定を確認してください"
         case .invalidImage:
-            return "图片格式无效，请选择其他照片"
+            return "画像フォーマットが無効です。別の写真を選択してください"
         case .networkError(let code, let msg):
-            return "服务器错误 (\(code))：\(msg)"
+            return "サーバーエラー (\(code))：\(msg)"
         case .decodeFailed:
-            return "无法解析生成结果，请重试"
+            return "生成結果を解析できませんでした。再試行してください"
         }
     }
 }
@@ -28,6 +28,7 @@ enum GeminiError: LocalizedError {
 struct BackendGenerateRequest: Encodable {
     let image: String   // base64
     let prompt: String
+    let tier: String    // "free" or "pro"
 }
 
 struct BackendGenerateResponse: Decodable {
@@ -55,14 +56,12 @@ final class GeminiService {
 
     // MARK: - Public API
 
-    /// Maximum output dimension for each tier.
-    /// Free users get 512px (fewer tokens → lower API cost).
-    /// Pro users get 1024px (high quality for printing).
     enum OutputTier {
-        case free   // 512px max dimension
-        case pro    // 1024px max dimension
+        case free   // 512px max dimension, cheaper model
+        case pro    // 1024px max dimension, better model
 
         var maxDimension: CGFloat { self == .free ? 512 : 1024 }
+        var apiValue: String { self == .free ? "free" : "pro" }
     }
 
     func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro) async throws -> UIImage {
@@ -82,7 +81,7 @@ final class GeminiService {
         }.value
 
         let cleanPrompt = sanitizePrompt(prompt)
-        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, backendURL: backendURL)
+        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, tier: tier, backendURL: backendURL)
     }
 
     func generateIDPhoto(from image: UIImage) async throws -> UIImage {
@@ -101,14 +100,13 @@ final class GeminiService {
         return clean
     }
 
-    private func requestViaBackend(base64: String, prompt: String, backendURL: URL) async throws -> UIImage {
+    private func requestViaBackend(base64: String, prompt: String, tier: OutputTier, backendURL: URL) async throws -> UIImage {
         let url = backendURL.appendingPathComponent("api/gemini/generate")
-        var req = URLRequest(url: url)
+        var req = Config.authenticatedRequest(url: url)
         req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.timeoutInterval = 60
 
-        let body = BackendGenerateRequest(image: base64, prompt: prompt)
+        let body = BackendGenerateRequest(image: base64, prompt: prompt, tier: tier.apiValue)
         req.httpBody = try encoder.encode(body)
 
         // Retry up to 2 times for transient network errors
@@ -128,7 +126,7 @@ final class GeminiService {
     }
 
     private func decodeBackendResponse(data: Data, response: URLResponse) throws -> UIImage {
-        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
             if let errorResp = try? decoder.decode(BackendErrorResponse.self, from: data) {
                 throw GeminiError.networkError(statusCode: http.statusCode, message: errorResp.error)
             }
@@ -148,8 +146,6 @@ final class GeminiService {
 // MARK: - UIImage Resize Helper
 
 private extension UIImage {
-    /// Returns a new image whose longest edge is at most `maxDimension` px.
-    /// If the image is already within bounds, returns `self` (no copy).
     func capped(to maxDimension: CGFloat) -> UIImage {
         let maxSide = max(size.width, size.height)
         guard maxSide > maxDimension else { return self }

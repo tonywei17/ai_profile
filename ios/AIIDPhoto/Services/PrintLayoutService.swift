@@ -1,11 +1,11 @@
 import UIKit
 
-@MainActor
 final class PrintLayoutService {
     static let shared = PrintLayoutService()
     private init() {}
 
     /// Render an ID photo tiled onto a print-ready canvas at 300 DPI.
+    /// Runs off the main thread to avoid UI blocking.
     func renderLayout(
         image: UIImage,
         spec: IDPhotoSpec,
@@ -26,20 +26,17 @@ final class PrintLayoutService {
         let canvasSize = CGSize(width: paperSize.widthPx, height: paperSize.heightPx)
 
         let format = UIGraphicsImageRendererFormat()
-        format.scale = 1 // Absolute pixel dimensions (no @2x/@3x scaling)
+        format.scale = 1
         let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
 
         guard let cgImage = image.cgImage else { return nil }
 
         return renderer.image { ctx in
-            // White paper background
             UIColor.white.setFill()
             ctx.fill(CGRect(origin: .zero, size: canvasSize))
 
-            // Draw each photo cell (using cached CGImage to avoid repeated decoding)
             let gc = ctx.cgContext
             gc.saveGState()
-            // Flip coordinate system for CGContext.draw (CGImage draws bottom-up)
             gc.translateBy(x: 0, y: canvasSize.height)
             gc.scaleBy(x: 1, y: -1)
             for row in 0..<layout.rows {
@@ -56,7 +53,6 @@ final class PrintLayoutService {
             }
             gc.restoreGState()
 
-            // Cutting guides: thin lines around each photo
             if showGuides {
                 drawGuides(ctx: ctx.cgContext, layout: layout)
             }

@@ -72,14 +72,12 @@ final class AnalyticsManager: ObservableObject {
     func flush(to backendURL: URL) async {
         let events = loadEvents()
         guard !events.isEmpty else { return }
-        var request = URLRequest(url: backendURL.appendingPathComponent("api/analytics/events"))
+        var request = Config.authenticatedRequest(url: backendURL.appendingPathComponent("api/analytics/events"))
         request.httpMethod = "POST"
         request.timeoutInterval = 15
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONEncoder().encode(events)
         guard let (_, response) = try? await URLSession.shared.data(for: request),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
-        // Clear local events after successful flush
         saveEvents([])
     }
 }
