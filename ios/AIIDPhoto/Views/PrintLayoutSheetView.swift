@@ -38,9 +38,7 @@ struct PrintLayoutSheetView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color(.systemBackground).ignoresSafeArea()
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     headerSection
@@ -51,17 +49,19 @@ struct PrintLayoutSheetView: View {
                     instructionSection
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 52)
+                .padding(.top, 16)
                 .padding(.bottom, 32)
             }
-
-            // Close
-            Button { dismiss() } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
+            .background(Color(.systemBackground))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
-            .padding(16)
         }
         .overlay(alignment: .bottom) {
             if showSavedToast { savedToast }
