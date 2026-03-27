@@ -10,7 +10,6 @@ struct ProOptionsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header — inside the card's padding context
             headerButton
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
@@ -73,7 +72,7 @@ struct ProOptionsView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     // MARK: - Header
@@ -85,32 +84,22 @@ struct ProOptionsView: View {
             }
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(
-                        LinearGradient(colors: [.yellow, .orange],
-                                       startPoint: .topLeading,
-                                       endPoint: .bottomTrailing)
-                    )
                 Text(sectionTitle)
-                    .font(.callout.weight(.semibold))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.inkBlack)
                 if !isSubscribed {
                     Text("PRO")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.white)
+                        .tracking(0.5)
+                        .foregroundStyle(Color.inkFillForeground)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(
-                            LinearGradient(colors: [.orange, .pink],
-                                           startPoint: .leading,
-                                           endPoint: .trailing)
-                        )
-                        .clipShape(Capsule())
+                        .background(Color.inkFill)
                 }
                 Spacer()
                 Image(systemName: "chevron.down")
                     .font(.caption2.bold())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.branchGray)
                     .rotationEffect(.degrees(isExpanded ? 0 : -90))
             }
         }
@@ -122,6 +111,7 @@ struct ProOptionsView: View {
         if pro && !isSubscribed {
             onLockedTap()
         } else {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             withAnimation(.easeInOut(duration: 0.2)) { action() }
         }
     }
@@ -131,8 +121,10 @@ struct ProOptionsView: View {
     private func categoryRow<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
+                .font(.system(size: 11, weight: .medium))
+                .tracking(0.5)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.branchGray)
                 .padding(.leading, 16)
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -175,7 +167,7 @@ struct ProOptionsView: View {
     }
 }
 
-// MARK: - Option Chip
+// MARK: - Option Chip (editorial style)
 
 private struct OptionChip: View {
     let label: String
@@ -190,27 +182,25 @@ private struct OptionChip: View {
                 Image(systemName: icon)
                     .font(.system(size: 12, weight: .semibold))
                 Text(label)
-                    .font(.caption.bold())
+                    .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
                 if isLocked {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 9))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.branchGray)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+            .foregroundStyle(isSelected ? Color.inkFillForeground : Color.inkBlack)
+            .background(isSelected ? Color.inkFill : Color(.systemBackground))
+            .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 1.5 : 1))
             .opacity(isLocked ? 0.55 : 1.0)
         }
-        .glassEffect(
-            isSelected ? .regular.tint(.blue) : .regular,
-            in: .capsule
-        )
     }
 }
 
-// MARK: - Background Color Chip
+// MARK: - Background Color Chip (editorial style)
 
 private struct BackgroundChip: View {
     let label: String
@@ -223,33 +213,31 @@ private struct BackgroundChip: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 if let color = swatchColor {
-                    Circle()
+                    Rectangle()
                         .fill(color)
                         .frame(width: 14, height: 14)
                         .overlay(
-                            Circle().strokeBorder(.primary.opacity(0.2), lineWidth: 0.5)
+                            Rectangle().strokeBorder(Color.inkBlack.opacity(0.3), lineWidth: 0.5)
                         )
                 } else {
                     Image(systemName: "rectangle.dashed")
                         .font(.system(size: 12, weight: .semibold))
                 }
                 Text(label)
-                    .font(.caption.bold())
+                    .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
                 if isLocked {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 9))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.branchGray)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+            .foregroundStyle(isSelected ? Color.inkFillForeground : Color.inkBlack)
+            .background(isSelected ? Color.inkFill : Color(.systemBackground))
+            .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 1.5 : 1))
             .opacity(isLocked ? 0.55 : 1.0)
         }
-        .glassEffect(
-            isSelected ? .regular.tint(.blue) : .regular,
-            in: .capsule
-        )
     }
 }

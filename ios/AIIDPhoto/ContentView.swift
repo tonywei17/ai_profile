@@ -116,9 +116,16 @@ struct ContentView: View {
                                 CustomSizePickerView(customSize: $customSize, language: lang)
                             }
 
-                            processingSection
-                                .opacity(inputImage == nil ? 0.4 : 1.0)
-                                .allowsHitTesting(inputImage != nil)
+                            // Pro options (beauty, attire, hair, background, accessories)
+                            ProOptionsView(
+                                options: $photoOptions,
+                                isSubscribed: subscription.isSubscribed,
+                                language: lang,
+                                onLockedTap: { showSubscriptionSheet = true }
+                            )
+                            .opacity(inputImage == nil ? 0.4 : 1.0)
+                            .allowsHitTesting(inputImage != nil)
+
                             outputSection
                                 .opacity(inputImage == nil ? 0.4 : 1.0)
                                 .allowsHitTesting(inputImage != nil)

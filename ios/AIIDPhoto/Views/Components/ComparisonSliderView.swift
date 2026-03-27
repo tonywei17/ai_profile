@@ -1,26 +1,27 @@
 import SwiftUI
 
-/// 原图 vs AI生成 左右拖动对比视图
+/// 原図 vs AI生成 左右拖動対比視図
 struct ComparisonSliderView: View {
     let before: UIImage
     let after: UIImage
     var language: String = "en"
 
     @State private var progress: CGFloat = 0.5
+    @State private var isDragging = false
 
     var body: some View {
         GeometryReader { geo in
             let dividerX = geo.size.width * progress
 
             ZStack(alignment: .leading) {
-                // After (AI生成) — 底层满铺
+                // After (AI生成) — full layer
                 Image(uiImage: after)
                     .resizable()
                     .scaledToFill()
                     .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
 
-                // Before (原图) — 左侧裁剪显示
+                // Before (原図) — left clipped
                 Image(uiImage: before)
                     .resizable()
                     .scaledToFill()
@@ -30,29 +31,35 @@ struct ComparisonSliderView: View {
                         Rectangle().frame(width: dividerX)
                     }
 
-                // 标签层
+                // Labels
                 labelOverlay(dividerX: dividerX, width: geo.size.width)
 
-                // 分割线
+                // Divider line
                 Rectangle()
                     .fill(.white.opacity(0.9))
                     .frame(width: 2)
                     .allowsHitTesting(false)
                     .offset(x: dividerX - 1)
 
-                // 拖动手柄
+                // Drag handle — only this area responds to drag
                 dragHandle
                     .offset(x: dividerX - 22)
+                    .gesture(
+                        DragGesture(minimumDistance: 4)
+                            .onChanged { val in
+                                isDragging = true
+                                let new = (dividerX + val.translation.width) / geo.size.width
+                                withAnimation(.interactiveSpring()) {
+                                    progress = max(0.04, min(0.96, new))
+                                }
+                            }
+                            .onEnded { _ in
+                                isDragging = false
+                            }
+                    )
             }
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { val in
-                        let new = val.location.x / geo.size.width
-                        withAnimation(.interactiveSpring()) {
-                            progress = max(0.04, min(0.96, new))
-                        }
-                    }
-            )
+            // Allow vertical scroll to pass through when not dragging the handle
+            .contentShape(Rectangle())
         }
         .drawingGroup()
         .clipShape(Rectangle())
@@ -79,6 +86,7 @@ struct ComparisonSliderView: View {
             Spacer()
         }
         .frame(width: width)
+        .allowsHitTesting(false)
     }
 
     private func pillLabel(_ text: String) -> some View {
