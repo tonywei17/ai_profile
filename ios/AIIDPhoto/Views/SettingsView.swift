@@ -36,7 +36,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "crown.fill", title: sectionTitle("Membership", "会员", "会員", "멤버십", vi: "Thành viên", id: "Keanggotaan", pt: "Assinatura"))
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
 
                     // MARK: Appearance
                     Section {
@@ -62,7 +62,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "paintbrush.fill", title: sectionTitle("Appearance", "外观", "外観", "외관", vi: "Giao diện", id: "Tampilan", pt: "Aparência"))
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
 
                     // MARK: Language
                     Section {
@@ -79,7 +79,7 @@ struct SettingsView: View {
                     } footer: {
                         Text(footerNote).font(.caption)
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
 
                     // MARK: Region
                     Section {
@@ -98,7 +98,7 @@ struct SettingsView: View {
                     } footer: {
                         Text(regionFooter).font(.caption)
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
 
                     // MARK: App Info
                     Section {
@@ -107,7 +107,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "info.circle", title: sectionTitle("App", "应用", "アプリ", "앱", vi: "Ứng dụng", id: "Aplikasi", pt: "Aplicativo"))
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
 
                     // MARK: Referral
                     Section {
@@ -174,7 +174,7 @@ struct SettingsView: View {
                     } footer: {
                         Text(referralFooter).font(.caption)
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
 
                     // MARK: Legal
                     Section {
@@ -187,7 +187,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "lock.shield", title: sectionTitle("Legal", "法律", "法的情報", "법적 정보", vi: "Pháp lý", id: "Hukum", pt: "Legal"))
                     }
-                    .listRowBackground(Color.white)
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
                 }
                 .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)

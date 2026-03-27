@@ -191,12 +191,14 @@ private struct OptionChip: View {
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .frame(minHeight: 36)
             .foregroundStyle(isSelected ? Color.inkFillForeground : Color.inkBlack)
             .background(isSelected ? Color.inkFill : Color(.systemBackground))
             .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 1.5 : 1))
             .opacity(isLocked ? 0.55 : 1.0)
         }
+        .accessibilityLabel(Text("\(label)\(isLocked ? ", locked" : "")"))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -233,11 +235,13 @@ private struct BackgroundChip: View {
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .frame(minHeight: 36)
             .foregroundStyle(isSelected ? Color.inkFillForeground : Color.inkBlack)
             .background(isSelected ? Color.inkFill : Color(.systemBackground))
             .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 1.5 : 1))
             .opacity(isLocked ? 0.55 : 1.0)
         }
+        .accessibilityLabel(Text("\(label)\(isLocked ? ", locked" : "")"))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

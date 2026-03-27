@@ -128,7 +128,7 @@ extension Color {
     })
     static let branchGray = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark
-            ? UIColor(red: 155/255, green: 155/255, blue: 155/255, alpha: 1)
+            ? UIColor(red: 185/255, green: 185/255, blue: 185/255, alpha: 1)
             : UIColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1)
     })
     static let treeGreen = Color(red: 90/255, green: 125/255, blue: 60/255)

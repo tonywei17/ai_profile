@@ -31,10 +31,12 @@ struct CustomSizePickerView: View {
                 Text("\(Int(customSize.widthMM)) mm")
                     .font(.callout.monospacedDigit())
                     .frame(width: 60, alignment: .trailing)
-                Stepper("", value: $customSize.widthMM,
+                Stepper(widthLabel, value: $customSize.widthMM,
                         in: CustomSizeSpec.minWidth...CustomSizeSpec.maxWidth,
                         step: 1)
                 .labelsHidden()
+                .accessibilityLabel(widthLabel)
+                .accessibilityValue(Text("\(Int(customSize.widthMM)) mm"))
             }
 
             // Height stepper
@@ -46,10 +48,12 @@ struct CustomSizePickerView: View {
                 Text("\(Int(customSize.heightMM)) mm")
                     .font(.callout.monospacedDigit())
                     .frame(width: 60, alignment: .trailing)
-                Stepper("", value: $customSize.heightMM,
+                Stepper(heightLabel, value: $customSize.heightMM,
                         in: CustomSizeSpec.minHeight...CustomSizeSpec.maxHeight,
                         step: 1)
                 .labelsHidden()
+                .accessibilityLabel(heightLabel)
+                .accessibilityValue(Text("\(Int(customSize.heightMM)) mm"))
             }
 
             // Range hint

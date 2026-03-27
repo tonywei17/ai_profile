@@ -126,10 +126,6 @@ struct ContentView: View {
                             .opacity(inputImage == nil ? 0.4 : 1.0)
                             .allowsHitTesting(inputImage != nil)
 
-                            outputSection
-                                .opacity(inputImage == nil ? 0.4 : 1.0)
-                                .allowsHitTesting(inputImage != nil)
-
                             if outputImage != nil {
                                 resultCard.id("resultCard")
                             }
@@ -501,96 +497,110 @@ struct ContentView: View {
         VStack(spacing: 0) {
             Color.inkBlack.frame(height: 1)
 
-            if outputImage != nil {
-                // Post-generation: Reset + Print Layout
-                HStack(spacing: 0) {
-                    // Reset (outline, subtle)
-                    Button {
-                        withAnimation { outputImage = nil }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 13))
-                            Text(resetLabel)
-                                .font(.system(size: 14, weight: .medium))
-                        }
-                        .foregroundStyle(Color.inkBlack)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
-                    }
-
-                    // Print Layout (filled, Pro)
-                    Button {
-                        if subscription.isSubscribed {
-                            showPrintLayout = true
-                        } else {
-                            showSubscriptionSheet = true
-                            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "printLayout"])
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text("P")
-                                .font(.system(size: 11, weight: .bold))
-                            Text(printBottomLabel)
-                                .font(.system(size: 14, weight: .medium))
-                            if !subscription.isSubscribed {
-                                Text("PRO")
-                                    .font(.system(size: 9, weight: .bold))
-                                    .tracking(0.5)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 1)
-                                    .overlay(Rectangle().stroke(Color.inkFillForeground.opacity(0.5), lineWidth: 1))
-                            }
-                        }
-                        .foregroundStyle(Color.inkFillForeground)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.inkFill)
-                    }
+            Group {
+                if outputImage != nil {
+                    postGenerationBar
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                } else {
+                    preGenerationBar
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .move(edge: .trailing).combined(with: .opacity)
+                        ))
                 }
-                .padding(16)
-                .background(Color(.systemBackground))
-            } else {
-                // Pre-generation: Generate button + usage hint
-                VStack(spacing: 8) {
-                    Button {
-                        Task { await generateTapped() }
-                    } label: {
-                        HStack(spacing: 8) {
-                            if isGenerating {
-                                GeneratingLabel(language: lang)
-                            } else {
-                                Circle()
-                                    .fill(Color.treeGreen)
-                                    .frame(width: 6, height: 6)
-                                Text(generateLabel)
-                            }
-                        }
-                        .font(.system(size: 15, weight: .medium))
-                        .tracking(1)
-                        .foregroundStyle(inputImage == nil ? Color.inkFillForeground.opacity(0.4) : Color.inkFillForeground)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(inputImage == nil ? Color.inkFill.opacity(0.3) : Color.inkFill)
-                    }
-                    .disabled(isGenerating || inputImage == nil)
+            }
+            .animation(.easeInOut(duration: 0.3), value: outputImage != nil)
+        }
+    }
 
-                    // Usage hint
+    private var postGenerationBar: some View {
+        HStack(spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.3)) { outputImage = nil }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 13))
+                    Text(resetLabel)
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundStyle(Color.inkBlack)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+            }
+
+            Button {
+                if subscription.isSubscribed {
+                    showPrintLayout = true
+                } else {
+                    showSubscriptionSheet = true
+                    AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "printLayout"])
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text("P")
+                        .font(.system(size: 11, weight: .bold))
+                    Text(printBottomLabel)
+                        .font(.system(size: 14, weight: .medium))
                     if !subscription.isSubscribed {
-                        Text(freeUsageNote)
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color.branchGray)
-                    } else {
-                        Text(remainingCountText)
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color.branchGray)
+                        Text("PRO")
+                            .font(.system(size: 9, weight: .bold))
+                            .tracking(0.5)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .overlay(Rectangle().stroke(Color.inkFillForeground.opacity(0.5), lineWidth: 1))
                     }
                 }
-                .padding(16)
-                .background(Color(.systemBackground))
+                .foregroundStyle(Color.inkFillForeground)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.inkFill)
             }
         }
+        .padding(16)
+        .background(Color(.systemBackground))
+    }
+
+    private var preGenerationBar: some View {
+        VStack(spacing: 8) {
+            Button {
+                Task { await generateTapped() }
+            } label: {
+                HStack(spacing: 8) {
+                    if isGenerating {
+                        GeneratingLabel(language: lang)
+                    } else {
+                        Circle()
+                            .fill(inputImage == nil ? Color.branchGray : Color.treeGreen)
+                            .frame(width: 6, height: 6)
+                        Text(generateLabel)
+                    }
+                }
+                .font(.system(size: 15, weight: .medium))
+                .tracking(1)
+                .foregroundStyle(inputImage == nil ? Color.branchGray : Color.inkFillForeground)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(inputImage == nil ? Color(.systemGray5) : Color.inkFill)
+            }
+            .disabled(isGenerating || inputImage == nil)
+
+            if !subscription.isSubscribed {
+                Text(freeUsageNote)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.branchGray)
+            } else {
+                Text(remainingCountText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.branchGray)
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
     }
 
     // MARK: - Toast

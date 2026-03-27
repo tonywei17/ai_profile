@@ -41,30 +41,37 @@ struct ComparisonSliderView: View {
                     .allowsHitTesting(false)
                     .offset(x: dividerX - 1)
 
-                // Drag handle — only this area responds to drag
+                // Drag handle — only this area responds to horizontal drag
                 dragHandle
                     .offset(x: dividerX - 22)
                     .gesture(
-                        DragGesture(minimumDistance: 4)
+                        DragGesture(minimumDistance: 4, coordinateSpace: .named("slider"))
                             .onChanged { val in
                                 isDragging = true
-                                let new = (dividerX + val.translation.width) / geo.size.width
-                                withAnimation(.interactiveSpring()) {
-                                    progress = max(0.04, min(0.96, new))
-                                }
+                                let new = val.location.x / geo.size.width
+                                progress = max(0.04, min(0.96, new))
                             }
                             .onEnded { _ in
                                 isDragging = false
                             }
                     )
             }
-            // Allow vertical scroll to pass through when not dragging the handle
-            .contentShape(Rectangle())
+            .coordinateSpace(name: "slider")
         }
         .drawingGroup()
         .clipShape(Rectangle())
         .overlay {
             Rectangle().stroke(Color.inkBlack, lineWidth: 1)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Before and after comparison"))
+        .accessibilityValue(Text(String(format: "%.0f%% original", progress * 100)))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: progress = min(0.96, progress + 0.1)
+            case .decrement: progress = max(0.04, progress - 0.1)
+            @unknown default: break
+            }
         }
     }
 
