@@ -1,5 +1,11 @@
 import SwiftUI
 
+private let thumbnailCache: NSCache<NSString, UIImage> = {
+    let cache = NSCache<NSString, UIImage>()
+    cache.countLimit = 30
+    return cache
+}()
+
 struct HistoryView: View {
     @EnvironmentObject var langManager: LanguageManager
     @EnvironmentObject var historyManager: HistoryManager
@@ -28,7 +34,7 @@ struct HistoryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                GlassBackground.gradient.ignoresSafeArea()
+                Color(.systemBackground).ignoresSafeArea()
 
                 if historyManager.records.isEmpty {
                     emptyState
@@ -36,7 +42,12 @@ struct HistoryView: View {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(historyManager.records) { record in
-                                historyCell(record)
+                                HistoryCellView(
+                                    record: record,
+                                    saveLabel: saveLabel,
+                                    deleteLabel: deleteLabel,
+                                    onDelete: { withAnimation { historyManager.deleteRecord(record) } }
+                                )
                             }
                         }
                         .padding()
@@ -45,6 +56,7 @@ struct HistoryView: View {
             }
             .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.large)
+            .task { historyManager.ensureLoaded() }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { dismiss() } label: {
@@ -53,57 +65,6 @@ struct HistoryView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            }
-        }
-    }
-
-    // MARK: - Cell
-
-    private func historyCell(_ record: GenerationRecord) -> some View {
-        VStack(spacing: 6) {
-            if let data = try? Data(contentsOf: record.thumbnailURL),
-               let uiImage = UIImage(data: data) {
-                Color.clear
-                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
-                    .overlay {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            } else {
-                Color.clear
-                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(.secondary.opacity(0.15))
-                        Image(systemName: "photo")
-                            .foregroundStyle(.secondary)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-
-            Text(record.sizeLabel)
-                .font(.caption2.bold())
-                .foregroundStyle(.secondary)
-
-            Text(record.date, style: .date)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-        }
-        .contextMenu {
-            Button {
-                if let data = try? Data(contentsOf: record.thumbnailURL),
-                   let img = UIImage(data: data) {
-                    UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
-                }
-            } label: {
-                Label(saveLabel, systemImage: "square.and.arrow.down")
-            }
-            Button(role: .destructive) {
-                withAnimation { historyManager.deleteRecord(record) }
-            } label: {
-                Label(deleteLabel, systemImage: "trash")
             }
         }
     }
@@ -134,4 +95,80 @@ struct HistoryView: View {
     private var emptyTitle:    String { l("暂无记录", "No History Yet", "履歴なし", "기록 없음", vi: "Chưa có lịch sử", id: "Belum Ada Riwayat", pt: "Sem Histórico") }
     private var emptySubtitle: String { l("生成的证件照将显示在这里", "Generated ID photos will appear here", "生成した証明写真がここに表示されます", "생성된 증명사진이 여기에 표시됩니다",
                                           vi: "Ảnh thẻ đã tạo sẽ hiển thị tại đây", id: "Foto ID yang dibuat akan muncul di sini", pt: "Fotos geradas aparecerão aqui") }
+}
+
+// MARK: - History Cell with async thumbnail loading + cache
+
+private struct HistoryCellView: View {
+    let record: GenerationRecord
+    let saveLabel: String
+    let deleteLabel: String
+    let onDelete: () -> Void
+
+    @State private var thumbnail: UIImage?
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Color.clear
+                .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                .overlay {
+                    if let img = thumbnail {
+                        Image(uiImage: img)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Rectangle()
+                            .fill(.secondary.opacity(0.15))
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .clipShape(Rectangle())
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+
+            Text(record.sizeLabel)
+                .font(.caption2.bold())
+                .foregroundStyle(.secondary)
+
+            Text(record.date, style: .date)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .task(id: record.id) {
+            await loadThumbnail()
+        }
+        .contextMenu {
+            Button {
+                if let img = thumbnail {
+                    UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
+                }
+            } label: {
+                Label(saveLabel, systemImage: "square.and.arrow.down")
+            }
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label(deleteLabel, systemImage: "trash")
+            }
+        }
+    }
+
+    private func loadThumbnail() async {
+        let key = record.thumbnailFilename as NSString
+        if let cached = thumbnailCache.object(forKey: key) {
+            thumbnail = cached
+            return
+        }
+        // Load from disk on background thread
+        let url = record.thumbnailURL
+        let loaded = await Task.detached(priority: .utility) {
+            guard let data = try? Data(contentsOf: url),
+                  let img = UIImage(data: data) else { return nil as UIImage? }
+            return img
+        }.value
+        if let loaded {
+            thumbnailCache.setObject(loaded, forKey: key)
+            thumbnail = loaded
+        }
+    }
 }

@@ -16,6 +16,11 @@ struct PrintLayoutSheetView: View {
     @State private var showGuides = true
     @State private var renderedImage: UIImage?
     @State private var showSavedToast = false
+    @State private var layout: PrintLayoutInfo?
+
+    private var currentLayout: PrintLayoutInfo {
+        layout ?? PrintLayoutInfo.calculate(photoSizeMM: photoSizeMM, paperSize: selectedPaper)
+    }
 
     private var lang: String { langManager.effectiveCode }
 
@@ -32,13 +37,9 @@ struct PrintLayoutSheetView: View {
         }
     }
 
-    private var layout: PrintLayoutInfo {
-        PrintLayoutInfo.calculate(photoSizeMM: photoSizeMM, paperSize: selectedPaper)
-    }
-
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            GlassBackground.gradient.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
@@ -56,18 +57,17 @@ struct PrintLayoutSheetView: View {
 
             // Close
             Button { dismiss() } label: {
-                Image(systemName: "xmark")
-                    .font(.callout.bold())
-                    .padding(10)
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
-            .glassEffect(.regular.interactive(), in: .circle)
             .padding(16)
         }
         .overlay(alignment: .bottom) {
             if showSavedToast { savedToast }
         }
-        .task { renderPreview() }
-        .onChange(of: selectedPaper) { _ in renderPreview() }
+        .task { updateLayout(); renderPreview() }
+        .onChange(of: selectedPaper) { _ in updateLayout(); renderPreview() }
         .onChange(of: showGuides) { _ in renderPreview() }
     }
 
@@ -75,25 +75,22 @@ struct PrintLayoutSheetView: View {
 
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Image(systemName: "printer.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            ZStack {
+                Rectangle()
+                    .stroke(Color.inkBlack, lineWidth: 1)
+                    .frame(width: 40, height: 40)
+                Text("P")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(Color.inkBlack)
+            }
 
             Text(sheetTitle)
-                .font(lang == "en"
-                      ? .custom("PlusJakartaSans-Bold", size: 24)
-                      : .system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(GlassBackground.titleGradient(for: colorScheme))
+                .font(.system(size: 22, weight: .medium))
+                .foregroundStyle(Color.inkBlack)
 
             Text(sheetSubtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.branchGray)
                 .multilineTextAlignment(.center)
         }
     }
@@ -110,8 +107,8 @@ struct PrintLayoutSheetView: View {
                         contentMode: .fit
                     )
                     .frame(maxHeight: 360)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                    .clipShape(Rectangle())
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
             } else {
                 ProgressView()
                     .frame(height: 200)
@@ -119,7 +116,7 @@ struct PrintLayoutSheetView: View {
 
             HStack(spacing: 16) {
                 Label(
-                    "\(layout.totalCount)\(photoCountUnit)",
+                    "\(currentLayout.totalCount)\(photoCountUnit)",
                     systemImage: "square.grid.2x2"
                 )
                 .font(.callout.bold())
@@ -138,7 +135,7 @@ struct PrintLayoutSheetView: View {
             }
         }
         .padding()
-        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     // MARK: - Paper Size Picker
@@ -161,35 +158,26 @@ struct PrintLayoutSheetView: View {
                     } label: {
                         VStack(spacing: 6) {
                             Text(size.displayName(language: lang))
-                                .font(.callout.bold())
-                                .foregroundStyle(isSelected ? .white : .primary)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(Color.inkBlack)
                             Text(size.sizeLabel)
-                                .font(.caption)
-                                .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.branchGray)
                             Text("\(info.totalCount)\(photoCountUnit)")
-                                .font(.caption2.bold())
+                                .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
-                                .background(
-                                    isSelected ? Color.white.opacity(0.25) : Color.blue
-                                )
-                                .clipShape(Capsule())
+                                .background(Color.inkBlack)
                             Text(size.priceHint(language: lang))
-                                .font(.caption2)
-                                .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.branchGray)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                     }
-                    .glassEffect(
-                        isSelected ? .regular.tint(.blue) : .regular,
-                        in: .rect(cornerRadius: 14)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .strokeBorder(isSelected ? Color.blue.opacity(0.6) : .clear, lineWidth: 2)
-                    )
+                    .background(isSelected ? Color.paperTan : Color(.systemBackground))
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 2 : 1))
                 }
             }
         }
@@ -225,7 +213,7 @@ struct PrintLayoutSheetView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     // MARK: - Save
@@ -233,34 +221,32 @@ struct PrintLayoutSheetView: View {
     private var saveButton: some View {
         Group {
             if isSubscribed {
-                // Subscriber: free save
                 Button {
                     savePrintLayout()
                 } label: {
                     Label(saveLayoutLabel, systemImage: "square.and.arrow.down")
-                        .font(.headline)
+                        .font(.system(size: 15, weight: .medium))
+                        .tracking(0.5)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .foregroundStyle(.white)
                 }
-                .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+                .background(Color.inkBlack)
             } else if subscription.printLayoutCredits > 0 {
-                // Has credits: use credit to save
                 Button {
                     subscription.consumePrintLayoutCredit()
                     savePrintLayout()
                 } label: {
                     Label(saveWithCreditLabel, systemImage: "square.and.arrow.down")
-                        .font(.headline)
+                        .font(.system(size: 15, weight: .medium))
+                        .tracking(0.5)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .foregroundStyle(.white)
                 }
-                .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+                .background(Color.inkBlack)
             } else {
-                // No access: show purchase options
                 VStack(spacing: 12) {
-                    // Single purchase
                     Button {
                         Task { await subscription.purchasePrintLayout() }
                     } label: {
@@ -268,10 +254,10 @@ struct PrintLayoutSheetView: View {
                             Image(systemName: "cart.fill")
                                 .font(.body)
                             Text(singlePurchaseLabel)
-                                .font(.headline)
+                                .font(.system(size: 15, weight: .medium))
                             Spacer()
                             Text(subscription.printLayoutSingleDisplayPrice ?? "---")
-                                .font(.callout.bold())
+                                .font(.system(size: 14, weight: .bold))
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 16)
@@ -279,33 +265,33 @@ struct PrintLayoutSheetView: View {
                         .foregroundStyle(.white)
                     }
                     .disabled(subscription.isPurchasing)
-                    .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+                    .background(Color.inkBlack)
 
-                    // Subscribe hint
                     Button { onLockedTap() } label: {
                         HStack(spacing: 10) {
-                            Image(systemName: "crown.fill")
-                                .font(.body)
-                                .foregroundStyle(.yellow)
+                            Text("PRO")
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1)
+                                .foregroundStyle(Color.inkBlack)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(subscribeHintLabel)
-                                    .font(.callout.bold())
+                                    .font(.system(size: 14, weight: .medium))
                                 Text(subscribeHintDesc)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Color.branchGray)
                                     .multilineTextAlignment(.leading)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.branchGray)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Color.inkBlack)
                     }
-                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
                 }
             }
         }
@@ -346,23 +332,31 @@ struct PrintLayoutSheetView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     // MARK: - Toast
 
     private var savedToast: some View {
-        Label(savedLabel, systemImage: "checkmark.circle.fill")
-            .font(.subheadline.bold())
-            .foregroundStyle(.white)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .glassEffect(.regular.tint(.green), in: .capsule)
-            .padding(.bottom, 48)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 12, weight: .bold))
+            Text(savedLabel)
+                .font(.system(size: 13, weight: .medium))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(Color.inkBlack)
+        .padding(.bottom, 48)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     // MARK: - Helpers
+
+    private func updateLayout() {
+        layout = PrintLayoutInfo.calculate(photoSizeMM: photoSizeMM, paperSize: selectedPaper)
+    }
 
     private func renderPreview() {
         renderedImage = PrintLayoutService.shared.renderLayout(

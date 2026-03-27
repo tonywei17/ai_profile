@@ -31,7 +31,7 @@ struct SubscriptionSheetView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            GlassBackground.gradient.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
@@ -50,11 +50,10 @@ struct SubscriptionSheetView: View {
 
             // Close button
             Button { dismiss() } label: {
-                Image(systemName: "xmark")
-                    .font(.callout.bold())
-                    .padding(10)
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
-            .glassEffect(.regular.interactive(), in: .circle)
             .padding(16)
         }
         .alert(errorAlertTitle, isPresented: Binding(
@@ -71,29 +70,13 @@ struct SubscriptionSheetView: View {
 
     private var heroSection: some View {
         VStack(spacing: 12) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color(hue: 0.12, saturation: 0.9, brightness: 1.0),
-                                 Color(hue: 0.07, saturation: 1.0, brightness: 0.9)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .scaleEffect(crownPulse ? 1.08 : 1.0)
-                .animation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true), value: crownPulse)
-                .onAppear { crownPulse = true }
-                .shadow(color: .orange.opacity(0.4), radius: 16, y: 6)
-
             Text(heroTitle)
-                .font(heroTitleFont)
-                .foregroundStyle(GlassBackground.titleGradient(for: colorScheme))
+                .font(.system(size: 26, weight: .medium))
+                .foregroundStyle(Color.inkBlack)
 
             Text(heroSubtitle)
-                .font(.subheadline.weight(.light))
-                .italic()
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.branchGray)
                 .multilineTextAlignment(.center)
         }
     }
@@ -142,7 +125,7 @@ struct SubscriptionSheetView: View {
             }
         }
         .padding(16)
-        .glassEffect(.regular.tint(.orange.opacity(0.08)), in: .rect(cornerRadius: 16))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     // MARK: - Benefits
@@ -173,17 +156,16 @@ struct SubscriptionSheetView: View {
                        title: benefitUpdatesTitle,
                        desc: benefitUpdatesDesc)
         }
-        .glassEffect(.regular, in: .rect(cornerRadius: 18))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     private func benefitRow(icon: String, color: Color, title: String, desc: String) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.inkBlack)
                 .frame(width: 36, height: 36)
-                .background(color.gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 9))
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.callout.bold())
@@ -192,7 +174,7 @@ struct SubscriptionSheetView: View {
             Spacer()
             Image(systemName: "checkmark")
                 .font(.caption.bold())
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.treeGreen)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -253,8 +235,8 @@ struct SubscriptionSheetView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.orange.gradient)
-                            .clipShape(Capsule())
+                            .background(Color.inkBlack)
+                            .padding(.horizontal, 2)
                     }
                     Text(price)
                         .font(.system(size: 20, weight: .bold))
@@ -266,14 +248,8 @@ struct SubscriptionSheetView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
-        .glassEffect(
-            isSelected ? .regular.tint(.blue.opacity(0.15)) : .regular,
-            in: .rect(cornerRadius: 16)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(isSelected ? Color.blue.opacity(0.6) : Color.clear, lineWidth: 2)
-        )
+        .background(isSelected ? Color.paperTan : Color(.systemBackground))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 2 : 1))
     }
 
     // MARK: - CTA
@@ -303,7 +279,7 @@ struct SubscriptionSheetView: View {
             .foregroundStyle(.white)
         }
         .disabled(subscription.isPurchasing)
-        .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+        .background(Color.inkBlack)
     }
 
     // MARK: - Social Proof

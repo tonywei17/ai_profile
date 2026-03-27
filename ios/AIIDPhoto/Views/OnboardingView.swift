@@ -36,7 +36,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            GlassBackground.gradient.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 TabView(selection: $currentPage) {
@@ -68,7 +68,7 @@ struct OnboardingView: View {
 
             Text(pageTitle(index))
                 .font(titleFont)
-                .foregroundStyle(GlassBackground.titleGradient(for: colorScheme))
+                .foregroundStyle(Color.inkBlack)
 
             Text(pageSubtitle(index))
                 .font(.body)
@@ -99,7 +99,7 @@ struct OnboardingView: View {
 
             Text(readyTitle)
                 .font(titleFont)
-                .foregroundStyle(GlassBackground.titleGradient(for: colorScheme))
+                .foregroundStyle(Color.inkBlack)
 
             Text(readySubtitle)
                 .font(.body)
@@ -118,7 +118,7 @@ struct OnboardingView: View {
                     .padding(.vertical, 16)
                     .foregroundStyle(.white)
             }
-            .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+            .background(Color.inkBlack)
             .padding(.horizontal, 24)
 
             Spacer()

@@ -11,16 +11,13 @@ struct CustomSizePickerView: View {
             // Header
             HStack(spacing: 8) {
                 Image(systemName: "ruler.fill")
-                    .foregroundStyle(
-                        LinearGradient(colors: [.blue, .purple],
-                                       startPoint: .leading, endPoint: .trailing)
-                    )
+                    .foregroundStyle(Color.inkBlack)
                 Text(title)
-                    .font(.callout.bold())
+                    .font(.system(size: 14, weight: .medium))
                 Spacer()
                 Text(customSize.sizeLabel)
-                    .font(.callout.monospacedDigit().bold())
-                    .foregroundStyle(.blue)
+                    .font(.system(size: 14, weight: .bold).monospacedDigit())
+                    .foregroundStyle(Color.inkBlack)
             }
 
             Divider()
@@ -62,7 +59,7 @@ struct CustomSizePickerView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(16)
-        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
     }
 
     // MARK: - Localized Strings

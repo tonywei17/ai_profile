@@ -61,25 +61,25 @@ private struct AdaptiveGradientBackground: View {
         Ellipse()
             .fill(Color(red: 0.48, green: 0.76, blue: 0.95).opacity(0.80))
             .frame(width: w * 0.90, height: h * 0.52)
-            .blur(radius: w * 0.20)
+            .blur(radius: min(w * 0.20, 60))
             .offset(x: -w * 0.24, y: -h * 0.20)
 
         Ellipse()
             .fill(Color(red: 0.96, green: 0.66, blue: 0.85).opacity(0.72))
             .frame(width: w * 0.78, height: h * 0.48)
-            .blur(radius: w * 0.18)
+            .blur(radius: min(w * 0.18, 60))
             .offset(x: w * 0.26, y: -h * 0.16)
 
         Ellipse()
             .fill(Color(red: 0.60, green: 0.67, blue: 0.93).opacity(0.68))
             .frame(width: w * 0.82, height: h * 0.44)
-            .blur(radius: w * 0.20)
+            .blur(radius: min(w * 0.20, 60))
             .offset(x: -w * 0.20, y: h * 0.30)
 
         Ellipse()
             .fill(Color(red: 0.82, green: 0.75, blue: 0.95).opacity(0.55))
             .frame(width: w * 0.65, height: h * 0.40)
-            .blur(radius: w * 0.16)
+            .blur(radius: min(w * 0.16, 60))
             .offset(x: w * 0.22, y: h * 0.26)
     }
 
@@ -90,25 +90,57 @@ private struct AdaptiveGradientBackground: View {
         Ellipse()
             .fill(Color(red: 0.12, green: 0.25, blue: 0.42).opacity(0.70))
             .frame(width: w * 0.90, height: h * 0.52)
-            .blur(radius: w * 0.22)
+            .blur(radius: min(w * 0.22, 60))
             .offset(x: -w * 0.24, y: -h * 0.20)
 
         Ellipse()
             .fill(Color(red: 0.38, green: 0.16, blue: 0.32).opacity(0.55))
             .frame(width: w * 0.78, height: h * 0.48)
-            .blur(radius: w * 0.20)
+            .blur(radius: min(w * 0.20, 60))
             .offset(x: w * 0.26, y: -h * 0.16)
 
         Ellipse()
             .fill(Color(red: 0.16, green: 0.20, blue: 0.40).opacity(0.55))
             .frame(width: w * 0.82, height: h * 0.44)
-            .blur(radius: w * 0.22)
+            .blur(radius: min(w * 0.22, 60))
             .offset(x: -w * 0.20, y: h * 0.30)
 
         Ellipse()
             .fill(Color(red: 0.24, green: 0.18, blue: 0.38).opacity(0.45))
             .frame(width: w * 0.65, height: h * 0.40)
-            .blur(radius: w * 0.18)
+            .blur(radius: min(w * 0.18, 60))
             .offset(x: w * 0.22, y: h * 0.26)
     }
+}
+
+// MARK: - Editorial Design Palette (adaptive light/dark)
+
+extension Color {
+    static let paperTan = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 60/255, green: 52/255, blue: 42/255, alpha: 1)
+            : UIColor(red: 214/255, green: 201/255, blue: 181/255, alpha: 1)
+    })
+    static let inkBlack = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 230/255, green: 230/255, blue: 230/255, alpha: 1)
+            : UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
+    })
+    static let branchGray = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 155/255, green: 155/255, blue: 155/255, alpha: 1)
+            : UIColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1)
+    })
+    static let treeGreen = Color(red: 90/255, green: 125/255, blue: 60/255)
+    /// Adaptive background that inverts ink for filled buttons in dark mode
+    static let inkFill = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 230/255, green: 230/255, blue: 230/255, alpha: 1)
+            : UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
+    })
+    static let inkFillForeground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
+            : UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1)
+    })
 }

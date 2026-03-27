@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
     @EnvironmentObject var langManager: LanguageManager
@@ -17,7 +18,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                GlassBackground.gradient.ignoresSafeArea()
+                Color(.systemBackground).ignoresSafeArea()
 
                 List {
                     // MARK: Subscription
@@ -25,6 +26,9 @@ struct SettingsView: View {
                         subscriptionStatusRow
                         if subscription.isSubscribed {
                             manageSubscriptionRow
+                            if !subscription.willAutoRenew {
+                                resubscribeHintRow
+                            }
                         } else {
                             upgradeRow
                         }
@@ -32,7 +36,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "crown.fill", title: sectionTitle("Membership", "会员", "会員", "멤버십", vi: "Thành viên", id: "Keanggotaan", pt: "Assinatura"))
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
 
                     // MARK: Appearance
                     Section {
@@ -58,7 +62,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "paintbrush.fill", title: sectionTitle("Appearance", "外观", "外観", "외관", vi: "Giao diện", id: "Tampilan", pt: "Aparência"))
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
 
                     // MARK: Language
                     Section {
@@ -75,7 +79,7 @@ struct SettingsView: View {
                     } footer: {
                         Text(footerNote).font(.caption)
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
 
                     // MARK: Region
                     Section {
@@ -94,7 +98,7 @@ struct SettingsView: View {
                     } footer: {
                         Text(regionFooter).font(.caption)
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
 
                     // MARK: App Info
                     Section {
@@ -103,7 +107,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "info.circle", title: sectionTitle("App", "应用", "アプリ", "앱", vi: "Ứng dụng", id: "Aplikasi", pt: "Aplicativo"))
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
 
                     // MARK: Referral
                     Section {
@@ -111,10 +115,10 @@ struct SettingsView: View {
                         Button { shareReferralCode() } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "person.2.fill")
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color.inkBlack)
                                     .frame(width: 28, height: 28)
-                                    .background(Color.green.gradient)
-                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                                    .clipShape(Rectangle())
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(inviteLabel).foregroundStyle(.primary)
                                     if let code = referralManager.referralCode {
@@ -132,10 +136,10 @@ struct SettingsView: View {
                         if referralManager.bonusGenerations > 0 {
                             HStack(spacing: 12) {
                                 Image(systemName: "gift.fill")
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color.inkBlack)
                                     .frame(width: 28, height: 28)
-                                    .background(Color.purple.gradient)
-                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                                    .clipShape(Rectangle())
                                 Text(bonusLabel)
                                 Spacer()
                                 Text("\(referralManager.bonusGenerations)")
@@ -147,10 +151,10 @@ struct SettingsView: View {
                         // Redeem code
                         HStack(spacing: 12) {
                             Image(systemName: "ticket.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color.inkBlack)
                                 .frame(width: 28, height: 28)
-                                .background(Color.orange.gradient)
-                                .clipShape(RoundedRectangle(cornerRadius: 7))
+                                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                                .clipShape(Rectangle())
                             TextField(redeemPlaceholder, text: $redeemCodeInput)
                                 .textInputAutocapitalization(.characters)
                                 .autocorrectionDisabled()
@@ -170,7 +174,7 @@ struct SettingsView: View {
                     } footer: {
                         Text(referralFooter).font(.caption)
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
 
                     // MARK: Legal
                     Section {
@@ -183,7 +187,7 @@ struct SettingsView: View {
                     } header: {
                         sectionHeader(icon: "lock.shield", title: sectionTitle("Legal", "法律", "法的情報", "법적 정보", vi: "Pháp lý", id: "Hukum", pt: "Legal"))
                     }
-                    .listRowBackground(Color.primary.opacity(0.06))
+                    .listRowBackground(Color.white)
                 }
                 .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
@@ -235,18 +239,23 @@ struct SettingsView: View {
 
     private var subscriptionStatusRow: some View {
         HStack(spacing: 12) {
-            Image(systemName: subscription.isSubscribed ? "checkmark.seal.fill" : "crown")
-                .foregroundStyle(.white)
+            Image(systemName: subscriptionStatusIcon)
+                .foregroundStyle(Color.inkBlack)
                 .frame(width: 28, height: 28)
-                .background((subscription.isSubscribed ? Color.orange : Color.gray).gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
             VStack(alignment: .leading, spacing: 2) {
-                Text(subscription.isSubscribed ? subscribedLabel : notSubscribedLabel)
+                Text(subscriptionStatusLabel)
                     .font(.callout)
                 if subscription.isSubscribed, let exp = subscription.expirationDate {
-                    Text(expiryText(exp))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if subscription.willAutoRenew {
+                        Text(renewsText(exp))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(expiresText(exp))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
                 } else if subscription.isSubscribed {
                     Text(todayRemainingText)
                         .font(.caption)
@@ -261,16 +270,31 @@ struct SettingsView: View {
         }
     }
 
+    private var subscriptionStatusIcon: String {
+        if !subscription.isSubscribed { return "crown" }
+        return subscription.willAutoRenew ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
+    }
+
+    private var subscriptionStatusColor: Color {
+        if !subscription.isSubscribed { return .gray }
+        return subscription.willAutoRenew ? .orange : .yellow
+    }
+
+    private var subscriptionStatusLabel: String {
+        if !subscription.isSubscribed { return notSubscribedLabel }
+        return subscription.willAutoRenew ? subscribedLabel : cancelledLabel
+    }
+
     private var upgradeRow: some View {
         Button {
             showSubscriptionSheet = true
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "arrow.up.circle.fill")
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.inkBlack)
                     .frame(width: 28, height: 28)
-                    .background(Color.blue.gradient)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                    .clipShape(Rectangle())
                 Text(upgradeLabel)
                     .foregroundStyle(.primary)
                 Spacer()
@@ -287,21 +311,60 @@ struct SettingsView: View {
 
     private var manageSubscriptionRow: some View {
         Button {
-            if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
-                UIApplication.shared.open(url)
+            Task {
+                if let scene = UIApplication.shared.connectedScenes
+                    .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                    do {
+                        try await AppStore.showManageSubscriptions(in: scene)
+                    } catch {
+                        // Fallback to URL if native sheet fails
+                        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+                            await UIApplication.shared.open(url)
+                        }
+                    }
+                }
             }
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "gearshape.fill")
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.inkBlack)
                     .frame(width: 28, height: 28)
-                    .background(Color.purple.gradient)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                    .clipShape(Rectangle())
                 Text(manageLabel)
                     .foregroundStyle(.primary)
                 Spacer()
-                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.secondary)
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private var resubscribeHintRow: some View {
+        Button {
+            showSubscriptionSheet = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.up.heart.fill")
+                    .foregroundStyle(Color.inkBlack)
+                    .frame(width: 28, height: 28)
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                    .clipShape(Rectangle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(resubscribeLabel)
+                        .foregroundStyle(.primary)
+                    Text(resubscribeDesc)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .sheet(isPresented: $showSubscriptionSheet) {
+            SubscriptionSheetView()
+                .environmentObject(subscription)
+                .environmentObject(langManager)
+                .presentationDetents([.large])
         }
     }
 
@@ -311,10 +374,10 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "arrow.clockwise")
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.inkBlack)
                     .frame(width: 28, height: 28)
-                    .background(Color.teal.gradient)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+                    .clipShape(Rectangle())
                 Text(restoreLabel)
                     .foregroundStyle(.primary)
                 Spacer()
@@ -348,10 +411,9 @@ struct SettingsView: View {
     private func infoRow(icon: String, color: Color, label: String, value: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.inkBlack)
                 .frame(width: 28, height: 28)
-                .background(color.gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
             Text(label)
             Spacer()
             Text(value).foregroundStyle(.secondary).font(.callout)
@@ -361,10 +423,9 @@ struct SettingsView: View {
     private func legalRow(icon: String, color: Color, title: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.inkBlack)
                 .frame(width: 28, height: 28)
-                .background(color.gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
             Text(title).foregroundStyle(.primary)
             Spacer()
             Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.secondary)
@@ -434,12 +495,31 @@ struct SettingsView: View {
         let n = usage.subscriberUsesLeft
         return sectionTitle("Today's remaining: \(n)", "今日剩余：\(n) 次", "本日残り：\(n)回", "오늘 남은 횟수: \(n)회", vi: "Còn lại hôm nay: \(n)", id: "Sisa hari ini: \(n)", pt: "Restantes hoje: \(n)")
     }
-    private func expiryText(_ date: Date) -> String {
+    private var cancelledLabel: String {
+        sectionTitle("Pro (Cancelled)", "专业会员（已取消）", "プロ会員（解約済み）", "프로 회원 (취소됨)",
+                     vi: "Pro (Đã hủy)", id: "Pro (Dibatalkan)", pt: "Pro (Cancelado)")
+    }
+    private var resubscribeLabel: String {
+        sectionTitle("Resubscribe", "重新订阅", "再購読", "다시 구독",
+                     vi: "Đăng ký lại", id: "Berlangganan Lagi", pt: "Reativar Assinatura")
+    }
+    private var resubscribeDesc: String {
+        sectionTitle("Don't lose your Pro features", "保留专业功能，不要错过", "プロ機能を失わないように", "프로 기능을 잃지 마세요",
+                     vi: "Đừng mất tính năng Pro", id: "Jangan kehilangan fitur Pro", pt: "Não perca seus recursos Pro")
+    }
+    private func renewsText(_ date: Date) -> String {
         let fmt = DateFormatter()
         fmt.dateStyle = .medium
         fmt.timeStyle = .none
         let ds = fmt.string(from: date)
         return sectionTitle("Renews \(ds)", "续期日期：\(ds)", "更新日：\(ds)", "갱신일: \(ds)", vi: "Gia hạn \(ds)", id: "Perpanjang \(ds)", pt: "Renova \(ds)")
+    }
+    private func expiresText(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateStyle = .medium
+        fmt.timeStyle = .none
+        let ds = fmt.string(from: date)
+        return sectionTitle("Expires \(ds)", "到期日期：\(ds)", "有効期限：\(ds)", "만료일: \(ds)", vi: "Hết hạn \(ds)", id: "Berakhir \(ds)", pt: "Expira \(ds)")
     }
 
     // MARK: - Referral Strings & Actions

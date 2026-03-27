@@ -4,6 +4,7 @@ import SwiftUI
 struct ComparisonSliderView: View {
     let before: UIImage
     let after: UIImage
+    var language: String = "en"
 
     @State private var progress: CGFloat = 0.5
 
@@ -53,9 +54,10 @@ struct ComparisonSliderView: View {
                     }
             )
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .drawingGroup()
+        .clipShape(Rectangle())
         .overlay {
-            RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.15))
+            Rectangle().stroke(Color.inkBlack, lineWidth: 1)
         }
     }
 
@@ -65,10 +67,10 @@ struct ComparisonSliderView: View {
     private func labelOverlay(dividerX: CGFloat, width: CGFloat) -> some View {
         VStack {
             HStack {
-                pillLabel("原图")
+                pillLabel(beforeLabel)
                     .opacity(progress > 0.12 ? 1 : 0)
                 Spacer()
-                pillLabel("AI 生成")
+                pillLabel(afterLabel)
                     .opacity(progress < 0.88 ? 1 : 0)
             }
             .padding(.horizontal, 12)
@@ -81,11 +83,36 @@ struct ComparisonSliderView: View {
 
     private func pillLabel(_ text: String) -> some View {
         Text(text)
-            .font(.caption.bold())
+            .font(.system(size: 11, weight: .medium))
+            .tracking(0.5)
             .foregroundStyle(.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(.black.opacity(0.45), in: Capsule())
+            .background(Color.inkBlack.opacity(0.6))
+    }
+
+    private var beforeLabel: String {
+        switch language {
+        case "zh": return "原图"
+        case "ja": return "元画像"
+        case "ko": return "원본"
+        case "vi": return "Gốc"
+        case "id": return "Asli"
+        case "pt": return "Original"
+        default:   return "Original"
+        }
+    }
+
+    private var afterLabel: String {
+        switch language {
+        case "zh": return "AI 生成"
+        case "ja": return "AI 生成"
+        case "ko": return "AI 생성"
+        case "vi": return "AI tạo"
+        case "id": return "AI Dibuat"
+        case "pt": return "AI Gerado"
+        default:   return "AI Generated"
+        }
     }
 
     private var dragHandle: some View {

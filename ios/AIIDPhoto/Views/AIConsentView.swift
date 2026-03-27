@@ -26,7 +26,7 @@ struct AIConsentView: View {
 
     var body: some View {
         ZStack {
-            GlassBackground.gradient.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -34,18 +34,13 @@ struct AIConsentView: View {
                 VStack(spacing: 24) {
                     // Icon
                     Image(systemName: "person.crop.circle.badge.checkmark")
-                        .font(.system(size: 64, weight: .thin))
-                        .foregroundStyle(
-                            LinearGradient(colors: [.blue, .purple],
-                                           startPoint: .topLeading,
-                                           endPoint: .bottomTrailing)
-                        )
-                        .shadow(color: .blue.opacity(0.3), radius: 16, y: 6)
+                        .font(.system(size: 48, weight: .thin))
+                        .foregroundStyle(Color.inkBlack)
 
                     // Title
                     Text(titleText)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(GlassBackground.titleGradient(for: colorScheme))
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(Color.inkBlack)
                         .multilineTextAlignment(.center)
 
                     // Data disclosure card
@@ -66,7 +61,7 @@ struct AIConsentView: View {
                                       detail: retentionDetail)
                     }
                     .padding(20)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 20))
+                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
 
                     Text(footerNote)
                         .font(.caption)
@@ -89,7 +84,7 @@ struct AIConsentView: View {
                             .padding(.vertical, 16)
                             .foregroundStyle(.white)
                     }
-                    .glassEffect(.regular.tint(.blue).interactive(), in: .rect(cornerRadius: 16))
+                    .background(Color.inkBlack)
 
                     Button {
                         onDecline()
@@ -111,10 +106,9 @@ struct AIConsentView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.inkBlack)
                 .frame(width: 34, height: 34)
-                .background(color.gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.callout.bold())
