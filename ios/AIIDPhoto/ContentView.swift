@@ -43,6 +43,10 @@ struct ContentView: View {
     @State private var showPhotoSourceDialog = false
     @State private var showPhotoChangeDialog = false
 
+    // Usage limit alert
+    @State private var showLimitAlert = false
+    @State private var limitAlertMessage = ""
+
     @AppStorage("successfulGenerations") private var successfulGenerations: Int = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion: String = ""
     @AppStorage("hasGivenAIConsent") private var hasGivenAIConsent: Bool = false
@@ -217,6 +221,12 @@ struct ContentView: View {
             Button(okLabel, role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+        .alert(limitAlertTitle, isPresented: $showLimitAlert) {
+            Button(upgradeLabel) { showSubscriptionSheet = true }
+            Button(okLabel, role: .cancel) {}
+        } message: {
+            Text(limitAlertMessage)
         }
         .onChange(of: selectedSpec) { _ in
             photoOptions.background = .specDefault
@@ -670,6 +680,10 @@ struct ContentView: View {
     private var outfitToggleDesc:       String { l("自动换装西装与白底背景", "Auto suit change & white background", "スーツへの自動着せ替えと白背景化", "자동 정장 착용 및 흰색 배경", vi: "Tự động đổi vest & nền trắng", id: "Otomatis ganti jas & latar putih", pt: "Traje automático & fundo branco") }
     private var printToggleLabel:       String { l("便利店排版打印", "Convenience Store Print", "コンビニプリント対応排版", "편의점 인쇄 레이아웃", vi: "In tại cửa hàng", id: "Layout Cetak", pt: "Layout de Impressão") }
     private var resetLabel:             String { l("重置", "Reset", "リセット", "리셋", vi: "Đặt lại", id: "Reset", pt: "Redefinir") }
+    private var limitAlertTitle:        String { l("次数已用完", "Limit Reached", "回数上限に達しました", "횟수 초과", vi: "Đã hết lượt", id: "Batas Tercapai", pt: "Limite Atingido") }
+    private var limitReachedMessage:    String { l("今日免费次数已用完。升级会员可无限生成，无需观看广告。", "You've used all free generations for today. Upgrade to Pro for unlimited generations without ads.", "本日の無料回数を使い切りました。プロにアップグレードすると、広告なしで無制限に生成できます。", "오늘의 무료 횟수를 모두 사용했습니다. 프로로 업그레이드하면 광고 없이 무제한 생성할 수 있습니다.", vi: "Đã hết lượt miễn phí hôm nay. Nâng cấp Pro để tạo không giới hạn.", id: "Kuota gratis hari ini habis. Upgrade ke Pro untuk tanpa batas.", pt: "Gerações gratuitas esgotadas hoje. Assine Pro para ilimitado.") }
+    private var subscriberLimitMessage: String { l("今日生成次数已达上限，请明天再试。", "You've reached today's generation limit. Please try again tomorrow.", "本日の生成回数上限に達しました。明日もう一度お試しください。", "오늘의 생성 횟수 한도에 도달했습니다. 내일 다시 시도해 주세요.", vi: "Đã đạt giới hạn hôm nay. Vui lòng thử lại ngày mai.", id: "Batas hari ini tercapai. Coba lagi besok.", pt: "Limite de hoje atingido. Tente novamente amanhã.") }
+    private var upgradeLabel:           String { l("升级会员", "Upgrade", "アップグレード", "업그레이드", vi: "Nâng cấp", id: "Upgrade", pt: "Assinar") }
     private var printBottomLabel:       String { l("便利店打印", "Print Layout", "コンビニプリント", "편의점 인쇄", vi: "In ảnh", id: "Cetak", pt: "Imprimir") }
 
     // MARK: - Actions
@@ -697,10 +711,12 @@ struct ContentView: View {
             }
             await presentRewardedThenGenerate(input: input)
         case .reachedDailyLimit:
-            showSubscriptionSheet = true
+            limitAlertMessage = limitReachedMessage
+            showLimitAlert = true
             AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedDailyLimit"])
         case .reachedLimit:
-            showSubscriptionSheet = true
+            limitAlertMessage = subscriberLimitMessage
+            showLimitAlert = true
             AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedLimit"])
         }
     }
