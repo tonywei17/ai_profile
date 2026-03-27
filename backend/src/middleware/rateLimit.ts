@@ -2,10 +2,11 @@ import { Request, Response, NextFunction } from "express";
 
 const windowMs = 60 * 1000; // 1 minute
 const maxRequests = 10; // max 10 requests per minute per IP
+const MAX_MAP_SIZE = 10_000; // OOM prevention
 
 const requests = new Map<string, { count: number; resetAt: number }>();
 
-// Periodic cleanup to prevent memory leak
+// Periodic cleanup
 setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of requests) {
@@ -15,14 +16,11 @@ setInterval(() => {
   }
 }, 60_000);
 
+/**
+ * Extract client IP using Express trust proxy (set in index.ts).
+ * Cloud Run sets x-forwarded-for correctly; Express parses it via req.ip.
+ */
 export function extractClientIp(req: Request): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (forwarded) {
-    const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
-      .split(",")[0]
-      .trim();
-    if (first) return first;
-  }
   return req.ip || req.socket.remoteAddress || "unknown";
 }
 
@@ -32,12 +30,17 @@ export function rateLimit(req: Request, res: Response, next: NextFunction) {
   const entry = requests.get(ip);
 
   if (!entry || now > entry.resetAt) {
+    // OOM guard: if Map is too large, clear it (all entries are short-lived)
+    if (requests.size >= MAX_MAP_SIZE) {
+      console.warn(`[rateLimit] Map size exceeded ${MAX_MAP_SIZE}, clearing`);
+      requests.clear();
+    }
     requests.set(ip, { count: 1, resetAt: now + windowMs });
     return next();
   }
 
   if (entry.count >= maxRequests) {
-    res.status(429).json({ error: "请求过于频繁，请稍后再试" });
+    res.status(429).json({ error: "Too many requests, please try again later" });
     return;
   }
 

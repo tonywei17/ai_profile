@@ -7,6 +7,7 @@ const router = Router();
 // Dedicated rate limiter for expensive /generate endpoint: 3 req/min/IP
 const GENERATE_WINDOW_MS = 60_000;
 const GENERATE_MAX_REQ = 3;
+const MAX_MAP_SIZE = 10_000;
 const generateLimiter = new Map<string, { count: number; resetAt: number }>();
 
 setInterval(() => {
@@ -16,10 +17,28 @@ setInterval(() => {
   }
 }, 60_000);
 
+// Daily budget circuit breaker
+let dailyBudget = { count: 0, date: "" };
+
+function checkDailyBudget(): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dailyBudget.date !== today) {
+    dailyBudget = { count: 0, date: today };
+  }
+  if (dailyBudget.count >= config.dailyBudget) {
+    return false;
+  }
+  if (dailyBudget.count >= config.dailyBudget * 0.8) {
+    console.warn(`[budget] Daily generation count at ${dailyBudget.count}/${config.dailyBudget} (80%+ threshold)`);
+  }
+  dailyBudget.count++;
+  return true;
+}
+
 interface GenerateRequest {
   image: string; // base64
   prompt: string;
-  tier?: string; // "free" = Nano Banana (2.5 Flash), "pro" = Nano Banana 2 (3.1 Flash)
+  tier?: string;
 }
 
 interface GeminiAPIResponse {
@@ -35,12 +54,12 @@ interface GeminiAPIResponse {
   error?: { code: number; message: string };
 }
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64 (~7.5MB raw JPEG)
-const GEMINI_TIMEOUT_MS = 30_000; // 30 seconds
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
+const GEMINI_TIMEOUT_MS = 30_000;
 const MAX_PROMPT_LENGTH = 2000;
 
 router.post("/generate", async (req: Request, res: Response) => {
-  // Per-IP rate limit for this expensive endpoint
+  // Per-IP rate limit
   const clientIp = extractClientIp(req);
   const now = Date.now();
   const limiterEntry = generateLimiter.get(clientIp);
@@ -51,7 +70,18 @@ router.post("/generate", async (req: Request, res: Response) => {
     }
     limiterEntry.count++;
   } else {
+    if (generateLimiter.size >= MAX_MAP_SIZE) {
+      console.warn(`[generateLimiter] Map size exceeded ${MAX_MAP_SIZE}, clearing`);
+      generateLimiter.clear();
+    }
     generateLimiter.set(clientIp, { count: 1, resetAt: now + GENERATE_WINDOW_MS });
+  }
+
+  // Daily budget check
+  if (!checkDailyBudget()) {
+    console.error(`[budget] Daily budget exceeded: ${config.dailyBudget}`);
+    res.status(503).json({ error: "Service temporarily unavailable, please try again later" });
+    return;
   }
 
   try {
@@ -77,9 +107,6 @@ router.post("/generate", async (req: Request, res: Response) => {
       return;
     }
 
-    // Route to model based on tier:
-    // "pro"  → Nano Banana 2 (gemini-3.1-flash-image-preview) ~¥10
-    // "free" → Nano Banana   (gemini-2.5-flash-image) ~¥6
     const endpoint = tier === "free"
       ? config.geminiEndpointFree
       : config.geminiEndpointPro;
@@ -121,22 +148,22 @@ router.post("/generate", async (req: Request, res: Response) => {
       geminiData = (await geminiRes.json()) as GeminiAPIResponse;
     } catch {
       console.error("Failed to parse Gemini response");
-      res.status(502).json({ error: "Invalid response from Gemini API" });
+      res.status(502).json({ error: "Generation failed, please try again" });
       return;
     }
 
     if (!geminiRes.ok) {
-      const message =
-        geminiData.error?.message ||
-        `Gemini API error: ${geminiRes.status}`;
-      res.status(geminiRes.status).json({ error: message });
+      // Log full error internally, return generic message to client
+      console.error(`Gemini API error ${geminiRes.status}:`, geminiData.error?.message);
+      res.status(geminiRes.status >= 500 ? 502 : geminiRes.status)
+        .json({ error: "Generation failed, please try again" });
       return;
     }
 
     // Extract image from response
     const candidates = geminiData.candidates;
     if (!candidates || candidates.length === 0) {
-      res.status(502).json({ error: "No result from Gemini API" });
+      res.status(502).json({ error: "No result from generation" });
       return;
     }
 
@@ -149,11 +176,11 @@ router.post("/generate", async (req: Request, res: Response) => {
       }
     }
 
-    res.status(502).json({ error: "No image in Gemini response" });
+    res.status(502).json({ error: "No image in generation result" });
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === "AbortError") {
       console.error("Gemini API timeout after", GEMINI_TIMEOUT_MS, "ms");
-      res.status(504).json({ error: "Gemini API timeout" });
+      res.status(504).json({ error: "Request timed out, please try again" });
       return;
     }
     console.error("Generate error:", err);

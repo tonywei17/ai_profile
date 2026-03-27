@@ -1,7 +1,10 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
+import { extractClientIp } from "../middleware/rateLimit";
 
 const router = Router();
+
+const MAX_MAP_SIZE = 10_000;
 
 // In-memory store (MVP; replace with Cloud Firestore for production)
 const referralCodes = new Map<string, { redeemCount: number; createdAt: number }>();
@@ -12,12 +15,17 @@ const redeemAttempts = new Map<string, { count: number; resetAt: number }>();
 const REDEEM_WINDOW_MS = 60 * 1000;
 const REDEEM_MAX_ATTEMPTS = 5;
 
+// Per-IP rate limiting for register endpoint (max 3 per minute)
+const registerAttempts = new Map<string, { count: number; resetAt: number }>();
+const REGISTER_WINDOW_MS = 60 * 1000;
+const REGISTER_MAX_ATTEMPTS = 3;
+
 // TTL constants
 const CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const DEVICE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const deviceTimestamps = new Map<string, number>(); // deviceId -> last activity
+const deviceTimestamps = new Map<string, number>();
 
-// Periodic cleanup to prevent memory leak
+// Periodic cleanup
 setInterval(() => {
   const now = Date.now();
   for (const [code, entry] of referralCodes) {
@@ -32,14 +40,30 @@ setInterval(() => {
     }
   }
   for (const [deviceId, attempt] of redeemAttempts) {
-    if (now > attempt.resetAt) {
-      redeemAttempts.delete(deviceId);
-    }
+    if (now > attempt.resetAt) redeemAttempts.delete(deviceId);
+  }
+  for (const [ip, attempt] of registerAttempts) {
+    if (now > attempt.resetAt) registerAttempts.delete(ip);
   }
 }, 5 * 60 * 1000); // every 5 minutes
 
 // POST /api/referral/register — generate a referral code for a device
 router.post("/register", (req: Request, res: Response) => {
+  // Per-IP rate limit
+  const clientIp = extractClientIp(req);
+  const now = Date.now();
+  const attempt = registerAttempts.get(clientIp);
+  if (attempt && now < attempt.resetAt) {
+    if (attempt.count >= REGISTER_MAX_ATTEMPTS) {
+      res.status(429).json({ error: "Too many registration attempts, try again later" });
+      return;
+    }
+    attempt.count++;
+  } else {
+    if (registerAttempts.size >= MAX_MAP_SIZE) registerAttempts.clear();
+    registerAttempts.set(clientIp, { count: 1, resetAt: now + REGISTER_WINDOW_MS });
+  }
+
   const { deviceId } = req.body;
   if (!deviceId || typeof deviceId !== "string" || deviceId.length < 8 || deviceId.length > 200) {
     res.status(400).json({ error: "Invalid deviceId" });
@@ -48,6 +72,11 @@ router.post("/register", (req: Request, res: Response) => {
 
   const code = generateCode(deviceId);
   if (!referralCodes.has(code)) {
+    if (referralCodes.size >= MAX_MAP_SIZE) {
+      console.warn("[referral] referralCodes Map exceeded limit, rejecting");
+      res.status(503).json({ error: "Service temporarily unavailable" });
+      return;
+    }
     referralCodes.set(code, { redeemCount: 0, createdAt: Date.now() });
   }
   res.json({ code });
@@ -61,7 +90,6 @@ router.post("/redeem", (req: Request, res: Response) => {
     return;
   }
 
-  // Validate code format (6 alphanumeric chars)
   if (!/^[A-Z0-9]{6}$/i.test(code)) {
     res.status(400).json({ error: "Invalid code format" });
     return;
@@ -77,6 +105,7 @@ router.post("/redeem", (req: Request, res: Response) => {
     }
     attempt.count++;
   } else {
+    if (redeemAttempts.size >= MAX_MAP_SIZE) redeemAttempts.clear();
     redeemAttempts.set(deviceId, { count: 1, resetAt: now + REDEEM_WINDOW_MS });
   }
 

@@ -1,29 +1,89 @@
 import { Router, Request, Response } from "express";
 import { config } from "../config";
+import { extractClientIp } from "../middleware/rateLimit";
 
 const router = Router();
 
 const TRIPO_TIMEOUT = 30_000;
 
+// Rate limiters for Tripo endpoints
+const MAX_MAP_SIZE = 10_000;
+const TRIPO_WRITE_WINDOW_MS = 60_000;
+const TRIPO_WRITE_MAX_REQ = 5; // upload + task creation: 5/min/IP
+const TRIPO_READ_WINDOW_MS = 60_000;
+const TRIPO_READ_MAX_REQ = 20; // task polling: 20/min/IP
+
+const tripoWriteLimiter = new Map<string, { count: number; resetAt: number }>();
+const tripoReadLimiter = new Map<string, { count: number; resetAt: number }>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, e] of tripoWriteLimiter) { if (now > e.resetAt) tripoWriteLimiter.delete(ip); }
+  for (const [ip, e] of tripoReadLimiter) { if (now > e.resetAt) tripoReadLimiter.delete(ip); }
+}, 60_000);
+
+function checkWriteLimit(req: Request, res: Response): boolean {
+  const ip = extractClientIp(req);
+  const now = Date.now();
+  const entry = tripoWriteLimiter.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= TRIPO_WRITE_MAX_REQ) {
+      res.status(429).json({ error: "Too many requests, please try again later" });
+      return false;
+    }
+    entry.count++;
+  } else {
+    if (tripoWriteLimiter.size >= MAX_MAP_SIZE) tripoWriteLimiter.clear();
+    tripoWriteLimiter.set(ip, { count: 1, resetAt: now + TRIPO_WRITE_WINDOW_MS });
+  }
+  return true;
+}
+
+function checkReadLimit(req: Request, res: Response): boolean {
+  const ip = extractClientIp(req);
+  const now = Date.now();
+  const entry = tripoReadLimiter.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= TRIPO_READ_MAX_REQ) {
+      res.status(429).json({ error: "Too many requests, please try again later" });
+      return false;
+    }
+    entry.count++;
+  } else {
+    if (tripoReadLimiter.size >= MAX_MAP_SIZE) tripoReadLimiter.clear();
+    tripoReadLimiter.set(ip, { count: 1, resetAt: now + TRIPO_READ_WINDOW_MS });
+  }
+  return true;
+}
+
 // POST /api/tripo/upload — proxy image upload to Tripo
 router.post("/upload", async (req: Request, res: Response) => {
+  if (!checkWriteLimit(req, res)) return;
+
   try {
     if (!config.tripoApiKey) {
       res.status(500).json({ error: "Tripo API key not configured" });
       return;
     }
 
-    // Forward the raw multipart body to Tripo
     const contentType = req.headers["content-type"];
     if (!contentType || !contentType.includes("multipart/form-data")) {
       res.status(400).json({ error: "Expected multipart/form-data" });
       return;
     }
 
-    // Collect raw body
+    // Collect raw body with size limit (50MB)
+    const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
     const chunks: Buffer[] = [];
+    let totalSize = 0;
     for await (const chunk of req) {
-      chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+      totalSize += buf.length;
+      if (totalSize > MAX_UPLOAD_SIZE) {
+        res.status(413).json({ error: "Upload too large" });
+        return;
+      }
+      chunks.push(buf);
     }
     const body = Buffer.concat(chunks);
 
@@ -40,15 +100,15 @@ router.post("/upload", async (req: Request, res: Response) => {
     const data = await tripoRes.json();
 
     if (!tripoRes.ok) {
-      const message = (data as any).message || `Tripo API error: ${tripoRes.status}`;
-      res.status(tripoRes.status).json({ error: message });
+      console.error(`Tripo upload error ${tripoRes.status}:`, (data as any).message);
+      res.status(tripoRes.status >= 500 ? 502 : tripoRes.status)
+        .json({ error: "Upload failed, please try again" });
       return;
     }
 
-    // Extract image_token from Tripo response { code, data: { image_token } }
     const imageToken = (data as any).data?.image_token;
     if (!imageToken) {
-      res.status(502).json({ error: "No image_token in Tripo response" });
+      res.status(502).json({ error: "Upload failed, please try again" });
       return;
     }
 
@@ -61,6 +121,8 @@ router.post("/upload", async (req: Request, res: Response) => {
 
 // POST /api/tripo/task — create image-to-model task
 router.post("/task", async (req: Request, res: Response) => {
+  if (!checkWriteLimit(req, res)) return;
+
   try {
     if (!config.tripoApiKey) {
       res.status(500).json({ error: "Tripo API key not configured" });
@@ -92,14 +154,15 @@ router.post("/task", async (req: Request, res: Response) => {
     const data = await tripoRes.json();
 
     if (!tripoRes.ok) {
-      const message = (data as any).message || `Tripo API error: ${tripoRes.status}`;
-      res.status(tripoRes.status).json({ error: message });
+      console.error(`Tripo task error ${tripoRes.status}:`, (data as any).message);
+      res.status(tripoRes.status >= 500 ? 502 : tripoRes.status)
+        .json({ error: "Task creation failed, please try again" });
       return;
     }
 
     const taskId = (data as any).data?.task_id;
     if (!taskId) {
-      res.status(502).json({ error: "No task_id in Tripo response" });
+      res.status(502).json({ error: "Task creation failed" });
       return;
     }
 
@@ -112,6 +175,8 @@ router.post("/task", async (req: Request, res: Response) => {
 
 // GET /api/tripo/task/:taskId — poll task status
 router.get("/task/:taskId", async (req: Request, res: Response) => {
+  if (!checkReadLimit(req, res)) return;
+
   try {
     if (!config.tripoApiKey) {
       res.status(500).json({ error: "Tripo API key not configured" });
@@ -134,14 +199,15 @@ router.get("/task/:taskId", async (req: Request, res: Response) => {
     const data = await tripoRes.json();
 
     if (!tripoRes.ok) {
-      const message = (data as any).message || `Tripo API error: ${tripoRes.status}`;
-      res.status(tripoRes.status).json({ error: message });
+      console.error(`Tripo poll error ${tripoRes.status}:`, (data as any).message);
+      res.status(tripoRes.status >= 500 ? 502 : tripoRes.status)
+        .json({ error: "Failed to check task status" });
       return;
     }
 
     const status = (data as any).data;
     if (!status) {
-      res.status(502).json({ error: "No status in Tripo response" });
+      res.status(502).json({ error: "No status available" });
       return;
     }
 
