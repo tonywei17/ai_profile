@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>APP_API_KEY</key>
+	<string>1cce8f8bb9e33377925ae7798457c36fdf3e46945fe32db3cea04db3bd8175f2</string>
 	<key>BACKEND_BASE_URL</key>
 	<string>https://aiidphoto-backend-616059029156.asia-northeast1.run.app</string>
 	<key>CFBundleDevelopmentRegion</key>
@@ -31,9 +33,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.1</string>
 	<key>CFBundleVersion</key>
-	<string>11</string>
+	<string>21</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-4720104330290543~3080111676</string>
 	<key>NSCameraUsageDescription</key>
