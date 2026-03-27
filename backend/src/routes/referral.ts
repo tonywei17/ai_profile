@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { extractClientIp } from "../middleware/rateLimit";
+import { config } from "../config";
 
 const router = Router();
 
@@ -90,7 +91,7 @@ router.post("/redeem", (req: Request, res: Response) => {
     return;
   }
 
-  if (!/^[A-Z0-9]{6}$/i.test(code)) {
+  if (!/^[A-Z0-9]{6,8}$/i.test(code)) {
     res.status(400).json({ error: "Invalid code format" });
     return;
   }
@@ -146,8 +147,9 @@ router.post("/redeem", (req: Request, res: Response) => {
 });
 
 function generateCode(deviceId: string): string {
-  const hash = crypto.createHash("sha256").update(deviceId).digest("hex");
-  return hash.substring(0, 6).toUpperCase();
+  const salt = config.appApiKey || "default-salt";
+  const hash = crypto.createHmac("sha256", salt).update(deviceId).digest("hex");
+  return hash.substring(0, 8).toUpperCase();
 }
 
 export default router;

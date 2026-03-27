@@ -97,8 +97,19 @@ router.post("/generate", async (req: Request, res: Response) => {
       return;
     }
 
+    // Validate base64 format (reject garbage data that still costs an API call)
+    if (!/^[A-Za-z0-9+/=]+$/.test(image.slice(0, 100))) {
+      res.status(400).json({ error: "Invalid image format" });
+      return;
+    }
+
     if (typeof prompt !== "string" || prompt.length > MAX_PROMPT_LENGTH) {
       res.status(413).json({ error: "Prompt too long" });
+      return;
+    }
+
+    if (prompt.trim().length < 3) {
+      res.status(400).json({ error: "Prompt too short" });
       return;
     }
 
