@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 final class PrintLayoutService {
     static let shared = PrintLayoutService()
     private init() {}
@@ -28,23 +29,32 @@ final class PrintLayoutService {
         format.scale = 1 // Absolute pixel dimensions (no @2x/@3x scaling)
         let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
 
+        guard let cgImage = image.cgImage else { return nil }
+
         return renderer.image { ctx in
             // White paper background
             UIColor.white.setFill()
             ctx.fill(CGRect(origin: .zero, size: canvasSize))
 
-            // Draw each photo cell
+            // Draw each photo cell (using cached CGImage to avoid repeated decoding)
+            let gc = ctx.cgContext
+            gc.saveGState()
+            // Flip coordinate system for CGContext.draw (CGImage draws bottom-up)
+            gc.translateBy(x: 0, y: canvasSize.height)
+            gc.scaleBy(x: 1, y: -1)
             for row in 0..<layout.rows {
                 for col in 0..<layout.cols {
                     let origin = layout.photoOrigin(col: col, row: row)
                     let rect = CGRect(
-                        x: origin.x, y: origin.y,
+                        x: origin.x,
+                        y: canvasSize.height - origin.y - Double(layout.photoHeightPx),
                         width: Double(layout.photoWidthPx),
                         height: Double(layout.photoHeightPx)
                     )
-                    image.draw(in: rect)
+                    gc.draw(cgImage, in: rect)
                 }
             }
+            gc.restoreGState()
 
             // Cutting guides: thin lines around each photo
             if showGuides {

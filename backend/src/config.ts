@@ -6,5 +6,7 @@ export const config = {
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
   geminiEndpointFree:
     process.env.GEMINI_ENDPOINT_FREE ||
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+  tripoApiKey: process.env.TRIPO_API_KEY || "",
+  tripoBaseUrl: process.env.TRIPO_BASE_URL || "https://api.tripo3d.ai/v2/openapi",
 };

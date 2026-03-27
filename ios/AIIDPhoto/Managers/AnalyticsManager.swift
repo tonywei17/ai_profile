@@ -48,7 +48,7 @@ final class AnalyticsManager: ObservableObject {
 
     // MARK: - Persistence
 
-    func loadEvents() -> [AnalyticsEvent] {
+    private func loadEvents() -> [AnalyticsEvent] {
         guard let data = defaults.data(forKey: kEventsKey),
               let events = try? JSONDecoder().decode([AnalyticsEvent].self, from: data) else {
             return []
@@ -57,8 +57,13 @@ final class AnalyticsManager: ObservableObject {
     }
 
     private func saveEvents(_ events: [AnalyticsEvent]) {
-        if let data = try? JSONEncoder().encode(events) {
+        do {
+            let data = try JSONEncoder().encode(events)
             defaults.set(data, forKey: kEventsKey)
+        } catch {
+            #if DEBUG
+            print("[AnalyticsManager] Failed to save events: \(error)")
+            #endif
         }
     }
 
@@ -69,6 +74,7 @@ final class AnalyticsManager: ObservableObject {
         guard !events.isEmpty else { return }
         var request = URLRequest(url: backendURL.appendingPathComponent("api/analytics/events"))
         request.httpMethod = "POST"
+        request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONEncoder().encode(events)
         guard let (_, response) = try? await URLSession.shared.data(for: request),

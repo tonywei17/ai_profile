@@ -19,17 +19,14 @@ enum ConsumableProduct: String {
 final class SubscriptionManager: ObservableObject {
 
     // MARK: - Debug Override
-
-    #if DEBUG
+    // Set to `true` in DEBUG builds to test subscription UI without real purchase
     static let forceSubscribed = false
-    #else
-    static let forceSubscribed = false
-    #endif
 
     // MARK: - Published State
 
     @Published private(set) var isSubscribed: Bool = false
     @Published private(set) var expirationDate: Date?
+    @Published private(set) var willAutoRenew: Bool = true
     @Published private(set) var isPurchasing: Bool = false
     @Published private(set) var isRestoring: Bool = false
     @Published var purchaseError: String?
@@ -142,21 +139,67 @@ final class SubscriptionManager: ObservableObject {
             return
         }
         var foundActive = false
+        var latestExpiration: Date?
         for await result in Transaction.currentEntitlements {
             if case .verified(let t) = result,
                SubscriptionPlan.allProductIDs.contains(t.productID) {
                 let active = t.revocationDate == nil &&
                              (t.expirationDate ?? .distantFuture) > Date()
-                isSubscribed = active
-                expirationDate = active ? t.expirationDate : nil
-                foundActive = active
+                if active {
+                    foundActive = true
+                    if let exp = t.expirationDate,
+                       (latestExpiration == nil || exp > latestExpiration!) {
+                        latestExpiration = exp
+                    }
+                }
                 await t.finish()
             }
         }
+
+        // Also check subscription status for grace period / billing retry
         if !foundActive {
-            isSubscribed = false
-            expirationDate = nil
+            foundActive = await checkGracePeriod()
         }
+
+        isSubscribed = foundActive
+        expirationDate = foundActive ? latestExpiration : nil
+
+        // Check auto-renew status via subscription info
+        if foundActive {
+            willAutoRenew = await checkAutoRenewStatus()
+        } else {
+            willAutoRenew = false
+        }
+    }
+
+    /// Check if the active subscription will auto-renew (false = user cancelled).
+    private func checkAutoRenewStatus() async -> Bool {
+        for (_, product) in products {
+            guard let statuses = try? await product.subscription?.status else { continue }
+            for status in statuses {
+                if case .verified(let renewalInfo) = status.renewalInfo,
+                   status.state == .subscribed || status.state == .inGracePeriod {
+                    return renewalInfo.willAutoRenew
+                }
+            }
+        }
+        return true // default to true if we can't determine
+    }
+
+    /// Check if any subscription product is in grace period or billing retry.
+    private func checkGracePeriod() async -> Bool {
+        for (_, product) in products {
+            guard let statuses = try? await product.subscription?.status else { continue }
+            for status in statuses {
+                switch status.state {
+                case .subscribed, .inGracePeriod, .inBillingRetryPeriod:
+                    return true
+                default:
+                    continue
+                }
+            }
+        }
+        return false
     }
 
     private func listenForUpdates() async {
@@ -171,8 +214,13 @@ final class SubscriptionManager: ObservableObject {
         if SubscriptionPlan.allProductIDs.contains(t.productID) {
             let active = t.revocationDate == nil &&
                          (t.expirationDate ?? .distantFuture) > Date()
-            isSubscribed = active
-            expirationDate = active ? t.expirationDate : nil
+            if active {
+                isSubscribed = true
+                expirationDate = t.expirationDate
+            } else {
+                // Re-check all entitlements — another plan may still be active
+                await checkCurrentEntitlements()
+            }
         } else if t.productID == ConsumableProduct.printLayoutSingle.rawValue {
             printLayoutCredits += 1
             UserDefaults.standard.set(printLayoutCredits, forKey: kPrintLayoutCredits)

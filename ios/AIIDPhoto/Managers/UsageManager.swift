@@ -64,9 +64,13 @@ final class UsageManager: ObservableObject {
         }
     }
 
-    private static func dayString(_ date: Date) -> String {
+    private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: date)
+        return f
+    }()
+
+    private static func dayString(_ date: Date) -> String {
+        dayFormatter.string(from: date)
     }
 }

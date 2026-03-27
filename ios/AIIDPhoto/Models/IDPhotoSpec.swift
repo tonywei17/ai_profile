@@ -198,7 +198,9 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
             // Within same region group, free specs first
             if a.isPro != b.isPro { return !a.isPro }
             // Preserve original declaration order as tie-break
-            return allCases.firstIndex(of: a)! < allCases.firstIndex(of: b)!
+            guard let idxA = allCases.firstIndex(of: a),
+                  let idxB = allCases.firstIndex(of: b) else { return false }
+            return idxA < idxB
         }
     }
 
