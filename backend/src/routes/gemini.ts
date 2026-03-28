@@ -55,7 +55,7 @@ interface GeminiAPIResponse {
 }
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
-const GEMINI_TIMEOUT_MS = 30_000;
+const GEMINI_TIMEOUT_MS = 90_000;
 const MAX_PROMPT_LENGTH = 2000;
 
 router.post("/generate", async (req: Request, res: Response) => {

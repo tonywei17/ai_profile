@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AIIDPhoto - App Store Screenshots Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e1a;
+    color: #fff;
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+    padding: 40px;
+  }
+
+  h1 { text-align: center; margin-bottom: 10px; font-size: 28px; }
+  .instructions {
+    text-align: center; color: #999; margin-bottom: 20px; font-size: 14px;
+  }
+
+  .controls {
+    display: flex; justify-content: center; gap: 12px; margin-bottom: 40px; flex-wrap: wrap;
+  }
+
+  .lang-section { margin-bottom: 60px; }
+  .lang-title {
+    font-size: 22px; margin-bottom: 20px; padding-bottom: 10px;
+    border-bottom: 1px solid #2a3050;
+  }
+
+  .screenshots-row {
+    display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+  }
+
+  /* 6.9" = 1320 x 2868px. Preview at 1/3 scale */
+  .screenshot-frame {
+    width: 440px;
+    height: 956px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .ss-inner {
+    width: 1320px;
+    height: 2868px;
+    transform: scale(0.3333);
+    transform-origin: top left;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ss-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .ss-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ss-title {
+    font-size: 120px;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 180px;
+    line-height: 1.2;
+    letter-spacing: -2px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  .ss-title.lang-ja { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; }
+  .ss-title.lang-en { font-family: 'SF Pro Display', -apple-system, 'Helvetica Neue', sans-serif; }
+  .ss-title.lang-zh { font-family: 'PingFang SC', 'Heiti SC', 'STHeiti', sans-serif; }
+  .ss-title.lang-ko { font-family: 'Apple SD Gothic Neo', sans-serif; }
+
+  .ss-subtitle {
+    font-size: 56px;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 30px;
+    opacity: 0.85;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .ss-subtitle.lang-ja { font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; }
+  .ss-subtitle.lang-en { font-family: 'SF Pro Display', -apple-system, 'Helvetica Neue', sans-serif; }
+  .ss-subtitle.lang-zh { font-family: 'PingFang SC', 'Heiti SC', 'STHeiti', sans-serif; }
+  .ss-subtitle.lang-ko { font-family: 'Apple SD Gothic Neo', sans-serif; }
+
+  .ss-phone {
+    margin-top: 210px;
+    width: 900px;
+    border-radius: 60px;
+    overflow: hidden;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+
+  .ss-phone img {
+    width: 100%;
+    display: block;
+  }
+
+  /* Background gradients - warm editorial tones matching app's paperTan aesthetic */
+  .bg-1 { background: linear-gradient(160deg, #3c342a 0%, #2a2218 30%, #161210 100%); }  /* warm brown/tan */
+  .bg-2 { background: linear-gradient(160deg, #2e2838 0%, #1e1828 30%, #100e16 100%); }  /* warm mauve/plum */
+  .bg-3 { background: linear-gradient(160deg, #1f3040 0%, #142028 30%, #0c1418 100%); }  /* warm teal */
+  .bg-4 { background: linear-gradient(160deg, #38301e 0%, #28200e 30%, #18140a 100%); }  /* warm amber */
+
+  /* Accent colors - warm editorial palette matching app */
+  .accent-1 { color: #e8d5be; }  /* Cream/paperTan - main brand */
+  .accent-2 { color: #c8a8e0; }  /* Soft lavender - premium */
+  .accent-3 { color: #88ccb8; }  /* Warm mint - compare */
+  .accent-4 { color: #e8c078; }  /* Warm amber - print */
+
+  .sub-1 { color: #d0c0a8; }
+  .sub-2 { color: #b090c8; }
+  .sub-3 { color: #70b8a0; }
+  .sub-4 { color: #d0a860; }
+
+  /* Decorative blur elements */
+  .ss-deco {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.25;
+    z-index: 0;
+  }
+
+  .deco-1 { width: 600px; height: 600px; background: #d6c9b5; top: -100px; right: -200px; }  /* paperTan */
+  .deco-2 { width: 500px; height: 500px; background: #c8a8e0; bottom: 200px; left: -150px; }  /* lavender */
+  .deco-3 { width: 600px; height: 600px; background: #88ccb8; top: 100px; left: -200px; }     /* mint */
+  .deco-4 { width: 500px; height: 500px; background: #e8c078; top: -50px; right: -150px; }    /* amber */
+
+  /* Buttons */
+  .export-btn {
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #d6c9b5, #c8a8e0);
+    color: #0a0e1a;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .export-btn:hover { transform: scale(1.05); }
+
+  .export-btn.secondary {
+    background: linear-gradient(135deg, #88ccb8, #e8c078);
+  }
+
+  .status { text-align: center; color: #aaa; margin-top: 10px; font-size: 14px; min-height: 20px; }
+
+  /* Image upload area */
+  .upload-area {
+    max-width: 800px; margin: 0 auto 40px;
+    background: #111827; border: 2px dashed #2a3050; border-radius: 16px;
+    padding: 30px; text-align: center;
+  }
+  .upload-area h3 { margin-bottom: 12px; font-size: 18px; color: #d6c9b5; }
+  .upload-area p { color: #666; font-size: 13px; margin-bottom: 16px; }
+  .upload-area .file-list { text-align: left; margin-top: 16px; }
+  .upload-area .file-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: #1a2040; border-radius: 8px; margin-bottom: 8px; font-size: 13px;
+  }
+  .upload-area .file-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+  .upload-area .file-item .name { flex: 1; color: #ccc; }
+  .upload-area .file-item .assigned { color: #88ccb8; font-size: 12px; }
+
+  .file-input-btn {
+    padding: 10px 24px; background: #1e2a4a; color: #d6c9b5;
+    border: 1px solid #2a3a5a; border-radius: 8px; cursor: pointer;
+    font-size: 14px; transition: background 0.2s;
+  }
+  .file-input-btn:hover { background: #2a3a5a; }
+
+  input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<h1>AIIDPhoto - App Store Screenshots</h1>
+<p class="instructions">
+  6.9" Display (1320 x 2868px) - Preview at 1/3 scale<br>
+  Put your raw screenshots in the <code>raw/</code> folder, or drag & drop below
+</p>
+
+<!-- Upload Area -->
+<div class="upload-area" id="uploadArea">
+  <h3>Screenshot Images</h3>
+  <p>
+    Raw screenshots in <code>raw/</code> folder:<br>
+    <code>IMG_2279.PNG</code> (Spec selection + AI customize) &nbsp;
+    <code>IMG_2280.PNG</code> (AI customize detail) &nbsp;
+    <code>IMG_2281.PNG</code> (Before/after comparison) &nbsp;
+    <code>IMG_2282.PNG</code> (Print layout)
+  </p>
+  <p>Or drop images here / click to select (images will be assigned in order)</p>
+  <label class="file-input-btn" for="fileInput">Select Images</label>
+  <input type="file" id="fileInput" multiple accept="image/*">
+  <div class="file-list" id="fileList"></div>
+</div>
+
+<div class="controls">
+  <button class="export-btn" onclick="exportAll('iphone')">Export iPhone 6.9"</button>
+  <button class="export-btn secondary" onclick="exportAll('ipad')">Export iPad 13"</button>
+</div>
+<p class="status" id="status"></p>
+
+<script>
+// Screenshot slot names for raw/ folder fallback
+const SLOT_NAMES = [
+  "IMG_2279.PNG",
+  "IMG_2280.PNG",
+  "IMG_2281.PNG",
+  "IMG_2282.PNG",
+];
+
+// Uploaded image data URLs (override raw/ when available)
+const uploadedImages = {};
+
+// Screenshot data per language — 4 screenshots matching actual raw images
+const screenshotData = {
+  ja: [
+    { slot: 0, title: "AI証明写真",         subtitle: "規格を選んでワンタップで生成",       bg: "bg-1", accent: "accent-1", sub: "sub-1", deco: "deco-1" },
+    { slot: 1, title: "美肌 & 服装チェンジ", subtitle: "美肌・髪型・背景色も自由自在",       bg: "bg-3", accent: "accent-3", sub: "sub-3", deco: "deco-3" },
+    { slot: 2, title: "ビフォー・アフター",   subtitle: "AI変換の仕上がりを即座に確認",      bg: "bg-2", accent: "accent-2", sub: "sub-2", deco: "deco-2" },
+    { slot: 3, title: "コンビニプリント対応", subtitle: "L判・2Lサイズに自動レイアウト",      bg: "bg-4", accent: "accent-4", sub: "sub-4", deco: "deco-4" },
+  ],
+  en: [
+    { slot: 0, title: "AI ID Photos",       subtitle: "Pick a spec, generate in one tap",     bg: "bg-1", accent: "accent-1", sub: "sub-1", deco: "deco-1" },
+    { slot: 1, title: "Beauty & Outfit",     subtitle: "Skin, hair, background — fully custom", bg: "bg-3", accent: "accent-3", sub: "sub-3", deco: "deco-3" },
+    { slot: 2, title: "Before & After",      subtitle: "See the AI transformation instantly",  bg: "bg-2", accent: "accent-2", sub: "sub-2", deco: "deco-2" },
+    { slot: 3, title: "Print-Ready Layout",  subtitle: "Auto-layout for L-size & 2L paper",   bg: "bg-4", accent: "accent-4", sub: "sub-4", deco: "deco-4" },
+  ],
+  zh: [
+    { slot: 0, title: "AI 智能证件照",   subtitle: "选好规格 一键生成",               bg: "bg-1", accent: "accent-1", sub: "sub-1", deco: "deco-1" },
+    { slot: 1, title: "美颜 & 换装",     subtitle: "美肌、发型、背景色自由定制",       bg: "bg-3", accent: "accent-3", sub: "sub-3", deco: "deco-3" },
+    { slot: 2, title: "前后对比",        subtitle: "AI 生成效果一目了然",              bg: "bg-2", accent: "accent-2", sub: "sub-2", deco: "deco-2" },
+    { slot: 3, title: "排版即刻打印",    subtitle: "L判/2L自动排版 便利店直接打印",     bg: "bg-4", accent: "accent-4", sub: "sub-4", deco: "deco-4" },
+  ],
+  ko: [
+    { slot: 0, title: "AI 증명사진",      subtitle: "규격 선택, 원탭으로 생성",           bg: "bg-1", accent: "accent-1", sub: "sub-1", deco: "deco-1" },
+    { slot: 1, title: "뷰티 & 의상 변경",  subtitle: "피부, 헤어, 배경색 자유 커스텀",    bg: "bg-3", accent: "accent-3", sub: "sub-3", deco: "deco-3" },
+    { slot: 2, title: "전후 비교",         subtitle: "AI 변환 결과를 즉시 확인",          bg: "bg-2", accent: "accent-2", sub: "sub-2", deco: "deco-2" },
+    { slot: 3, title: "편의점 인쇄 대응",  subtitle: "L판/2L 자동 레이아웃",             bg: "bg-4", accent: "accent-4", sub: "sub-4", deco: "deco-4" },
+  ],
+};
+
+const langLabels = { ja: "日本語", en: "English", zh: "中文", ko: "한국어" };
+
+// Device specs
+const devices = {
+  iphone: { W: 1320, H: 2868, phoneW: 900, phoneR: 60, label: "6.9" },
+  ipad:   { W: 2048, H: 2732, phoneW: 1500, phoneR: 40, label: "13" },
+};
+
+// -- File upload handling --
+const fileInput = document.getElementById("fileInput");
+const fileListEl = document.getElementById("fileList");
+const uploadArea = document.getElementById("uploadArea");
+
+fileInput.addEventListener("change", handleFiles);
+uploadArea.addEventListener("dragover", e => { e.preventDefault(); uploadArea.style.borderColor = "#d6c9b5"; });
+uploadArea.addEventListener("dragleave", () => { uploadArea.style.borderColor = "#2a3050"; });
+uploadArea.addEventListener("drop", e => {
+  e.preventDefault();
+  uploadArea.style.borderColor = "#2a3050";
+  handleFiles({ target: { files: e.dataTransfer.files } });
+});
+
+function handleFiles(e) {
+  const files = Array.from(e.target.files);
+  fileListEl.innerHTML = "";
+
+  files.forEach((file, idx) => {
+    if (idx >= 4) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      uploadedImages[idx] = ev.target.result;
+
+      const div = document.createElement("div");
+      div.className = "file-item";
+      div.innerHTML = `
+        <img src="${ev.target.result}" alt="">
+        <span class="name">${file.name}</span>
+        <span class="assigned">→ Screenshot ${idx + 1}</span>
+      `;
+      fileListEl.appendChild(div);
+
+      // Rebuild preview if all loaded
+      if (Object.keys(uploadedImages).length === Math.min(files.length, 4)) {
+        buildScreenshots();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function getImageSrc(slotIndex) {
+  if (uploadedImages[slotIndex]) return uploadedImages[slotIndex];
+  return `raw/${SLOT_NAMES[slotIndex]}`;
+}
+
+// -- Build preview --
+function buildScreenshots() {
+  const container = document.getElementById("app");
+  container.innerHTML = "";
+
+  for (const [lang, items] of Object.entries(screenshotData)) {
+    const section = document.createElement("div");
+    section.className = "lang-section";
+    section.innerHTML = `<h2 class="lang-title">${langLabels[lang]}</h2>`;
+
+    const row = document.createElement("div");
+    row.className = "screenshots-row";
+
+    items.forEach((item, idx) => {
+      const num = idx + 1;
+      const frame = document.createElement("div");
+      frame.className = "screenshot-frame";
+      frame.id = `frame-${lang}-${num}`;
+
+      frame.innerHTML = `
+        <div class="ss-inner" id="ss-${lang}-${num}">
+          <div class="ss-bg ${item.bg}">
+            <div class="ss-deco ${item.deco}"></div>
+          </div>
+          <div class="ss-content">
+            <h2 class="ss-title lang-${lang} ${item.accent}">${item.title}</h2>
+            <p class="ss-subtitle lang-${lang} ${item.sub}">${item.subtitle}</p>
+            <div class="ss-phone">
+              <img src="${getImageSrc(item.slot)}" alt="Screenshot ${num}" loading="eager">
+            </div>
+          </div>
+        </div>
+      `;
+
+      row.appendChild(frame);
+    });
+
+    section.appendChild(row);
+    container.appendChild(section);
+  }
+}
+
+// -- Canvas export --
+async function exportAll(deviceType) {
+  const status = document.getElementById("status");
+  const dev = devices[deviceType];
+  const W = dev.W, H = dev.H;
+
+  const totalCount = Object.values(screenshotData).reduce((sum, items) => sum + items.length, 0);
+  let exported = 0;
+
+  status.textContent = "Exporting...";
+
+  const gradients = {
+    "bg-1": [["#3c342a",0], ["#2a2218",0.3], ["#161210",1]],
+    "bg-2": [["#2e2838",0], ["#1e1828",0.3], ["#100e16",1]],
+    "bg-3": [["#1f3040",0], ["#142028",0.3], ["#0c1418",1]],
+    "bg-4": [["#38301e",0], ["#28200e",0.3], ["#18140a",1]],
+  };
+
+  const decoColors = {
+    "deco-1": "#d6c9b5", "deco-2": "#c8a8e0",
+    "deco-3": "#88ccb8", "deco-4": "#e8c078",
+  };
+  const decoPositions = {
+    "deco-1": { x: W + 100, y: -100, r: 300 },
+    "deco-2": { x: -150, y: H - 500, r: 250 },
+    "deco-3": { x: -200, y: 100, r: 300 },
+    "deco-4": { x: W + 50, y: -50, r: 250 },
+  };
+
+  const accentColors = {
+    "accent-1": "#e8d5be", "accent-2": "#c8a8e0",
+    "accent-3": "#88ccb8", "accent-4": "#e8c078",
+  };
+  const subColors = {
+    "sub-1": "#d0c0a8", "sub-2": "#b090c8",
+    "sub-3": "#70b8a0", "sub-4": "#d0a860",
+  };
+
+  const fontMap = {
+    ja: "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif",
+    en: "'SF Pro Display', -apple-system, 'Helvetica Neue', sans-serif",
+    zh: "'PingFang SC', 'Heiti SC', 'STHeiti', sans-serif",
+    ko: "'Apple SD Gothic Neo', sans-serif",
+  };
+
+  for (const [lang, items] of Object.entries(screenshotData)) {
+    for (let i = 0; i < items.length; i++) {
+      const num = i + 1;
+      const item = items[i];
+      exported++;
+      status.textContent = `Exporting ${lang} ${num}/${items.length} (${exported}/${totalCount})...`;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+
+      // -- Background gradient --
+      const grad = ctx.createLinearGradient(0, 0, W * 0.6, H);
+      const gStops = gradients[item.bg];
+      gStops.forEach(([color, stop]) => grad.addColorStop(stop, color));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // -- Decorative glow --
+      const dp = decoPositions[item.deco];
+      const radGrad = ctx.createRadialGradient(dp.x, dp.y, 0, dp.x, dp.y, dp.r);
+      radGrad.addColorStop(0, decoColors[item.deco] + "44");
+      radGrad.addColorStop(1, "transparent");
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // -- Title text --
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(0,0,0,0.4)";
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 4;
+
+      const fontFamily = fontMap[lang] || fontMap.ja;
+      const titleSize = deviceType === "ipad" ? 140 : 120;
+      const subSize = deviceType === "ipad" ? 64 : 56;
+      const titleY = deviceType === "ipad" ? 320 : 300;
+      const subY = titleY + 100;
+
+      ctx.font = `800 ${titleSize}px ${fontFamily}`;
+      ctx.fillStyle = accentColors[item.accent];
+      ctx.fillText(item.title, W / 2, titleY);
+
+      // -- Subtitle --
+      ctx.font = `500 ${subSize}px ${fontFamily}`;
+      ctx.fillStyle = subColors[item.sub];
+      ctx.shadowBlur = 10;
+      ctx.fillText(item.subtitle, W / 2, subY);
+
+      // Reset shadow
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // -- Phone frame --
+      const img = await loadImage(getImageSrc(item.slot));
+
+      const phoneW = dev.phoneW;
+      const phoneH = (img.height / img.width) * phoneW;
+      const phoneX = (W - phoneW) / 2;
+      const phoneY = subY + 210;
+      const phoneR = dev.phoneR;
+
+      // Phone shadow
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 80;
+      ctx.shadowOffsetY = 20;
+
+      // Glass border
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 4;
+      roundRect(ctx, phoneX, phoneY, phoneW, phoneH, phoneR);
+      ctx.stroke();
+
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Clip and draw
+      ctx.save();
+      roundRect(ctx, phoneX, phoneY, phoneW, phoneH, phoneR);
+      ctx.clip();
+      ctx.drawImage(img, phoneX, phoneY, phoneW, phoneH);
+      ctx.restore();
+
+      // -- Download --
+      const deviceLabel = deviceType === "ipad" ? "iPad-13" : "iPhone-6.9";
+      const link = document.createElement("a");
+      link.download = `${lang}-${deviceLabel}-0${num}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      await sleep(300);
+    }
+  }
+
+  status.textContent = `All ${totalCount} ${deviceType === "ipad" ? "iPad" : "iPhone"} screenshots exported!`;
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      // Return a placeholder on error
+      const c = document.createElement("canvas");
+      c.width = 1320; c.height = 2868;
+      const cx = c.getContext("2d");
+      cx.fillStyle = "#1a1a2e";
+      cx.fillRect(0, 0, 1320, 2868);
+      cx.fillStyle = "#333";
+      cx.font = "60px sans-serif";
+      cx.textAlign = "center";
+      cx.fillText("Screenshot Not Found", 660, 1434);
+      const placeholder = new Image();
+      placeholder.onload = () => resolve(placeholder);
+      placeholder.src = c.toDataURL();
+    };
+    img.src = src;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.addEventListener("DOMContentLoaded", buildScreenshots);
+</script>
+
+<div id="app"></div>
+
+</body>
+</html>

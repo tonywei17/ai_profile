@@ -104,7 +104,7 @@ final class GeminiService {
         let url = backendURL.appendingPathComponent("api/gemini/generate")
         var req = Config.authenticatedRequest(url: url)
         req.httpMethod = "POST"
-        req.timeoutInterval = 60
+        req.timeoutInterval = 120
 
         let body = BackendGenerateRequest(image: base64, prompt: prompt, tier: tier.apiValue)
         req.httpBody = try encoder.encode(body)
