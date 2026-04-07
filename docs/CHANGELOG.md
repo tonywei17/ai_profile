@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.1] — 2026-04-07
+
+### 新增
+- 多层模型 Fallback 架构：Gemini → OpenRouter(SM) → OpenRouter(ENV)
+- OpenRouter API 密钥集成（GCP Secret Manager）
+- 后端响应新增 `provider` 字段，标明实际使用的模型提供商
+
+### 修复
+- **[重大]** OpenRouter fallback 未生成证件照，仅返回原图/文本分析
+  - 根因：缺少 `modalities: ["text", "image"]` 参数 + prompt 未明确图片编辑意图
+  - 修复：添加 system prompt、包装 prompt、请求图片输出模态
+
+### 优化
+- Pro 用户日生成上限从 20 次降至 10 次（防止重度用户亏损）
+- 免费用户仅走 Gemini 直连，不触发高成本 OpenRouter fallback
+- Pro/Free 统一使用 `gemini-2.5-flash-image` 模型，降低 API 成本
+- 移除 OpenAI fallback（单次成本过高，不适合当前收入规模）
+
+---
+
 ## [0.4.0] — 2026-03-02
 
 ### 新增

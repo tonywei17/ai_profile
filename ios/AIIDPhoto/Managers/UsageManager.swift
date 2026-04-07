@@ -4,7 +4,7 @@ import Foundation
 final class UsageManager: ObservableObject {
     enum Decision { case allowed, requireRewardedAd, reachedDailyLimit, reachedLimit }
 
-    @Published private(set) var subscriberUsesLeft: Int = 20
+    @Published private(set) var subscriberUsesLeft: Int = 10
     @Published private(set) var freeUsesToday: Int = 0
 
     private let defaults = UserDefaults.standard
@@ -22,8 +22,8 @@ final class UsageManager: ObservableObject {
     init() {
         migrateToKeychainIfNeeded()
         resetIfNeeded()
-        subscriberUsesLeft = KeychainHelper.readInt(key: kSubscriberLeft) ?? 20
-        if subscriberUsesLeft == 0 { subscriberUsesLeft = 20 }
+        subscriberUsesLeft = KeychainHelper.readInt(key: kSubscriberLeft) ?? 10
+        if subscriberUsesLeft == 0 { subscriberUsesLeft = 10 }
         freeUsesToday = KeychainHelper.readInt(key: kFreeUsesToday) ?? 0
     }
 
@@ -64,8 +64,8 @@ final class UsageManager: ObservableObject {
         let last = defaults.string(forKey: kLastReset)
         if last != today {
             defaults.set(today, forKey: kLastReset)
-            subscriberUsesLeft = 20
-            KeychainHelper.saveInt(key: kSubscriberLeft, value: 20)
+            subscriberUsesLeft = 10
+            KeychainHelper.saveInt(key: kSubscriberLeft, value: 10)
             freeUsesToday = 0
             KeychainHelper.saveInt(key: kFreeUsesToday, value: 0)
         }

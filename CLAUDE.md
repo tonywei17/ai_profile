@@ -127,7 +127,14 @@ backend/
 - **GCP Project**: `ai-id-photo-prod`
 - **Region**: `asia-northeast1` (Tokyo)
 - **Service URL**: `https://aiidphoto-backend-616059029156.asia-northeast1.run.app`
-- **API Key**: Stored in Secret Manager (`GEMINI_API_KEY`), never in code
+- **API Keys**: Stored in Secret Manager, never in code
+  - `GEMINI_API_KEY` — Gemini direct API (primary)
+  - `OPENROUTER_API_KEY` — OpenRouter fallback (secondary)
+  - `OPENROUTER_API_KEY` — OpenRouter fallback (secondary, Pro only)
+- **Env-based keys** (optional):
+  - `OPENROUTER_API_KEY_ENV` — OpenRouter separate account (tertiary, Pro only)
+- **Fallback chain**: Gemini → OpenRouter(SM) → OpenRouter(ENV)
+  - Free 用户仅走 Gemini，不触发高成本 fallback
 
 ### Backend Deploy Workflow (Cloud Run — no local Docker needed)
 
@@ -137,7 +144,7 @@ gcloud run deploy aiidphoto-backend \
   --source ./backend \
   --project=ai-id-photo-prod \
   --region=asia-northeast1 \
-  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest" \
+  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest,OPENROUTER_API_KEY=OPENROUTER_API_KEY:latest" \
   --quiet
 
 # Or use the skill:
