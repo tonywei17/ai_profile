@@ -41,248 +41,213 @@ interface GenerateRequest {
   tier?: string;
 }
 
-interface GeminiAPIResponse {
-  candidates?: Array<{
-    content: {
-      parts: Array<{
-        text?: string;
-        inline_data?: { mime_type: string; data: string };
-        inlineData?: { mimeType: string; data: string };
-      }>;
-    };
-  }>;
-  error?: { code: number; message: string };
-}
-
-interface OpenRouterResponse {
-  choices?: Array<{
-    message: {
-      content: Array<{
-        type: string;
-        text?: string;
-        image_url?: { url: string };
-      }> | string;
-    };
-  }>;
-  error?: { message: string; code?: number };
+interface QwenImageEditResponse {
+  output?: {
+    choices?: Array<{
+      finish_reason: string;
+      message: {
+        role: string;
+        content: Array<{ image?: string; text?: string }>;
+      };
+    }>;
+  };
+  code?: string;
+  message?: string;
 }
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
-const GEMINI_TIMEOUT_MS = 90_000;
-const OPENROUTER_TIMEOUT_MS = 120_000;
+const QWEN_TIMEOUT_MS = 90_000;
+const BAILIAN_TIMEOUT_MS = 90_000;
+const BAILIAN_POLL_INTERVAL_MS = 3_000;
 const MAX_PROMPT_LENGTH = 2000;
 
 // ============================================================
-// Provider 1: Gemini direct API
+// Provider 0: 阿里云百炼 wanx2.1-imageedit (异步任务轮询)
 // ============================================================
-async function callGemini(
-  prompt: string,
-  imageBase64: string,
-  tier: string | undefined
-): Promise<{ image: string } | null> {
-  const endpoint = tier === "free"
-    ? config.geminiEndpointFree
-    : config.geminiEndpointPro;
 
-  const body = {
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          { inline_data: { mime_type: "image/jpeg", data: imageBase64 } },
-        ],
-      },
-    ],
-    generationConfig: {
-      responseModalities: ["TEXT", "IMAGE"],
-    },
+const BAILIAN_ENDPOINT =
+  "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis";
+const BAILIAN_TASK_ENDPOINT =
+  "https://dashscope.aliyuncs.com/api/v1/tasks";
+
+interface BailianCreateResponse {
+  request_id?: string;
+  output?: { task_id: string; task_status: string };
+  code?: string;
+  message?: string;
+}
+
+interface BailianTaskResponse {
+  output?: {
+    task_id: string;
+    task_status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+    results?: Array<{ url: string; code?: string; message?: string }>;
+    code?: string;
+    message?: string;
   };
+}
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+async function callBailian(
+  prompt: string,
+  imageBase64: string
+): Promise<{ image: string } | null> {
+  if (!config.bailianApiKey) return null;
 
+  // Step 1: 创建异步任务
+  let taskId: string;
   try {
-    const res = await fetch(endpoint, {
+    const createRes = await fetch(BAILIAN_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": config.geminiApiKey,
+        Authorization: `Bearer ${config.bailianApiKey}`,
+        "X-DashScope-Async": "enable",
       },
-      body: JSON.stringify(body),
-      signal: controller.signal,
+      body: JSON.stringify({
+        model: "wanx2.1-imageedit",
+        input: {
+          function: "description_edit",
+          prompt,
+          base_image_url: `data:image/jpeg;base64,${imageBase64}`,
+        },
+        parameters: { n: 1, watermark: false },
+      }),
     });
 
-    const data = (await res.json()) as GeminiAPIResponse;
-
-    if (!res.ok) {
-      console.error(`[gemini] API error ${res.status}:`, data.error?.message);
+    const createData = (await createRes.json()) as BailianCreateResponse;
+    if (!createRes.ok || createData.code || !createData.output?.task_id) {
+      console.error("[bailian] Task creation failed:", createData.code, createData.message);
       return null;
     }
 
-    const candidates = data.candidates;
-    if (!candidates || candidates.length === 0) {
-      console.error("[gemini] No candidates in response");
-      return null;
-    }
-
-    for (const part of candidates[0].content.parts) {
-      const inlineData = part.inline_data || part.inlineData;
-      if (inlineData?.data) {
-        return { image: inlineData.data };
-      }
-    }
-
-    console.error("[gemini] No image in response parts");
-    return null;
-  } catch (err: unknown) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      console.error("[gemini] Timeout after", GEMINI_TIMEOUT_MS, "ms");
-    } else {
-      console.error("[gemini] Request failed:", err);
-    }
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-// ============================================================
-// Provider 2 & 3: OpenRouter (shared logic, different API keys)
-// Pro tier only — free users do not trigger this fallback
-//
-// Key difference from Gemini direct:
-//   Gemini native API uses responseModalities: ["TEXT", "IMAGE"]
-//   OpenRouter uses OpenAI-compatible format, so we must:
-//   1. Set "modalities": ["text", "image"] for image output
-//   2. Wrap the prompt to make image editing intent explicit
-// ============================================================
-
-const OPENROUTER_SYSTEM_PROMPT =
-  "You are a professional ID photo editor. " +
-  "You MUST edit the provided photo and return the edited image. " +
-  "Do NOT describe the image. Do NOT return text. " +
-  "Your output MUST be the edited photo image.";
-
-function buildOpenRouterImagePrompt(originalPrompt: string): string {
-  return (
-    "TASK: Edit the attached photo into a professional ID/passport photo. " +
-    "Return ONLY the edited image, no text description.\n\n" +
-    "EDITING REQUIREMENTS:\n" +
-    originalPrompt + "\n\n" +
-    "CRITICAL: You must OUTPUT the edited photo as an image. " +
-    "Preserve the person's exact facial identity and features. " +
-    "Apply proper background, lighting, framing, and cropping as specified above."
-  );
-}
-
-async function callOpenRouter(
-  prompt: string,
-  imageBase64: string,
-  apiKey: string,
-  label: string
-): Promise<{ image: string } | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
-
-  const body = {
-    model: config.openrouterModel,
-    messages: [
-      {
-        role: "system",
-        content: OPENROUTER_SYSTEM_PROMPT,
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: buildOpenRouterImagePrompt(prompt) },
-          {
-            type: "image_url",
-            image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-          },
-        ],
-      },
-    ],
-    // Request image output (OpenAI-compatible multimodal output)
-    modalities: ["text", "image"],
-    provider: {
-      order: ["Google"],
-      allow_fallbacks: true,
-    },
-  };
-
-  try {
-    const res = await fetch(`${config.openrouterBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://aiidphoto.app",
-        "X-Title": "AIIDPhoto",
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-
-    const data = (await res.json()) as OpenRouterResponse;
-
-    if (!res.ok) {
-      console.error(`[${label}] API error ${res.status}:`, data.error?.message);
-      return null;
-    }
-
-    return extractImageFromChatResponse(data, label);
-  } catch (err: unknown) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      console.error(`[${label}] Timeout after ${OPENROUTER_TIMEOUT_MS}ms`);
-    } else {
-      console.error(`[${label}] Request failed:`, err);
-    }
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-// ============================================================
-// Shared: extract image from OpenAI-compatible chat response
-// ============================================================
-function extractImageFromChatResponse(
-  data: OpenRouterResponse,
-  label: string
-): { image: string } | null {
-  const choices = data.choices;
-  if (!choices || choices.length === 0) {
-    console.error(`[${label}] No choices in response`);
+    taskId = createData.output.task_id;
+    console.log("[bailian] Task created:", taskId);
+  } catch (err) {
+    console.error("[bailian] Task creation request failed:", err);
     return null;
   }
 
-  const content = choices[0].message.content;
+  // Step 2: 轮询直到完成或超时
+  const deadline = Date.now() + BAILIAN_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, BAILIAN_POLL_INTERVAL_MS));
 
-  if (Array.isArray(content)) {
-    for (const block of content) {
-      if (block.type === "image_url" && block.image_url?.url) {
-        const base64Match = block.image_url.url.match(
-          /^data:image\/[^;]+;base64,(.+)$/
-        );
-        if (base64Match) {
-          return { image: base64Match[1] };
+    try {
+      const pollRes = await fetch(`${BAILIAN_TASK_ENDPOINT}/${taskId}`, {
+        headers: { Authorization: `Bearer ${config.bailianApiKey}` },
+      });
+
+      const pollData = (await pollRes.json()) as BailianTaskResponse;
+      const status = pollData.output?.task_status;
+
+      if (status === "SUCCEEDED") {
+        const imageUrl = pollData.output?.results?.[0]?.url;
+        if (!imageUrl) {
+          console.error("[bailian] No image URL in SUCCEEDED response");
+          return null;
         }
+        const imgRes = await fetch(imageUrl);
+        const imgBuffer = await imgRes.arrayBuffer();
+        const base64 = Buffer.from(imgBuffer).toString("base64");
+        console.log("[bailian] Task succeeded, image bytes:", base64.length);
+        return { image: base64 };
       }
+
+      if (status === "FAILED" || status === "CANCELED") {
+        console.error("[bailian] Task failed:", pollData.output?.code, pollData.output?.message);
+        return null;
+      }
+
+      console.log("[bailian] Task status:", status);
+    } catch (err) {
+      console.error("[bailian] Poll request failed:", err);
+      return null;
     }
   }
 
-  if (typeof content === "string") {
-    const dataUrlMatch = content.match(/^data:image\/[^;]+;base64,(.+)$/);
-    if (dataUrlMatch) {
-      return { image: dataUrlMatch[1] };
-    }
-    if (/^[A-Za-z0-9+/=]{100,}$/.test(content)) {
-      return { image: content };
-    }
-  }
-
-  console.error(`[${label}] No image found in response`);
+  console.error("[bailian] Task timed out after", BAILIAN_TIMEOUT_MS, "ms");
   return null;
+}
+
+// ============================================================
+// Provider 1 & 2: 阿里云百炼 qwen-image-edit / qwen-image-edit-plus
+// Pro tier only — 同一 BAILIAN_API_KEY，不同模型
+// ============================================================
+
+const QWEN_IMAGE_EDIT_ENDPOINT =
+  "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
+
+async function callQwenImageEdit(
+  model: string,
+  prompt: string,
+  imageBase64: string
+): Promise<{ image: string } | null> {
+  if (!config.bailianApiKey) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), QWEN_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(QWEN_IMAGE_EDIT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.bailianApiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        input: {
+          messages: [
+            {
+              role: "user",
+              content: [
+                { image: `data:image/jpeg;base64,${imageBase64}` },
+                { text: prompt },
+              ],
+            },
+          ],
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    const data = (await res.json()) as QwenImageEditResponse;
+
+    if (!res.ok || data.code) {
+      console.error(`[${model}] API error:`, data.code, data.message);
+      return null;
+    }
+
+    const content = data.output?.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error(`[${model}] No content in response`);
+      return null;
+    }
+
+    for (const block of content) {
+      if (!block.image) continue;
+      const dataUrlMatch = block.image.match(/^data:image\/[^;]+;base64,(.+)$/);
+      if (dataUrlMatch) return { image: dataUrlMatch[1] };
+      if (block.image.startsWith("http")) {
+        const imgRes = await fetch(block.image);
+        const base64 = Buffer.from(await imgRes.arrayBuffer()).toString("base64");
+        return { image: base64 };
+      }
+      return { image: block.image };
+    }
+
+    console.error(`[${model}] No image in response content`);
+    return null;
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      console.error(`[${model}] Timeout after ${QWEN_TIMEOUT_MS}ms`);
+    } else {
+      console.error(`[${model}] Request failed:`, err);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ============================================================
@@ -297,24 +262,22 @@ interface ProviderEntry {
 
 const providers: ProviderEntry[] = [
   {
-    name: "gemini",
+    name: "bailian",
     proOnly: false,
-    available: () => !!config.geminiApiKey,
-    call: (prompt, image, tier) => callGemini(prompt, image, tier),
+    available: () => !!config.bailianApiKey,
+    call: (prompt, image) => callBailian(prompt, image),
   },
   {
-    name: "openrouter",
+    name: "qwen-image-edit",
     proOnly: true,
-    available: () => !!config.openrouterApiKey,
-    call: (prompt, image) =>
-      callOpenRouter(prompt, image, config.openrouterApiKey, "openrouter"),
+    available: () => !!config.bailianApiKey,
+    call: (prompt, image) => callQwenImageEdit("qwen-image-edit", prompt, image),
   },
   {
-    name: "openrouter-env",
+    name: "qwen-image-edit-plus",
     proOnly: true,
-    available: () => !!config.openrouterApiKeyEnv,
-    call: (prompt, image) =>
-      callOpenRouter(prompt, image, config.openrouterApiKeyEnv, "openrouter-env"),
+    available: () => !!config.bailianApiKey,
+    call: (prompt, image) => callQwenImageEdit("qwen-image-edit-plus", prompt, image),
   },
 ];
 
