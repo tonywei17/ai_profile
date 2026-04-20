@@ -1,5 +1,5 @@
 {
-  "identifier" : "com.nexus.aiidphoto.storekit",
+  "identifier" : "com.yufeicn.aiidphoto.storekit",
   "nonConsumableProducts" : [],
   "nonRenewingSubscriptionProducts" : [],
   "products" : [
@@ -29,7 +29,7 @@
           "locale" : "ko_KR"
         }
       ],
-      "productID" : "com.nexus.aiidphoto.print_layout_single",
+      "productID" : "com.yufeicn.aiidphoto.print_layout_single",
       "referenceName" : "Print Layout Single Use",
       "type" : "Consumable"
     }
@@ -73,7 +73,7 @@
               "locale" : "ko_KR"
             }
           ],
-          "productID" : "com.nexus.aiidphoto.pro_monthly",
+          "productID" : "com.yufeicn.aiidphoto.pro_monthly",
           "referenceName" : "Pro Monthly",
           "subscriptionPeriod" : "1 Month",
           "type" : "RecurringSubscription"
@@ -106,7 +106,7 @@
               "locale" : "ko_KR"
             }
           ],
-          "productID" : "com.nexus.aiidphoto.pro_annual",
+          "productID" : "com.yufeicn.aiidphoto.pro_annual",
           "referenceName" : "Pro Annual",
           "subscriptionPeriod" : "1 Year",
           "type" : "RecurringSubscription"

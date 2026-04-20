@@ -3,8 +3,8 @@ import StoreKit
 
 /// Represents a subscription plan option.
 enum SubscriptionPlan: String, CaseIterable, Identifiable {
-    case monthly = "com.nexus.aiidphoto.pro_monthly"
-    case annual  = "com.nexus.aiidphoto.pro_annual"
+    case monthly = "com.yufeicn.aiidphoto.pro_monthly"
+    case annual  = "com.yufeicn.aiidphoto.pro_annual"
 
     var id: String { rawValue }
 
@@ -12,7 +12,7 @@ enum SubscriptionPlan: String, CaseIterable, Identifiable {
 }
 
 enum ConsumableProduct: String {
-    case printLayoutSingle = "com.nexus.aiidphoto.print_layout_single"
+    case printLayoutSingle = "com.yufeicn.aiidphoto.print_layout_single"
 }
 
 @MainActor

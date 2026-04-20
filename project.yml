@@ -39,14 +39,14 @@ targets:
         type: folder
         buildPhase: resources
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.nexus.aiidphoto
+      PRODUCT_BUNDLE_IDENTIFIER: com.yufeicn.aiidphoto
       SWIFT_VERSION: 5.9
       IPHONEOS_DEPLOYMENT_TARGET: 26.0
       TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
       CODE_SIGN_STYLE: Automatic
-      DEVELOPMENT_TEAM: K2ZG73WM9X
+      DEVELOPMENT_TEAM: 4MYXBV84DV
     dependencies:
       - package: GoogleMobileAds
     resources:
@@ -75,9 +75,9 @@ targets:
           - vi
           - id
           - pt-BR
-        CFBundleDisplayName: AIIDPhoto
-        CFBundleIdentifier: com.nexus.aiidphoto
-        CFBundleName: AIIDPhoto
+        CFBundleDisplayName: AI证件照
+        CFBundleIdentifier: com.yufeicn.aiidphoto
+        CFBundleName: AI证件照
         CFBundleVersion: "22"
         CFBundleShortVersionString: "1.1.1"
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
