@@ -141,43 +141,43 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
 
     // MARK: - Generation Prompt (image-edit friendly imperative)
 
-    /// Suffix that locks face/hair/pose — does NOT restrict outfit, to avoid contradictions.
+    /// Preserves face features and hair only — outfit change is intentional and must not be blocked.
     private var preserveSuffix: String {
-        "保持人物的脸部特征、发型和姿势不变，不要裁剪或缩放画面。"
+        "保持人物的脸部五官和发型完全不变，不要裁剪或改变画面构图比例。"
     }
 
     var prompt: String {
         switch self {
         case .chinaID:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合中国居民身份证证件照标准。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成深色系正装衬衫，均匀柔和正面补光，轻微修肤保持自然，输出中国居民身份证标准证件照效果。" + preserveSuffix
         case .oneInch:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合中国标准一寸证件照规格（25×35mm）。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成正式商务衬衫或上衣，均匀柔和光线，轻微修肤，输出中国标准一寸证件照（25×35mm）效果。" + preserveSuffix
         case .twoInch:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合中国标准二寸证件照规格（35×49mm）。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成正式商务装，均匀柔和正面光线，输出中国标准二寸证件照（35×49mm）效果。" + preserveSuffix
         case .chinaPassport:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合中国护照申请照片标准，表情自然，嘴巴闭合。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成深色纯色领口上衣（无图案无logo），均匀柔和正面光线，嘴巴自然闭合，输出中国护照申请标准照片效果。" + preserveSuffix
         case .driverLicense:
-            return "请将这张照片的背景换为纯蓝色（#5395E2），使其符合中国机动车驾驶证照片标准。" + preserveSuffix
+            return "将背景换为纯蓝色（#5395E2），将服装换成整洁上衣，均匀柔和光线，输出中国驾驶证标准证件照效果。" + preserveSuffix
         case .studentID:
-            return "请将这张照片的背景换为淡蓝色或纯白色，使其符合中国学生证照片标准。" + preserveSuffix
+            return "将背景换为淡蓝色或纯白色，将服装换成整洁学生装，均匀柔和光线，轻微修肤，输出学生证标准证件照效果。" + preserveSuffix
         case .socialSecurity:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合中国社会保障卡照片标准。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成深色商务上衣，均匀柔和正面光线，输出中国社保卡标准证件照效果。" + preserveSuffix
         case .resume:
-            return "请将这张照片的背景换为纯白色或浅蓝色，生成专业简历标准证件照，整体形象自信大方。" + preserveSuffix
+            return "将背景换为纯白色或浅蓝色，将服装换成专业商务装（白衬衫或正装上衣），均匀柔和光线，轻微修肤，输出专业简历标准证件照效果。" + preserveSuffix
         case .standardPortrait:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），生成标准胸部以上证件人像，光线均匀自然。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成整洁商务装，均匀柔和影棚光线，轻微修肤，输出标准胸部以上证件人像效果。" + preserveSuffix
         case .halfBody:
-            return "请将这张照片的背景换为纯白色或浅灰色影棚背景，生成专业半身人像照片，光线均匀。" + preserveSuffix
+            return "将背景换为纯白色或浅灰色影棚背景，将服装换成专业商务休闲装，均匀柔和影棚光线，轻微修肤，输出专业半身人像效果。" + preserveSuffix
         case .fullBody:
-            return "请将这张照片的背景换为纯白色或浅灰色影棚背景，生成专业全身人像照片，光线均匀。" + preserveSuffix
+            return "将背景换为纯白色或浅灰色影棚背景，将服装换成专业商务休闲装，均匀柔和影棚光线，轻微修肤，输出专业全身人像效果。" + preserveSuffix
         case .chinaMarriage:
-            return "请将这张双人合照的背景换为中国婚姻登记专用纯红色（#C10000），男左女右，符合中国结婚登记照片标准。" + preserveSuffix
+            return "将背景换为中国婚姻登记专用纯红色（#C10000），两人服装换成半正式装（男士衬衫或西装，女士整洁上衣），均匀柔和正面光线，男左女右，输出中国结婚登记标准照片效果。" + preserveSuffix
         case .oneInchLarge:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合中国大一寸规格（33×48mm，适用于普通话水平测试及党员申请）。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成正式商务装，均匀柔和正面光线，输出中国大一寸（33×48mm）证件照效果，适用于普通话水平测试及党员申请。" + preserveSuffix
         case .twoInchSmall:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合小二寸规格（35×45mm），满足ICAO生物特征识别标准。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成纯色无图案上衣，均匀柔和正面光线，输出小二寸（35×45mm）证件照效果，符合ICAO生物特征标准。" + preserveSuffix
         case .ncreExam:
-            return "请将这张照片的背景换为纯白色（#FFFFFF），使其符合全国计算机等级考试（NCRE）报名照片规格要求。" + preserveSuffix
+            return "将背景换为纯白色（#FFFFFF），将服装换成正式商务装，均匀柔和正面光线，输出全国计算机等级考试（NCRE）标准报名照片效果。" + preserveSuffix
         }
     }
 }
