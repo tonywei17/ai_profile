@@ -125,8 +125,10 @@ async function callHivision(
       return null;
     }
 
-    console.log("[hivision] Done, bytes:", data2.image_base64.length);
-    return { image: data2.image_base64 };
+    // Python's base64.encodebytes adds \n every 76 chars; strip before sending to iOS
+    const cleanBase64 = data2.image_base64.replace(/\s+/g, "");
+    console.log("[hivision] Done, bytes:", cleanBase64.length);
+    return { image: cleanBase64 };
 
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === "AbortError") {

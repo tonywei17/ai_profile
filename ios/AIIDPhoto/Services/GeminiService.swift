@@ -12,13 +12,13 @@ enum GeminiError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidConfig:
-            return "API 配置无効、ネットワーク設定を確認してください"
+            return "服务配置异常，请检查网络设置后重试"
         case .invalidImage:
-            return "画像フォーマットが無効です。別の写真を選択してください"
+            return "图片格式不支持，请换一张照片"
         case .networkError(let code, let msg):
-            return "サーバーエラー (\(code))：\(msg)"
+            return "服务器错误（\(code)）：\(msg)"
         case .decodeFailed:
-            return "生成結果を解析できませんでした。再試行してください"
+            return "生成结果解析失败，请重试"
         }
     }
 }
@@ -154,7 +154,8 @@ final class GeminiService {
         }
 
         let result = try decoder.decode(BackendGenerateResponse.self, from: data)
-        guard let imgData = Data(base64Encoded: result.image),
+        // .ignoreUnknownCharacters handles \n inserted by Python's base64.encodebytes
+        guard let imgData = Data(base64Encoded: result.image, options: .ignoreUnknownCharacters),
               let uiImage = UIImage(data: imgData) else {
             throw GeminiError.decodeFailed
         }
