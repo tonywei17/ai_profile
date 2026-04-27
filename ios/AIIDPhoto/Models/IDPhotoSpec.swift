@@ -103,6 +103,23 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Pixel dimensions at 300 DPI derived from photoSizeMM.
+    var pixelSize: (width: Int, height: Int) {
+        let scale = 300.0 / 25.4
+        let (w, h) = photoSizeMM
+        return (Int((w * scale).rounded()), Int((h * scale).rounded()))
+    }
+
+    /// Background color hex without # (used by HivisionIDPhotos add_background).
+    var backgroundColorHex: String {
+        switch self {
+        case .driverLicense: return "5395e2"
+        case .chinaMarriage: return "c10000"
+        case .studentID:     return "438edb"
+        default:             return "ffffff"
+        }
+    }
+
     /// Physical dimensions in millimeters (width × height).
     var photoSizeMM: (width: Double, height: Double) {
         switch self {
@@ -195,6 +212,13 @@ struct CustomSizeSpec {
 
     var sizeLabel: String { "\(Int(widthMM))×\(Int(heightMM)) mm" }
     var photoSizeMM: (width: Double, height: Double) { (widthMM, heightMM) }
+
+    var pixelSize: (width: Int, height: Int) {
+        let scale = 300.0 / 25.4
+        return (Int((widthMM * scale).rounded()), Int((heightMM * scale).rounded()))
+    }
+
+    var backgroundColorHex: String { "ffffff" }
 
     var prompt: String {
         "生成自定义证件照：纯白色背景，\(Int(widthMM))×\(Int(heightMM))mm，正脸居中，头肩构图，自然表情，均匀柔和光线，专业证件照风格。"

@@ -1,7 +1,10 @@
 export const config = {
   port: parseInt(process.env.PORT || "8080", 10),
 
-  // --- Provider 0: 阿里云百炼 wanx2.1-imageedit ---
+  // --- Provider 0: HivisionIDPhotos (专业证件照生成) ---
+  hivisionUrl: process.env.HIVISION_URL || "",
+
+  // --- Provider 1-3: 阿里云百炼 ---
   bailianApiKey: process.env.BAILIAN_API_KEY || "",
 
   tripoApiKey: process.env.TRIPO_API_KEY || "",

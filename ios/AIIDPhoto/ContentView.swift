@@ -764,10 +764,14 @@ struct ContentView: View {
             let basePrompt = isCustomSize ? customSize.prompt : selectedSpec.prompt
             let finalPrompt = basePrompt + photoOptions.buildPromptSuffix()
             let tier: GeminiService.OutputTier = subscription.isSubscribed ? .pro : .free
+            let px = isCustomSize ? customSize.pixelSize : selectedSpec.pixelSize
+            let bgHex = isCustomSize ? customSize.backgroundColorHex : selectedSpec.backgroundColorHex
+            let specInfo = GeminiService.SpecInfo(widthPx: px.width, heightPx: px.height, bgColorHex: bgHex)
             let result = try await GeminiService.shared.generateIDPhoto(
                 from: input,
                 prompt: finalPrompt,
-                tier: tier
+                tier: tier,
+                specInfo: specInfo
             )
             self.outputImage = result
             usage.markUsed(isSubscribed: subscription.isSubscribed)

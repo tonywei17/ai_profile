@@ -26,9 +26,12 @@ enum GeminiError: LocalizedError {
 // MARK: - Codable Models (Backend Proxy)
 
 struct BackendGenerateRequest: Encodable {
-    let image: String   // base64
+    let image: String
     let prompt: String
-    let tier: String    // "free" or "pro"
+    let tier: String
+    let specWidth: Int?
+    let specHeight: Int?
+    let specBgColor: String?
 }
 
 struct BackendGenerateResponse: Decodable {
@@ -64,15 +67,23 @@ final class GeminiService {
         var apiValue: String { self == .free ? "free" : "pro" }
     }
 
-    func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro) async throws -> UIImage {
+    struct SpecInfo {
+        let widthPx: Int
+        let heightPx: Int
+        let bgColorHex: String
+    }
+
+    func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro, specInfo: SpecInfo? = nil) async throws -> UIImage {
         guard let backendURL = Config.backendBaseURL else {
             throw GeminiError.invalidConfig
         }
 
-        // Heavy image processing off the main thread
+        // HivisionIDPhotos needs higher input resolution for quality face detection
+        let maxDim: CGFloat = specInfo != nil ? 1500 : tier.maxDimension
+
         let base64 = try await Task.detached(priority: .userInitiated) {
-            let processed = image.capped(to: tier.maxDimension)
-            guard let jpegData = processed.jpegData(compressionQuality: tier == .free ? 0.85 : 0.9) else {
+            let processed = image.capped(to: maxDim)
+            guard let jpegData = processed.jpegData(compressionQuality: 0.92) else {
                 throw GeminiError.invalidImage
             }
             let b64 = jpegData.base64EncodedString()
@@ -81,7 +92,7 @@ final class GeminiService {
         }.value
 
         let cleanPrompt = sanitizePrompt(prompt)
-        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, tier: tier, backendURL: backendURL)
+        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, tier: tier, backendURL: backendURL, specInfo: specInfo)
     }
 
     func generateIDPhoto(from image: UIImage) async throws -> UIImage {
@@ -100,13 +111,21 @@ final class GeminiService {
         return clean
     }
 
-    private func requestViaBackend(base64: String, prompt: String, tier: OutputTier, backendURL: URL) async throws -> UIImage {
+    private func requestViaBackend(base64: String, prompt: String, tier: OutputTier, backendURL: URL, specInfo: SpecInfo? = nil) async throws -> UIImage {
         let url = backendURL.appendingPathComponent("api/gemini/generate")
         var req = Config.authenticatedRequest(url: url)
         req.httpMethod = "POST"
-        req.timeoutInterval = 120
+        // HivisionIDPhotos cold start can take ~60s; keep 150s for safety
+        req.timeoutInterval = 150
 
-        let body = BackendGenerateRequest(image: base64, prompt: prompt, tier: tier.apiValue)
+        let body = BackendGenerateRequest(
+            image: base64,
+            prompt: prompt,
+            tier: tier.apiValue,
+            specWidth: specInfo?.widthPx,
+            specHeight: specInfo?.heightPx,
+            specBgColor: specInfo?.bgColorHex
+        )
         req.httpBody = try encoder.encode(body)
 
         // Retry up to 2 times for transient network errors

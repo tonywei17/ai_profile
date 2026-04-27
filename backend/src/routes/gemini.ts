@@ -36,9 +36,12 @@ function checkDailyBudget(): boolean {
 }
 
 interface GenerateRequest {
-  image: string; // base64
+  image: string;       // base64
   prompt: string;
   tier?: string;
+  specWidth?: number;  // target pixel width at 300dpi (from IDPhotoSpec)
+  specHeight?: number; // target pixel height at 300dpi
+  specBgColor?: string; // hex color without #, e.g. "ffffff"
 }
 
 interface QwenImageEditResponse {
@@ -56,13 +59,89 @@ interface QwenImageEditResponse {
 }
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
+const HIVISION_TIMEOUT_MS = 90_000;
 const QWEN_TIMEOUT_MS = 90_000;
 const BAILIAN_TIMEOUT_MS = 90_000;
 const BAILIAN_POLL_INTERVAL_MS = 3_000;
 const MAX_PROMPT_LENGTH = 2000;
 
 // ============================================================
-// Provider 0: 阿里云百炼 wanx2.1-imageedit (异步任务轮询)
+// Provider 0: HivisionIDPhotos — 专业证件照，精确尺寸 + 人脸自动居中
+// Two-step: /idphoto (RGBA transparent) → /add_background (final JPEG)
+// ============================================================
+
+async function callHivision(
+  imageBase64: string,
+  widthPx: number,
+  heightPx: number,
+  bgColorHex: string
+): Promise<{ image: string } | null> {
+  if (!config.hivisionUrl) return null;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HIVISION_TIMEOUT_MS);
+
+  try {
+    // Step 1: face detection + matting → RGBA PNG at target dimensions
+    const form1 = new FormData();
+    form1.append("input_image_base64", imageBase64);
+    form1.append("width", String(widthPx));
+    form1.append("height", String(heightPx));
+    form1.append("hd", "false");
+    form1.append("dpi", "300");
+    form1.append("human_matting_model", "modnet_photographic_portrait_matting");
+    form1.append("face_detect_model", "mtcnn");
+
+    const res1 = await fetch(`${config.hivisionUrl}/idphoto`, {
+      method: "POST",
+      body: form1,
+      signal: controller.signal,
+    });
+    const data1 = await res1.json() as { status: boolean; image_base64_standard?: string };
+    console.log("[hivision] Step1 status:", data1.status, "http:", res1.status);
+
+    if (!data1.status || !data1.image_base64_standard) {
+      console.error("[hivision] Face not detected or step1 failed");
+      return null;
+    }
+
+    // Step 2: fill background color → JPEG
+    const color = bgColorHex.replace("#", "");
+    const form2 = new FormData();
+    form2.append("input_image_base64", data1.image_base64_standard);
+    form2.append("color", color);
+    form2.append("render", "0");
+    form2.append("dpi", "300");
+
+    const res2 = await fetch(`${config.hivisionUrl}/add_background`, {
+      method: "POST",
+      body: form2,
+      signal: controller.signal,
+    });
+    const data2 = await res2.json() as { status: boolean; image_base64?: string };
+
+    if (!data2.status || !data2.image_base64) {
+      console.error("[hivision] add_background failed");
+      return null;
+    }
+
+    console.log("[hivision] Done, bytes:", data2.image_base64.length);
+    return { image: data2.image_base64 };
+
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      console.error("[hivision] Timeout after", HIVISION_TIMEOUT_MS, "ms");
+    } else {
+      console.error("[hivision] Error:", err);
+    }
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ============================================================
+// Provider 1: 阿里云百炼 wanx2.1-imageedit (异步任务轮询)
 // ============================================================
 
 const BAILIAN_ENDPOINT =
@@ -254,39 +333,6 @@ async function callQwenImageEdit(
 }
 
 // ============================================================
-// Fallback chain definition
-// ============================================================
-interface ProviderEntry {
-  name: string;
-  proOnly: boolean;
-  available: () => boolean;
-  call: (prompt: string, image: string, tier?: string) => Promise<{ image: string } | null>;
-}
-
-// Pro tier: qwen-image-edit-plus → qwen-image-edit → wanx2.1-imageedit
-// Free tier: wanx2.1-imageedit only (cost control)
-const providers: ProviderEntry[] = [
-  {
-    name: "qwen-image-edit-plus",
-    proOnly: true,
-    available: () => !!config.bailianApiKey,
-    call: (prompt, image) => callQwenImageEdit("qwen-image-edit-plus", prompt, image),
-  },
-  {
-    name: "qwen-image-edit",
-    proOnly: true,
-    available: () => !!config.bailianApiKey,
-    call: (prompt, image) => callQwenImageEdit("qwen-image-edit", prompt, image),
-  },
-  {
-    name: "bailian",
-    proOnly: false,
-    available: () => !!config.bailianApiKey,
-    call: (prompt, image) => callBailian(prompt, image),
-  },
-];
-
-// ============================================================
 // POST /generate
 // ============================================================
 router.post("/generate", async (req: Request, res: Response) => {
@@ -316,59 +362,71 @@ router.post("/generate", async (req: Request, res: Response) => {
   }
 
   try {
-    const { image, prompt, tier } = req.body as GenerateRequest;
+    const { image, prompt, tier, specWidth, specHeight, specBgColor } = req.body as GenerateRequest;
 
     if (!image || !prompt) {
       res.status(400).json({ error: "Missing required fields: image, prompt" });
       return;
     }
-
     if (typeof image !== "string" || image.length > MAX_IMAGE_SIZE) {
       res.status(413).json({ error: "Image too large" });
       return;
     }
-
     if (!/^[A-Za-z0-9+/=]+$/.test(image.slice(0, 100))) {
       res.status(400).json({ error: "Invalid image format" });
       return;
     }
-
     if (typeof prompt !== "string" || prompt.length > MAX_PROMPT_LENGTH) {
       res.status(413).json({ error: "Prompt too long" });
       return;
     }
-
     if (prompt.trim().length < 3) {
       res.status(400).json({ error: "Prompt too short" });
       return;
     }
 
-    // Free users: Gemini only (no expensive fallbacks)
-    // Pro users: full fallback chain
     const isPro = tier === "pro";
-    const availableProviders = providers.filter(
-      (p) => p.available() && (!p.proOnly || isPro)
-    );
+    const hasSpec = typeof specWidth === "number" && typeof specHeight === "number" && typeof specBgColor === "string";
 
-    if (availableProviders.length === 0) {
+    // Build provider chain dynamically per request
+    const candidates: Array<{ name: string; call: () => Promise<{ image: string } | null> }> = [];
+
+    // 1. HivisionIDPhotos — all tiers, purpose-built for compliant ID photos
+    if (hasSpec && config.hivisionUrl) {
+      candidates.push({
+        name: "hivision",
+        call: () => callHivision(image, specWidth!, specHeight!, specBgColor!),
+      });
+    }
+
+    // 2. qwen-image-edit-plus → qwen-image-edit — Pro only
+    if (isPro && config.bailianApiKey) {
+      candidates.push({ name: "qwen-image-edit-plus", call: () => callQwenImageEdit("qwen-image-edit-plus", prompt, image) });
+      candidates.push({ name: "qwen-image-edit",      call: () => callQwenImageEdit("qwen-image-edit", prompt, image) });
+    }
+
+    // 3. wanx2.1-imageedit — all tiers
+    if (config.bailianApiKey) {
+      candidates.push({ name: "bailian", call: () => callBailian(prompt, image) });
+    }
+
+    if (candidates.length === 0) {
       res.status(500).json({ error: "Server API key not configured" });
       return;
     }
 
-    // Walk the fallback chain in priority order
-    for (let i = 0; i < availableProviders.length; i++) {
+    for (let i = 0; i < candidates.length; i++) {
       if (i > 0) {
-        console.warn(`[fallback] ${availableProviders[i - 1].name} failed, trying ${availableProviders[i].name}`);
+        console.warn(`[fallback] ${candidates[i - 1].name} failed, trying ${candidates[i].name}`);
       }
-
-      const result = await availableProviders[i].call(prompt, image, tier);
+      const result = await candidates[i].call();
       if (result) {
-        res.json({ image: result.image, provider: availableProviders[i].name });
+        res.json({ image: result.image, provider: candidates[i].name });
         return;
       }
     }
 
-    const tried = availableProviders.map((p) => p.name).join(" → ");
+    const tried = candidates.map((c) => c.name).join(" → ");
     console.error(`[generate] All providers failed: ${tried}`);
     res.status(502).json({ error: "Generation failed, please try again" });
   } catch (err: unknown) {
