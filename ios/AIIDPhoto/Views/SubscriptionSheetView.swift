@@ -382,17 +382,13 @@ struct SubscriptionSheetView: View {
           pt: "Pule anúncios de 30s — gere instantaneamente")
     }
     private var benefitPrintTitle: String {
-        l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃",
-          vi: "In ảnh tại cửa hàng", id: "Cetak di Konbini", pt: "Impressão em Loja")
+        l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃")
     }
     private var benefitPrintDesc: String {
-        l("300DPI排版照片，便利店直接打印",
-          "300 DPI print-ready layout, print at any convenience store",
-          "300DPIレイアウト写真、コンビニで即印刷",
-          "300DPI 레이아웃, 편의점에서 바로 인쇄",
-          vi: "Layout 300DPI, in tại cửa hàng tiện lợi",
-          id: "Layout 300DPI, cetak di toko serba ada",
-          pt: "Layout 300DPI, imprima em qualquer loja")
+        l("300DPI 排版照片，可到任意打印店打印",
+          "300 DPI print-ready layout for any photo print shop",
+          "300DPIレイアウト写真",
+          "300DPI 인쇄용 레이아웃")
     }
     private var benefitFormatsTitle: String {
         l("10+国际规格", "10+ Global Formats", "10種類以上の国際規格", "10개 이상 국제 규격",

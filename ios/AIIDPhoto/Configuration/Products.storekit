@@ -19,8 +19,8 @@
           "locale" : "ja_JP"
         },
         {
-          "description" : "便利店排版照片单次保存。",
-          "displayName" : "便利店排版（1次）",
+          "description" : "打印店排版照片单次保存。",
+          "displayName" : "打印店排版（1次）",
           "locale" : "zh_CN"
         },
         {
@@ -63,7 +63,7 @@
               "locale" : "ja_JP"
             },
             {
-              "description" : "无限AI生成，无广告，全规格，含便利店排版。",
+              "description" : "无限 AI 生成，无广告，全规格，含打印店排版。",
               "displayName" : "AI证件照 Pro（月付）",
               "locale" : "zh_CN"
             },
@@ -96,7 +96,7 @@
               "locale" : "ja_JP"
             },
             {
-              "description" : "无限AI生成，无广告，全规格，含便利店排版。",
+              "description" : "无限 AI 生成，无广告，全规格，含打印店排版。",
               "displayName" : "AI证件照 Pro",
               "locale" : "zh_CN"
             },

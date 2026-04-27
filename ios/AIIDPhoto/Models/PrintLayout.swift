@@ -36,25 +36,9 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
     func displayName(language: String) -> String {
         switch self {
         case .lSize:
-            switch language {
-            case "zh": return "L判"
-            case "ja": return "L判"
-            case "ko": return "L 사이즈"
-            case "vi": return "Cỡ L"
-            case "id": return "Ukuran L"
-            case "pt": return "Tamanho L"
-            default:   return "L Size"
-            }
+            return language == "zh" ? "5 寸 (89×127)" : "5R (89×127)"
         case .twoL:
-            switch language {
-            case "zh": return "2L判"
-            case "ja": return "2L判"
-            case "ko": return "2L 사이즈"
-            case "vi": return "Cỡ 2L"
-            case "id": return "Ukuran 2L"
-            case "pt": return "Tamanho 2L"
-            default:   return "2L Size"
-            }
+            return language == "zh" ? "7 寸 (127×178)" : "7R (127×178)"
         }
     }
 

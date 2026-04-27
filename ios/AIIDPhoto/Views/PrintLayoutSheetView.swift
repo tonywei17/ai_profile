@@ -379,17 +379,13 @@ struct PrintLayoutSheetView: View {
     // MARK: - Localized Strings
 
     private var sheetTitle: String {
-        l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃",
-          vi: "In ảnh tại cửa hàng", id: "Cetak di Konbini", pt: "Layout p/ Impressão")
+        l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃")
     }
     private var sheetSubtitle: String {
-        l("一键生成排版照片，直接到便利店打印",
-          "Export a print-ready layout for convenience store printing",
-          "コンビニで印刷できるレイアウト写真を一発生成",
-          "편의점에서 바로 인쇄할 수 있는 레이아웃 생성",
-          vi: "Tạo bố cục in ảnh, in tại cửa hàng tiện lợi",
-          id: "Ekspor layout siap cetak untuk toko serba ada",
-          pt: "Exporte um layout pronto para impressão em lojas")
+        l("一键生成排版照片，可直接到打印店打印",
+          "Export a print-ready layout for any photo print shop",
+          "プリント用レイアウトを一発生成",
+          "인쇄용 레이아웃을 한 번에 생성")
     }
     private var paperSizeLabel: String {
         l("用纸尺寸", "Paper Size", "用紙サイズ", "용지 크기",
@@ -404,8 +400,7 @@ struct PrintLayoutSheetView: View {
           vi: "Đường cắt", id: "Panduan Potong", pt: "Guias de Corte")
     }
     private var compatLabel: String {
-        l("便利店兼容", "Konbini Compatible", "コンビニ対応", "편의점 호환",
-          vi: "Tương thích cửa hàng", id: "Kompatibel Konbini", pt: "Compatível com Lojas")
+        l("打印店兼容", "Print Shop Compatible", "プリント対応", "인쇄 호환")
     }
     private var saveLayoutLabel: String {
         l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장",
@@ -454,20 +449,14 @@ struct PrintLayoutSheetView: View {
               vi: "Lưu ảnh bố cục vào album",
               id: "Simpan foto layout ke Galeri",
               pt: "Salve a imagem de layout em Fotos"),
-            l("将照片传输到便利店多功能复合机（USB、Wi-Fi或LINE等）",
-              "Transfer the image to the konbini multi-function printer (USB, Wi-Fi, or LINE)",
-              "USBやWi-Fi、LINEなどでコンビニのマルチコピー機に転送",
-              "USB, Wi-Fi 또는 LINE으로 편의점 복합기에 전송",
-              vi: "Chuyển ảnh sang máy in cửa hàng (USB, Wi-Fi hoặc LINE)",
-              id: "Transfer gambar ke printer konbini (USB, Wi-Fi, atau LINE)",
-              pt: "Transfira a imagem para a impressora (USB, Wi-Fi ou LINE)"),
-            l("选择\"照片打印\" → L判或2L判",
-              "Select \"Photo Print\" → L or 2L size",
-              "「写真プリント」→ L判または2L判を選択",
-              "\"사진 인쇄\" → L 또는 2L 사이즈 선택",
-              vi: "Chọn \"In ảnh\" → L hoặc 2L",
-              id: "Pilih \"Cetak Foto\" → ukuran L atau 2L",
-              pt: "Selecione \"Imprimir Foto\" → tamanho L ou 2L"),
+            l("将排版图发到打印店（微信/U盘/邮件均可）",
+              "Send the layout to a print shop (WeChat / USB / email)",
+              "プリント店に画像を送信",
+              "인쇄소에 이미지 전송"),
+            l("选择\"照片打印\" → 5 寸或 7 寸相纸",
+              "Select \"Photo Print\" → 5R or 7R photo paper",
+              "「写真プリント」→ 5R または 7R を選択",
+              "\"사진 인쇄\" → 5R 또는 7R 선택"),
             l("打印后沿参考线裁剪即可使用",
               "Cut along the guide lines after printing",
               "印刷後、ガイドラインに沿って切り取り",

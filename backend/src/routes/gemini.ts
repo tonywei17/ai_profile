@@ -260,12 +260,14 @@ interface ProviderEntry {
   call: (prompt: string, image: string, tier?: string) => Promise<{ image: string } | null>;
 }
 
+// Pro tier: qwen-image-edit-plus → qwen-image-edit → wanx2.1-imageedit
+// Free tier: wanx2.1-imageedit only (cost control)
 const providers: ProviderEntry[] = [
   {
-    name: "bailian",
-    proOnly: false,
+    name: "qwen-image-edit-plus",
+    proOnly: true,
     available: () => !!config.bailianApiKey,
-    call: (prompt, image) => callBailian(prompt, image),
+    call: (prompt, image) => callQwenImageEdit("qwen-image-edit-plus", prompt, image),
   },
   {
     name: "qwen-image-edit",
@@ -274,10 +276,10 @@ const providers: ProviderEntry[] = [
     call: (prompt, image) => callQwenImageEdit("qwen-image-edit", prompt, image),
   },
   {
-    name: "qwen-image-edit-plus",
-    proOnly: true,
+    name: "bailian",
+    proOnly: false,
     available: () => !!config.bailianApiKey,
-    call: (prompt, image) => callQwenImageEdit("qwen-image-edit-plus", prompt, image),
+    call: (prompt, image) => callBailian(prompt, image),
   },
 ];
 

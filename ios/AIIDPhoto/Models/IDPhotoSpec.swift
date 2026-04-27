@@ -139,40 +139,45 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
     /// Default selected spec.
     static func defaultSpec(for locale: Locale) -> IDPhotoSpec { .chinaID }
 
-    // MARK: - Generation Prompt (English for best AI results)
+    // MARK: - Generation Prompt (image-edit friendly imperative)
+
+    /// Common suffix instructing the model to preserve identity & framing.
+    private var preserveSuffix: String {
+        " Preserve the person's face, identity, hairstyle, and current framing exactly. Do not change the pose or crop."
+    }
 
     var prompt: String {
         switch self {
         case .chinaID:
-            return "Generate a Chinese resident ID card photo: pure white background, 26×32mm, face centered front-on, head occupies about 2/3 of the photo height, head top 2-4mm from top edge, even soft lighting, natural skin tone, professional ID photo style."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to a neat dark-colored business shirt or blouse. Apply even soft frontal lighting and clean the skin while keeping it natural. Output as a Chinese resident ID card photo style." + preserveSuffix
         case .oneInch:
-            return "Generate a standard Chinese 1-inch ID photo: pure white background, 25×35mm, face centered front-on, head-and-shoulders, natural relaxed expression, even soft lighting, professional appearance suitable for resumes, student IDs, and exam registrations."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to professional business attire (white shirt or dark blouse). Apply even soft lighting, remove harsh shadows, and lightly retouch the skin while keeping it natural. Output as a standard Chinese 1-inch ID photo." + preserveSuffix
         case .twoInch:
-            return "Generate a standard Chinese 2-inch ID photo: pure white background, 35×49mm, face centered front-on, head-and-shoulders, natural professional expression, even soft lighting, suitable for civil servant exams, teacher certification, and official applications."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to formal business attire suitable for an official Chinese 2-inch ID photo. Apply even soft frontal lighting, remove shadows, and lightly retouch the skin." + preserveSuffix
         case .chinaPassport:
-            return "Generate a Chinese passport photo: pure white background, 33×48mm, face centered, head-and-shoulders composition, eyes aligned slightly above center, even lighting, natural relaxed expression, meets Chinese passport and Hong Kong/Macao travel permit standards."
+            return "Replace the background with a pure solid white (#FFFFFF) meeting Chinese passport standards. Change the outfit to a plain dark-colored top with collar (no patterns, no logos). Apply even soft frontal lighting with no shadows on background. Set a neutral relaxed expression with mouth closed." + preserveSuffix
         case .driverLicense:
-            return "Generate a Chinese driver's license photo: light blue solid background (#5395E2), 22×32mm (小一寸), face centered front-on, head-and-shoulders, natural expression, even soft lighting, no hat, meets PRC driver's license photo requirements."
+            return "Replace the background with a solid light blue color (#5395E2) matching PRC driver's license requirements. Change the outfit to a neat top. Apply even soft lighting and remove any hat or head covering." + preserveSuffix
         case .studentID:
-            return "Generate a Chinese student ID photo: pure white or light blue solid background, 25×35mm (1-inch), face centered front-on, head-and-shoulders, calm natural expression, even soft lighting, neat appearance suitable for school student ID cards."
+            return "Replace the background with a solid pure white or light blue. Change the outfit to a neat school-appropriate top. Apply even soft lighting and lightly retouch the skin to look fresh and natural." + preserveSuffix
         case .socialSecurity:
-            return "Generate a Chinese social security card photo: pure white background, 26×32mm, face centered front-on, head occupies about 2/3 of frame, even soft lighting, natural professional expression, meets PRC social security card photo standards (same as resident ID card)."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to a plain dark business top. Apply even soft frontal lighting matching PRC social security card photo requirements (same standard as resident ID card)." + preserveSuffix
         case .resume:
-            return "Generate a professional resume photo: pure white or light blue solid background, 25×35mm (1-inch), face centered front-on, head-and-shoulders, confident calm expression, even soft lighting, neat business-casual attire, suitable for Chinese job applications."
+            return "Replace the background with a pure solid white or light blue. Change the outfit to professional business-casual attire (white shirt, blazer, or smart blouse). Apply even soft lighting and lightly retouch the skin. Make the person look confident and approachable for a Chinese resume photo." + preserveSuffix
         case .standardPortrait:
-            return "Generate a standard chest-up ID portrait: pure white background, 35×45mm, head-and-shoulders to upper chest visible, face centered front-on, head occupies 70-80% of upper frame, eyes looking directly at camera, natural professional expression, even soft lighting, neat business attire, suitable for general identification and document photos."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to neat business attire. Apply even soft studio lighting, remove harsh shadows, and lightly retouch the skin while keeping it natural. Output as a standard chest-up ID portrait." + preserveSuffix
         case .halfBody:
-            return "Generate a half-body portrait photo: clean white or light gray background, 89×127mm (3R/3.5×5 inch), framing from waist or hips up, person facing camera with relaxed natural posture, head and torso clearly visible, professional or smart-casual attire, even soft lighting, gentle natural smile, sharp focus on face, magazine-quality portrait composition."
+            return "Replace the background with a clean solid white or light gray studio backdrop. Change the outfit to professional or smart-casual attire. Apply even soft studio lighting, retouch the skin lightly, and produce magazine-quality portrait colors." + preserveSuffix
         case .fullBody:
-            return "Generate a full-body portrait photo: clean white or light studio background, 102×152mm (4R/4×6 inch), full figure from head to feet visible and centered, person standing naturally facing the camera, well-proportioned framing with comfortable spacing above head and below feet, professional or smart-casual outfit, even studio lighting, natural pose, sharp focus throughout, professional portrait photography quality."
+            return "Replace the background with a clean solid white or light gray studio backdrop. Change the outfit to professional or smart-casual attire. Apply even soft studio lighting, retouch the skin lightly, and produce professional portrait photography colors and quality." + preserveSuffix
         case .chinaMarriage:
-            return "Generate a Chinese marriage registration couple photo: solid red background (#C10000), 35×53mm, two people side by side with the man on the left and woman on the right, both facing the camera directly, head-and-shoulders composition centered in the frame, shoulders gently touching, even soft lighting, natural warm smiles, both wearing semi-formal attire, suitable for official Chinese civil affairs marriage registration."
+            return "Replace the background with a solid red color (#C10000) for Chinese marriage registration. Change both people's outfits to semi-formal attire (the man in a shirt or light suit, the woman in a red top or smart blouse). Apply even soft frontal lighting and add natural warm smiles. Keep the man on the left and the woman on the right with shoulders gently touching." + preserveSuffix
         case .oneInchLarge:
-            return "Generate a Chinese 大一寸 (Large 1-Inch) ID photo: pure white background, 33×48mm, face centered front-on, head-and-shoulders, natural professional expression, even soft lighting, suitable for Putonghua proficiency test (普通话证) and Communist Party member applications."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to formal business attire. Apply even soft frontal lighting matching the Chinese 大一寸 standard used for Putonghua proficiency tests and Communist Party member applications." + preserveSuffix
         case .twoInchSmall:
-            return "Generate a Chinese 小二寸 (Small 2-Inch) ID photo: pure white background, 35×45mm, face centered front-on, head-and-shoulders, natural calm expression, even soft lighting, meets ICAO biometric standards suitable for overseas visa applications."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to a plain solid-color top with no patterns. Apply even soft frontal lighting with no shadows, meeting ICAO biometric standards for overseas visa applications." + preserveSuffix
         case .ncreExam:
-            return "Generate a Chinese NCRE (computer rank examination) ID photo: pure white background, 32×40mm, face centered front-on, head-and-shoulders, natural calm expression, even soft lighting, professional appearance meeting NCRE registration photo requirements."
+            return "Replace the background with a pure solid white (#FFFFFF). Change the outfit to neat formal business attire. Apply even soft frontal lighting matching Chinese NCRE (Computer Rank Examination) registration photo requirements." + preserveSuffix
         }
     }
 }

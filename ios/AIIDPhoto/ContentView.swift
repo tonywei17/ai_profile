@@ -682,8 +682,8 @@ struct ContentView: View {
     private var regenerateLabel: String { l("重新生成", "Regenerate", "再生成", "재생성", vi: "Tạo lại", id: "Buat Ulang", pt: "Regerar") }
     private var retakeLabel:     String { l("换一张照片", "Try Another Photo", "別の写真で試す", "다른 사진으로", vi: "Thử ảnh khác", id: "Coba Foto Lain", pt: "Outra Foto") }
     private var savedMessage:    String { l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료", vi: "Đã lưu vào Ảnh", id: "Tersimpan ke Foto", pt: "Salvo em Fotos") }
-    private var printLayoutLabel: String { l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃", vi: "In ảnh tại cửa hàng", id: "Layout Cetak Konbini", pt: "Layout p/ Impressão") }
-    private var printLayoutDesc:  String { l("生成排版照片，到便利店直接打印", "Print-ready layout for convenience stores", "プリント用レイアウトを生成、コンビニで印刷", "편의점에서 바로 인쇄할 수 있는 레이아웃", vi: "Tạo bố cục, in tại cửa hàng tiện lợi", id: "Layout siap cetak untuk toko serba ada", pt: "Layout pronto para lojas de conveniência") }
+    private var printLayoutLabel: String { l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃") }
+    private var printLayoutDesc:  String { l("生成排版照片，到打印店直接打印", "Print-ready layout for any photo print shop", "プリント用レイアウトを生成", "인쇄용 레이아웃 생성") }
     private var errorTitle:      String { l("错误", "Error", "エラー", "오류", vi: "Lỗi", id: "Kesalahan", pt: "Erro") }
     private var okLabel:         String { l("好的", "OK", "OK", "확인", vi: "OK", id: "OK", pt: "OK") }
 
@@ -695,13 +695,13 @@ struct ContentView: View {
     private var beautyToggleDesc:       String { l("自然肌肤修正与面部倾斜调整", "Natural skin correction & face alignment", "自然な肌補正と顔の傾き調整", "자연스러운 피부 보정과 얼굴 기울기 조정", vi: "Chỉnh sửa da tự nhiên", id: "Koreksi kulit alami", pt: "Correção natural da pele") }
     private var outfitToggleTitle:      String { l("服装・背景替换", "Outfit & Background", "服装・背景置換", "복장·배경 교체", vi: "Trang phục & Nền", id: "Pakaian & Latar", pt: "Traje & Fundo") }
     private var outfitToggleDesc:       String { l("自动换装西装与白底背景", "Auto suit change & white background", "スーツへの自動着せ替えと白背景化", "자동 정장 착용 및 흰색 배경", vi: "Tự động đổi vest & nền trắng", id: "Otomatis ganti jas & latar putih", pt: "Traje automático & fundo branco") }
-    private var printToggleLabel:       String { l("便利店排版打印", "Convenience Store Print", "コンビニプリント対応排版", "편의점 인쇄 레이아웃", vi: "In tại cửa hàng", id: "Layout Cetak", pt: "Layout de Impressão") }
+    private var printToggleLabel:       String { l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃") }
     private var resetLabel:             String { l("重置", "Reset", "リセット", "리셋", vi: "Đặt lại", id: "Reset", pt: "Redefinir") }
     private var limitAlertTitle:        String { l("次数已用完", "Limit Reached", "回数上限に達しました", "횟수 초과", vi: "Đã hết lượt", id: "Batas Tercapai", pt: "Limite Atingido") }
     private var limitReachedMessage:    String { l("今日免费次数已用完。升级会员可无限生成，无需观看广告。", "You've used all free generations for today. Upgrade to Pro for unlimited generations without ads.", "本日の無料回数を使い切りました。プロにアップグレードすると、広告なしで無制限に生成できます。", "오늘의 무료 횟수를 모두 사용했습니다. 프로로 업그레이드하면 광고 없이 무제한 생성할 수 있습니다.", vi: "Đã hết lượt miễn phí hôm nay. Nâng cấp Pro để tạo không giới hạn.", id: "Kuota gratis hari ini habis. Upgrade ke Pro untuk tanpa batas.", pt: "Gerações gratuitas esgotadas hoje. Assine Pro para ilimitado.") }
     private var subscriberLimitMessage: String { l("今日生成次数已达上限，请明天再试。", "You've reached today's generation limit. Please try again tomorrow.", "本日の生成回数上限に達しました。明日もう一度お試しください。", "오늘의 생성 횟수 한도에 도달했습니다. 내일 다시 시도해 주세요.", vi: "Đã đạt giới hạn hôm nay. Vui lòng thử lại ngày mai.", id: "Batas hari ini tercapai. Coba lagi besok.", pt: "Limite de hoje atingido. Tente novamente amanhã.") }
     private var upgradeLabel:           String { l("升级会员", "Upgrade", "アップグレード", "업그레이드", vi: "Nâng cấp", id: "Upgrade", pt: "Assinar") }
-    private var printBottomLabel:       String { l("便利店打印", "Print Layout", "コンビニプリント", "편의점 인쇄", vi: "In ảnh", id: "Cetak", pt: "Imprimir") }
+    private var printBottomLabel:       String { l("打印店打印", "Print", "プリント", "인쇄") }
 
     // MARK: - Actions
 

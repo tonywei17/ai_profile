@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Shown once before the user's first AI generation.
-/// Discloses that the photo is sent to Google Gemini API and asks for consent.
+/// Discloses that the photo is sent to Alibaba Cloud Bailian (Wanx/Qwen) and asks for consent.
 struct AIConsentView: View {
     @EnvironmentObject var langManager: LanguageManager
     @Environment(\.colorScheme) private var colorScheme
@@ -160,13 +160,10 @@ struct AIConsentView: View {
     }
 
     private var recipientDetail: String {
-        l("Google Gemini API（通过我们的安全后端代理，不会直接暴露API Key）",
-          "Google Gemini API via our secure backend proxy — your photo is never stored",
-          "Google Gemini API（当社のセキュアなバックエンド経由、写真は保存されません）",
-          "Google Gemini API (보안 백엔드 경유, 사진은 저장되지 않음)",
-          vi: "Google Gemini API qua backend bảo mật — ảnh không được lưu trữ",
-          id: "Google Gemini API melalui backend aman kami — foto tidak disimpan",
-          pt: "Google Gemini API via backend seguro — sua foto nunca é armazenada")
+        l("阿里云百炼 通义万相 / 通义千问图像编辑 API（通过我们的安全后端代理，不会直接暴露 API Key）",
+          "Alibaba Cloud Bailian (Wanx / Qwen Image-Edit) API via our secure backend proxy — your photo is never stored",
+          "アリババクラウド百錬（Wanx / Qwen Image-Edit）API（セキュアなバックエンド経由、写真は保存されません）",
+          "알리바바 클라우드 바이롄 (Wanx / Qwen Image-Edit) API (보안 백엔드 경유, 사진은 저장되지 않음)")
     }
 
     private var retentionTitle: String {
