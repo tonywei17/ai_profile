@@ -110,11 +110,13 @@ async function callBailian(
           prompt,
           base_image_url: `data:image/jpeg;base64,${imageBase64}`,
         },
-        parameters: { n: 1, watermark: false },
+        // strength: 0.85 ensures background is fully replaced; default 0.5 is too conservative
+        parameters: { n: 1, watermark: false, strength: 0.85 },
       }),
     });
 
     const createData = (await createRes.json()) as BailianCreateResponse;
+    console.log("[bailian] Create response status:", createRes.status, "code:", createData.code, "message:", createData.message);
     if (!createRes.ok || createData.code || !createData.output?.task_id) {
       console.error("[bailian] Task creation failed:", createData.code, createData.message);
       return null;
@@ -213,6 +215,7 @@ async function callQwenImageEdit(
 
     const data = (await res.json()) as QwenImageEditResponse;
 
+    console.log(`[${model}] Response status:`, res.status, "code:", data.code ?? "none");
     if (!res.ok || data.code) {
       console.error(`[${model}] API error:`, data.code, data.message);
       return null;
@@ -220,7 +223,7 @@ async function callQwenImageEdit(
 
     const content = data.output?.choices?.[0]?.message?.content;
     if (!content) {
-      console.error(`[${model}] No content in response`);
+      console.error(`[${model}] No content in response, output:`, JSON.stringify(data.output).slice(0, 200));
       return null;
     }
 
