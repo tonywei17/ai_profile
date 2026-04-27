@@ -125,15 +125,14 @@ async function callHivision(
       return null;
     }
 
-    // Normalize base64: strip whitespace, convert url-safe chars, fix padding
-    let b64 = data2.image_base64.replace(/\s+/g, "");
+    // Normalize: strip data URL prefix, whitespace, url-safe chars, fix padding
+    let b64 = data2.image_base64.replace(/^data:image\/[^;]+;base64,/, "");
+    b64 = b64.replace(/\s+/g, "");
     b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
     const rem = b64.length % 4;
     if (rem === 2) b64 += "==";
     else if (rem === 3) b64 += "=";
-    console.log("[hivision] Done, bytes:", b64.length,
-      "prefix:", b64.substring(0, 12),
-      "rem_before_pad:", rem);
+    console.log("[hivision] Done, bytes:", b64.length, "prefix:", b64.substring(0, 8));
     return { image: b64 };
 
   } catch (err: unknown) {

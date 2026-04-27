@@ -144,9 +144,14 @@ final class GeminiService {
         throw lastError ?? GeminiError.invalidConfig
     }
 
-    /// Robust base64 → UIImage: handles whitespace, url-safe chars, and missing padding.
+    /// Robust base64 → UIImage: handles data URL prefix, whitespace, url-safe chars, padding.
     private static func decodeBase64Image(_ raw: String) -> UIImage? {
-        var b64 = raw.components(separatedBy: .whitespacesAndNewlines).joined()
+        var b64 = raw
+        // Strip data URL prefix if present (e.g. "data:image/png;base64,")
+        if let range = b64.range(of: #"^data:image/[^;]+;base64,"#, options: .regularExpression) {
+            b64.removeSubrange(range)
+        }
+        b64 = b64.components(separatedBy: .whitespacesAndNewlines).joined()
         b64 = b64.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         let rem = b64.count % 4
         if rem == 2 { b64 += "==" } else if rem == 3 { b64 += "=" }
