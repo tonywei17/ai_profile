@@ -69,11 +69,6 @@ struct SettingsView: View {
                         langRow(.system)
                         langRow(.chineseSimplified)
                         langRow(.english)
-                        langRow(.japanese)
-                        langRow(.korean)
-                        langRow(.vietnamese)
-                        langRow(.indonesian)
-                        langRow(.portuguese)
                     } header: {
                         sectionHeader(icon: "globe", title: sectionTitle("Language", "语言", "言語", "언어", vi: "Ngôn ngữ", id: "Bahasa", pt: "Idioma"))
                     } footer: {
@@ -89,14 +84,12 @@ struct SettingsView: View {
                             Text(regionLabel)
                                 .foregroundStyle(.secondary)
                             Spacer()
-                            Text(Locale.current.region?.identifier ?? "—")
+                            Text(lang == "zh" ? "中国大陆 CN" : "China CN")
                                 .foregroundStyle(.secondary)
-                                .font(.callout.monospacedDigit())
+                                .font(.callout)
                         }
                     } header: {
-                        sectionHeader(icon: "map", title: sectionTitle("Region / Spec Order", "地区 / 规格排序", "地域 / 規格順序", "지역 / 규격 순서", vi: "Vùng / Thứ tự quy cách", id: "Wilayah / Urutan Spek", pt: "Região / Ordem de Formato"))
-                    } footer: {
-                        Text(regionFooter).font(.caption)
+                        sectionHeader(icon: "map", title: sectionTitle("Region", "地区", "地域", "지역", vi: "Vùng", id: "Wilayah", pt: "Região"))
                     }
                     .listRowBackground(Color(.secondarySystemGroupedBackground))
 
@@ -465,27 +458,13 @@ struct SettingsView: View {
     private var navTitle:     String { sectionTitle("Settings", "设置", "設定", "설정", vi: "Cài đặt", id: "Pengaturan", pt: "Configurações") }
     private var footerNote:   String {
         sectionTitle(
-            "App display language. Spec ordering is always based on device region.",
-            "应用界面语言。规格排序始终根据设备地区自动调整。",
-            "アプリの表示言語。規格の並び順はデバイスの地域設定に従います。",
-            "앱 표시 언어입니다. 규격 순서는 기기 지역 설정을 따릅니다.",
-            vi: "Ngôn ngữ hiển thị ứng dụng. Thứ tự quy cách luôn theo vùng thiết bị.",
-            id: "Bahasa tampilan aplikasi. Urutan spek selalu berdasarkan wilayah perangkat.",
-            pt: "Idioma do aplicativo. A ordem dos formatos segue a região do dispositivo."
+            "App display language.",
+            "应用界面语言。",
+            "アプリの表示言語。",
+            "앱 표시 언어입니다."
         )
     }
-    private var regionLabel:  String { sectionTitle("Device Region", "设备地区", "デバイス地域", "기기 지역", vi: "Vùng thiết bị", id: "Wilayah Perangkat", pt: "Região do Dispositivo") }
-    private var regionFooter: String {
-        sectionTitle(
-            "ID photo formats are sorted by your device region. To change, go to iOS Settings → General → Language & Region.",
-            "证件照规格按设备地区自动排序。在 iOS 设置 → 通用 → 语言与地区 中更改。",
-            "規格の並び順はデバイスの地域設定で変わります。iOS設定 → 一般 → 言語と地域 で変更できます。",
-            "규격 순서는 기기 지역에 따라 정렬됩니다. iOS 설정 → 일반 → 언어 및 지역에서 변경하세요.",
-            vi: "Quy cách ảnh thẻ được sắp xếp theo vùng thiết bị. Để thay đổi, vào Cài đặt iOS → Cài đặt chung → Ngôn ngữ & Vùng.",
-            id: "Format foto ID diurutkan berdasarkan wilayah perangkat. Untuk mengubah, buka Pengaturan iOS → Umum → Bahasa & Wilayah.",
-            pt: "Os formatos são ordenados pela região do dispositivo. Para alterar, vá em Ajustes iOS → Geral → Idioma e Região."
-        )
-    }
+    private var regionLabel:  String { sectionTitle("Region", "服务地区", "地域", "지역") }
     private var versionLabel:      String { sectionTitle("Version", "版本", "バージョン", "버전", vi: "Phiên bản", id: "Versi", pt: "Versão") }
     private var privacyLabel:      String { sectionTitle("Privacy Policy", "隐私政策", "プライバシーポリシー", "개인정보 처리방침", vi: "Chính sách Bảo mật", id: "Kebijakan Privasi", pt: "Política de Privacidade") }
     private var termsLabel:        String { sectionTitle("Terms of Service", "服务条款", "利用規約", "이용약관", vi: "Điều khoản Dịch vụ", id: "Ketentuan Layanan", pt: "Termos de Serviço") }

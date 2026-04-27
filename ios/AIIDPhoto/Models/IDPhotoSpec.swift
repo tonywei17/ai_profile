@@ -1,97 +1,61 @@
 import Foundation
 
-// MARK: - ID Photo Spec
+// MARK: - ID Photo Spec (China-only)
 
 enum IDPhotoSpec: String, CaseIterable, Identifiable {
-    // China
-    case chinaID
-    case chinaPassport
-    case chinaMarriage       // PRO — couple photo
-    // Japan
-    case japanMyNumber
-    case japanPassport
-    case japanResume         // 履歴書
-    case japanDriverLicense  // 運転免許証
-    case japanResidenceCard  // 在留カード
-    // Korea
-    case koreaID
-    case koreaResume         // 이력서
-    // USA
-    case usPassport
-    // UK
-    case ukPassport
-    // Schengen / EU
-    case schengenVisa
-    // Australia / NZ
-    case ausPassport
-    // Universal exam
-    case exam
+    // Free
+    case chinaID            // 居民身份证 26×32
+    case oneInch            // 一寸 25×35
+    case twoInch            // 二寸 35×49
+    case chinaPassport      // 中国护照 33×48
+    case driverLicense      // 驾驶证 22×32 (小一寸)
+    case studentID          // 学生证 25×35
+    case socialSecurity     // 社保卡 26×32
+    case resume             // 简历照 25×35
+    case standardPortrait   // 证件照（胸部以上）35×45
+    case halfBody           // 半身照 89×127 (3R)
+    case fullBody           // 全身照 102×152 (4R)
+
+    // Pro
+    case chinaMarriage      // 结婚登记照 35×53 (双人)
+    case oneInchLarge       // 大一寸 33×48
+    case twoInchSmall       // 小二寸 35×45
+    case ncreExam           // NCRE 32×40
 
     var id: String { rawValue }
 
     /// Pro-only specs require subscription to use.
     var isPro: Bool {
         switch self {
-        case .chinaMarriage: true
-        default:             false
+        case .chinaMarriage, .oneInchLarge, .twoInchSmall, .ncreExam: true
+        default: false
         }
     }
 
     /// Whether this spec is a couple/two-person photo.
     var isCouplePhoto: Bool {
-        switch self {
-        case .chinaMarriage: true
-        default:             false
-        }
+        self == .chinaMarriage
     }
 
     // MARK: - Localized Display Name
 
     func displayName(language: String) -> String {
         switch self {
-        case .chinaID:
-            return names(zh: "居民身份证", en: "China ID Card",  ja: "中国居民身份証", ko: "중국 신분증", vi: "CMND Trung Quốc", id: "KTP Tiongkok", pt: "RG China", lang: language)
-        case .chinaPassport:
-            return names(zh: "中国护照",   en: "China Passport", ja: "中国旅券",       ko: "중국 여권",   vi: "Hộ chiếu TQ", id: "Paspor Tiongkok", pt: "Passaporte China", lang: language)
-        case .chinaMarriage:
-            return names(zh: "结婚登记照", en: "Marriage Photo",  ja: "結婚届写真",     ko: "결혼 등록 사진", vi: "Ảnh kết hôn", id: "Foto Nikah", pt: "Foto Casamento", lang: language)
-        case .japanMyNumber:
-            return names(zh: "My Number", en: "My Number Card", ja: "マイナンバー",   ko: "마이넘버 카드", vi: "My Number", id: "My Number", pt: "My Number", lang: language)
-        case .japanPassport:
-            return names(zh: "日本护照",   en: "Japan Passport", ja: "日本旅券",       ko: "일본 여권",    vi: "Hộ chiếu Nhật", id: "Paspor Jepang", pt: "Passaporte Japão", lang: language)
-        case .japanResume:
-            return names(zh: "日本履历书", en: "Japan Resume",   ja: "履歴書",         ko: "일본 이력서",  vi: "Sơ yếu lý lịch JP", id: "Resume Jepang", pt: "Currículo Japão", lang: language)
-        case .japanDriverLicense:
-            return names(zh: "日本驾照",   en: "JP License",     ja: "運転免許証",     ko: "일본 운전면허", vi: "Bằng lái Nhật", id: "SIM Jepang", pt: "CNH Japão", lang: language)
-        case .japanResidenceCard:
-            return names(zh: "日本在留卡", en: "Residence Card",  ja: "在留カード",     ko: "재류 카드",    vi: "Thẻ lưu trú", id: "Kartu Tinggal", pt: "Cartão Residência", lang: language)
-        case .koreaID:
-            return names(zh: "韩国身份证", en: "Korea ID Card",  ja: "韓国住民票",     ko: "주민등록증",   vi: "CMND Hàn Quốc", id: "KTP Korea", pt: "RG Coreia", lang: language)
-        case .koreaResume:
-            return names(zh: "韩国履历书", en: "Korea Resume",   ja: "韓国履歴書",     ko: "이력서",       vi: "Lý lịch Hàn Quốc", id: "Resume Korea", pt: "Currículo Coreia", lang: language)
-        case .usPassport:
-            return names(zh: "美国护照",   en: "US Passport",    ja: "アメリカ旅券",   ko: "미국 여권",    vi: "Hộ chiếu Mỹ", id: "Paspor AS", pt: "Passaporte EUA", lang: language)
-        case .ukPassport:
-            return names(zh: "英国护照",   en: "UK Passport",    ja: "英国旅券",       ko: "영국 여권",    vi: "Hộ chiếu Anh", id: "Paspor Inggris", pt: "Passaporte Reino Unido", lang: language)
-        case .schengenVisa:
-            return names(zh: "欧洲申根",   en: "Schengen Visa",  ja: "シェンゲンVISA", ko: "쉥겐 비자",    vi: "Visa Schengen", id: "Visa Schengen", pt: "Visto Schengen", lang: language)
-        case .ausPassport:
-            return names(zh: "澳洲护照",   en: "AU Passport",    ja: "オーストラリア旅券", ko: "호주 여권", vi: "Hộ chiếu Úc", id: "Paspor Australia", pt: "Passaporte Austrália", lang: language)
-        case .exam:
-            return names(zh: "考试证件照", en: "Exam / Test",    ja: "試験用写真",     ko: "시험용 증명사진", vi: "Ảnh thi cử", id: "Foto Ujian", pt: "Foto p/ Prova", lang: language)
-        }
-    }
-
-    private func names(zh: String, en: String, ja: String, ko: String,
-                       vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
-        switch lang {
-        case "zh": return zh
-        case "ja": return ja
-        case "ko": return ko
-        case "vi": return vi ?? en
-        case "id": return id ?? en
-        case "pt": return pt ?? en
-        default:   return en
+        case .chinaID:           language == "zh" ? "居民身份证"       : "China ID Card"
+        case .oneInch:           language == "zh" ? "一寸照"           : "1-Inch Photo"
+        case .twoInch:           language == "zh" ? "二寸照"           : "2-Inch Photo"
+        case .chinaPassport:     language == "zh" ? "中国护照"         : "China Passport"
+        case .driverLicense:     language == "zh" ? "驾驶证"           : "Driver License"
+        case .studentID:         language == "zh" ? "学生证"           : "Student ID"
+        case .socialSecurity:    language == "zh" ? "社保卡"           : "Social Security Card"
+        case .resume:            language == "zh" ? "简历照"           : "Resume Photo"
+        case .standardPortrait:  language == "zh" ? "证件照（胸部以上）" : "Standard Portrait"
+        case .halfBody:          language == "zh" ? "半身照"           : "Half-Body Portrait"
+        case .fullBody:          language == "zh" ? "全身照"           : "Full-Body Portrait"
+        case .chinaMarriage:     language == "zh" ? "结婚登记照"       : "Marriage Photo"
+        case .oneInchLarge:      language == "zh" ? "大一寸"           : "Large 1-Inch"
+        case .twoInchSmall:      language == "zh" ? "小二寸"           : "Small 2-Inch"
+        case .ncreExam:          language == "zh" ? "计算机等级"       : "NCRE Exam"
         }
     }
 
@@ -99,150 +63,116 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        case .chinaID:            "creditcard.fill"
-        case .chinaPassport:      "books.vertical.fill"
-        case .chinaMarriage:      "heart.fill"
-        case .japanMyNumber:      "checkmark.seal.fill"
-        case .japanPassport:      "airplane.departure"
-        case .japanResume:        "doc.text.fill"
-        case .japanDriverLicense: "car.fill"
-        case .japanResidenceCard: "person.crop.rectangle.fill"
-        case .koreaID:            "person.text.rectangle.fill"
-        case .koreaResume:        "doc.text.fill"
-        case .usPassport:         "globe.americas.fill"
-        case .ukPassport:         "globe.europe.africa.fill"
-        case .schengenVisa:       "mappin.and.ellipse"
-        case .ausPassport:        "sun.max.fill"
-        case .exam:               "pencil.and.list.clipboard"
+        case .chinaID:          "creditcard.fill"
+        case .oneInch:          "1.square.fill"
+        case .twoInch:          "2.square.fill"
+        case .chinaPassport:    "books.vertical.fill"
+        case .driverLicense:    "car.fill"
+        case .studentID:        "graduationcap.fill"
+        case .socialSecurity:   "cross.case.fill"
+        case .resume:           "doc.text.fill"
+        case .standardPortrait: "person.crop.rectangle.fill"
+        case .halfBody:         "figure.stand"
+        case .fullBody:         "figure.walk"
+        case .chinaMarriage:    "heart.fill"
+        case .oneInchLarge:     "rectangle.portrait.fill"
+        case .twoInchSmall:     "rectangle.portrait"
+        case .ncreExam:         "desktopcomputer"
         }
     }
 
-    // MARK: - Size Label (universal, no i18n needed)
+    // MARK: - Size Label
 
     var sizeLabel: String {
         switch self {
-        case .chinaID:            "26×32 mm"
-        case .chinaPassport:      "33×48 mm"
-        case .chinaMarriage:      "35×53 mm"
-        case .japanMyNumber:      "35×45 mm"
-        case .japanPassport:      "35×45 mm"
-        case .japanResume:        "30×40 mm"
-        case .japanDriverLicense: "24×30 mm"
-        case .japanResidenceCard: "30×40 mm"
-        case .koreaID:            "35×45 mm"
-        case .koreaResume:        "30×40 mm"
-        case .usPassport:         "51×51 mm"
-        case .ukPassport:         "35×45 mm"
-        case .schengenVisa:       "35×45 mm"
-        case .ausPassport:        "35×45 mm"
-        case .exam:               "25×35 mm"
+        case .chinaID:          "26×32 mm"
+        case .oneInch:          "25×35 mm"
+        case .twoInch:          "35×49 mm"
+        case .chinaPassport:    "33×48 mm"
+        case .driverLicense:    "22×32 mm"
+        case .studentID:        "25×35 mm"
+        case .socialSecurity:   "26×32 mm"
+        case .resume:           "25×35 mm"
+        case .standardPortrait: "35×45 mm"
+        case .halfBody:         "89×127 mm"
+        case .fullBody:         "102×152 mm"
+        case .chinaMarriage:    "35×53 mm"
+        case .oneInchLarge:     "33×48 mm"
+        case .twoInchSmall:     "35×45 mm"
+        case .ncreExam:         "32×40 mm"
         }
     }
 
     /// Physical dimensions in millimeters (width × height).
     var photoSizeMM: (width: Double, height: Double) {
         switch self {
-        case .chinaID:            (26, 32)
-        case .chinaPassport:      (33, 48)
-        case .chinaMarriage:      (35, 53)
-        case .japanMyNumber:      (35, 45)
-        case .japanPassport:      (35, 45)
-        case .japanResume:        (30, 40)
-        case .japanDriverLicense: (24, 30)
-        case .japanResidenceCard: (30, 40)
-        case .koreaID:            (35, 45)
-        case .koreaResume:        (30, 40)
-        case .usPassport:         (51, 51)
-        case .ukPassport:         (35, 45)
-        case .schengenVisa:       (35, 45)
-        case .ausPassport:        (35, 45)
-        case .exam:               (25, 35)
+        case .chinaID:          (26, 32)
+        case .oneInch:          (25, 35)
+        case .twoInch:          (35, 49)
+        case .chinaPassport:    (33, 48)
+        case .driverLicense:    (22, 32)
+        case .studentID:        (25, 35)
+        case .socialSecurity:   (26, 32)
+        case .resume:           (25, 35)
+        case .standardPortrait: (35, 45)
+        case .halfBody:         (89, 127)
+        case .fullBody:         (102, 152)
+        case .chinaMarriage:    (35, 53)
+        case .oneInchLarge:     (33, 48)
+        case .twoInchSmall:     (35, 45)
+        case .ncreExam:         (32, 40)
         }
     }
 
-    // MARK: - Regions
+    // MARK: - Sorting
 
-    /// Primary region codes (ISO 3166-1 alpha-2) this spec is most relevant to.
-    var primaryRegions: Set<String> {
-        switch self {
-        case .chinaID:            ["CN"]
-        case .chinaPassport:      ["CN", "TW", "HK", "MO"]
-        case .chinaMarriage:      ["CN"]
-        case .japanMyNumber:      ["JP"]
-        case .japanPassport:      ["JP"]
-        case .japanResume:        ["JP"]
-        case .japanDriverLicense: ["JP"]
-        case .japanResidenceCard: ["JP", "VN"]
-        case .koreaID:            ["KR"]
-        case .koreaResume:        ["KR"]
-        case .usPassport:         ["US"]
-        case .ukPassport:         ["GB"]
-        case .schengenVisa:       ["AT","BE","CZ","DK","EE","FI","FR","DE","GR",
-                                   "HU","IS","IT","LV","LI","LT","LU","MT","NL",
-                                   "NO","PL","PT","SK","SI","ES","SE","CH"]
-        case .ausPassport:        ["AU","NZ"]
-        case .exam:               []   // universal — always appears near the end
-        }
-    }
-
-    // MARK: - Locale-Aware Sorting
-
-    /// Return all cases sorted so the device's local region specs appear first.
-    /// Pro specs sort to the end within their region group.
+    /// All specs ordered for display: free first, Pro last.
     static func sorted(for locale: Locale) -> [IDPhotoSpec] {
-        let region = locale.region?.identifier ?? ""
-        return allCases.sorted { a, b in
-            let aRegion = a.primaryRegions.contains(region) ? 1 : 0
-            let bRegion = b.primaryRegions.contains(region) ? 1 : 0
-            if aRegion != bRegion { return aRegion > bRegion }
-            // Within same region group, free specs first
+        allCases.sorted { a, b in
             if a.isPro != b.isPro { return !a.isPro }
-            // Preserve original declaration order as tie-break
             guard let idxA = allCases.firstIndex(of: a),
                   let idxB = allCases.firstIndex(of: b) else { return false }
             return idxA < idxB
         }
     }
 
-    /// Convenience: the first spec for a given locale (used as default selection).
-    static func defaultSpec(for locale: Locale) -> IDPhotoSpec {
-        sorted(for: locale).first ?? .chinaID
-    }
+    /// Default selected spec.
+    static func defaultSpec(for locale: Locale) -> IDPhotoSpec { .chinaID }
 
-    // MARK: - Gemini Prompt (always English for best API results)
+    // MARK: - Generation Prompt (English for best AI results)
 
     var prompt: String {
         switch self {
         case .chinaID:
-            return "Generate a Chinese resident ID card application photo: pure white background, 26×32mm, face centered front-on, head occupies about 2/3 of the photo height, head top 2-4mm from top edge, even soft lighting, natural skin tone, professional ID photo style."
+            return "Generate a Chinese resident ID card photo: pure white background, 26×32mm, face centered front-on, head occupies about 2/3 of the photo height, head top 2-4mm from top edge, even soft lighting, natural skin tone, professional ID photo style."
+        case .oneInch:
+            return "Generate a standard Chinese 1-inch ID photo: pure white background, 25×35mm, face centered front-on, head-and-shoulders, natural relaxed expression, even soft lighting, professional appearance suitable for resumes, student IDs, and exam registrations."
+        case .twoInch:
+            return "Generate a standard Chinese 2-inch ID photo: pure white background, 35×49mm, face centered front-on, head-and-shoulders, natural professional expression, even soft lighting, suitable for civil servant exams, teacher certification, and official applications."
         case .chinaPassport:
-            return "Generate a Chinese passport photo: pure white background, 33×48mm, face centered, head-and-shoulders composition, eyes aligned slightly above center, even lighting, natural relaxed expression, meets Chinese passport standards."
+            return "Generate a Chinese passport photo: pure white background, 33×48mm, face centered, head-and-shoulders composition, eyes aligned slightly above center, even lighting, natural relaxed expression, meets Chinese passport and Hong Kong/Macao travel permit standards."
+        case .driverLicense:
+            return "Generate a Chinese driver's license photo: light blue solid background (#5395E2), 22×32mm (小一寸), face centered front-on, head-and-shoulders, natural expression, even soft lighting, no hat, meets PRC driver's license photo requirements."
+        case .studentID:
+            return "Generate a Chinese student ID photo: pure white or light blue solid background, 25×35mm (1-inch), face centered front-on, head-and-shoulders, calm natural expression, even soft lighting, neat appearance suitable for school student ID cards."
+        case .socialSecurity:
+            return "Generate a Chinese social security card photo: pure white background, 26×32mm, face centered front-on, head occupies about 2/3 of frame, even soft lighting, natural professional expression, meets PRC social security card photo standards (same as resident ID card)."
+        case .resume:
+            return "Generate a professional resume photo: pure white or light blue solid background, 25×35mm (1-inch), face centered front-on, head-and-shoulders, confident calm expression, even soft lighting, neat business-casual attire, suitable for Chinese job applications."
+        case .standardPortrait:
+            return "Generate a standard chest-up ID portrait: pure white background, 35×45mm, head-and-shoulders to upper chest visible, face centered front-on, head occupies 70-80% of upper frame, eyes looking directly at camera, natural professional expression, even soft lighting, neat business attire, suitable for general identification and document photos."
+        case .halfBody:
+            return "Generate a half-body portrait photo: clean white or light gray background, 89×127mm (3R/3.5×5 inch), framing from waist or hips up, person facing camera with relaxed natural posture, head and torso clearly visible, professional or smart-casual attire, even soft lighting, gentle natural smile, sharp focus on face, magazine-quality portrait composition."
+        case .fullBody:
+            return "Generate a full-body portrait photo: clean white or light studio background, 102×152mm (4R/4×6 inch), full figure from head to feet visible and centered, person standing naturally facing the camera, well-proportioned framing with comfortable spacing above head and below feet, professional or smart-casual outfit, even studio lighting, natural pose, sharp focus throughout, professional portrait photography quality."
         case .chinaMarriage:
             return "Generate a Chinese marriage registration couple photo: solid red background (#C10000), 35×53mm, two people side by side with the man on the left and woman on the right, both facing the camera directly, head-and-shoulders composition centered in the frame, shoulders gently touching, even soft lighting, natural warm smiles, both wearing semi-formal attire, suitable for official Chinese civil affairs marriage registration."
-        case .japanMyNumber:
-            return "Generate a Japan My Number card photo: pure white background, 35×45mm, face centered, head occupies upper 70-80% of frame, natural expression, even lighting, no shadows, meets Japanese My Number card photo requirements."
-        case .japanPassport:
-            return "Generate a Japan passport photo: pure white background, 35×45mm, face centered, head-and-shoulders, eyes at center-to-upper area of frame, natural expression, even lighting, no shadows, meets Japan Ministry of Foreign Affairs passport photo standards."
-        case .japanResume:
-            return "Generate a Japanese resume (履歴書) photo: plain white or light blue solid background, 30×40mm, face centered front-on, head-and-shoulders with upper chest visible, natural calm expression, even soft lighting, professional business appearance, suitable for Japanese job applications."
-        case .japanDriverLicense:
-            return "Generate a Japanese driver's license photo: plain solid color background, 24×30mm, face centered, upper body (上三分身), head top 2-3mm from top edge, no hat, natural expression, even lighting, meets Japanese police driver's license photo requirements."
-        case .japanResidenceCard:
-            return "Generate a Japanese residence card (在留カード) photo: plain white background, 30×40mm, face centered front-on, head-and-shoulders, head top 2-4mm from top edge, no hat, natural expression with mouth closed, even soft lighting, no shadows, meets Japanese Immigration Services Agency residence card photo requirements."
-        case .koreaID:
-            return "Generate a Korean national ID registration photo: white background, 35×45mm (3.5×4.5cm), face centered front-on, natural expression, even soft lighting, no accessories covering face, meets Korean resident registration card standards."
-        case .koreaResume:
-            return "Generate a Korean resume (이력서) photo: plain white or light solid background, 30×40mm, face centered front-on, head-and-shoulders, calm professional expression, even soft lighting, suitable for Korean job applications."
-        case .usPassport:
-            return "Generate a US passport photo: white background, 2×2 inch (51×51mm), head centered, face occupies 50-70% of frame height, neutral expression, eyes open and looking directly at camera, even lighting, no shadows on background, meets US State Department standards."
-        case .ukPassport:
-            return "Generate a UK passport photo: light grey or white background, 35×45mm, face centered, head and shoulders, natural expression with mouth closed, even lighting, no shadows, meets UK Identity and Passport Service requirements."
-        case .schengenVisa:
-            return "Generate a Schengen visa photo: light plain background, 35×45mm, face centered, head and shoulders, relaxed natural expression, even lighting, meets ICAO biometric photo standards for EU Schengen visa applications."
-        case .ausPassport:
-            return "Generate an Australian passport photo: plain white or off-white background, 35×45mm, face centered with head covering 70-80% of height, neutral expression, even lighting, no shadows, meets Australian Passport Office photo requirements."
-        case .exam:
-            return "Generate a standard 1-inch exam registration photo: white background, 25×35mm, face centered, head-and-shoulders, natural expression, even lighting, suitable for TOEFL, IELTS, CET, and other exam registrations."
+        case .oneInchLarge:
+            return "Generate a Chinese 大一寸 (Large 1-Inch) ID photo: pure white background, 33×48mm, face centered front-on, head-and-shoulders, natural professional expression, even soft lighting, suitable for Putonghua proficiency test (普通话证) and Communist Party member applications."
+        case .twoInchSmall:
+            return "Generate a Chinese 小二寸 (Small 2-Inch) ID photo: pure white background, 35×45mm, face centered front-on, head-and-shoulders, natural calm expression, even soft lighting, meets ICAO biometric standards suitable for overseas visa applications."
+        case .ncreExam:
+            return "Generate a Chinese NCRE (computer rank examination) ID photo: pure white background, 32×40mm, face centered front-on, head-and-shoulders, natural calm expression, even soft lighting, professional appearance meeting NCRE registration photo requirements."
         }
     }
 }
