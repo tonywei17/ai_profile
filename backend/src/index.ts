@@ -62,8 +62,10 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-app.listen(config.port, () => {
-  console.log(`AIIDPhoto backend listening on port ${config.port}`);
+// CN 后端跑在阿里云 ECS 上，仅通过 Nginx 反向代理对外，故强制绑 127.0.0.1
+const HOST = process.env.HOST || "127.0.0.1";
+app.listen(config.port, HOST, () => {
+  console.log(`AIIDPhoto backend listening on ${HOST}:${config.port}`);
   if (!config.appApiKey) {
     console.warn("[WARN] APP_API_KEY not set — app key auth disabled");
   }
