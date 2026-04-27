@@ -144,6 +144,16 @@ final class GeminiService {
         throw lastError ?? GeminiError.invalidConfig
     }
 
+    /// Robust base64 → UIImage: handles whitespace, url-safe chars, and missing padding.
+    private static func decodeBase64Image(_ raw: String) -> UIImage? {
+        var b64 = raw.components(separatedBy: .whitespacesAndNewlines).joined()
+        b64 = b64.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        let rem = b64.count % 4
+        if rem == 2 { b64 += "==" } else if rem == 3 { b64 += "=" }
+        guard let data = Data(base64Encoded: b64, options: .ignoreUnknownCharacters) else { return nil }
+        return UIImage(data: data)
+    }
+
     private func decodeBackendResponse(data: Data, response: URLResponse) throws -> UIImage {
         if let http = response as? HTTPURLResponse, http.statusCode != 200 {
             if let errorResp = try? decoder.decode(BackendErrorResponse.self, from: data) {
@@ -154,9 +164,7 @@ final class GeminiService {
         }
 
         let result = try decoder.decode(BackendGenerateResponse.self, from: data)
-        // .ignoreUnknownCharacters handles \n inserted by Python's base64.encodebytes
-        guard let imgData = Data(base64Encoded: result.image, options: .ignoreUnknownCharacters),
-              let uiImage = UIImage(data: imgData) else {
+        guard let uiImage = Self.decodeBase64Image(result.image) else {
             throw GeminiError.decodeFailed
         }
         return uiImage

@@ -125,10 +125,16 @@ async function callHivision(
       return null;
     }
 
-    // Python's base64.encodebytes adds \n every 76 chars; strip before sending to iOS
-    const cleanBase64 = data2.image_base64.replace(/\s+/g, "");
-    console.log("[hivision] Done, bytes:", cleanBase64.length);
-    return { image: cleanBase64 };
+    // Normalize base64: strip whitespace, convert url-safe chars, fix padding
+    let b64 = data2.image_base64.replace(/\s+/g, "");
+    b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+    const rem = b64.length % 4;
+    if (rem === 2) b64 += "==";
+    else if (rem === 3) b64 += "=";
+    console.log("[hivision] Done, bytes:", b64.length,
+      "prefix:", b64.substring(0, 12),
+      "rem_before_pad:", rem);
+    return { image: b64 };
 
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === "AbortError") {
