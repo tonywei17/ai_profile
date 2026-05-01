@@ -46,7 +46,7 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
         switch self {
         case .lSize:
             switch language {
-            case "zh": return "约30~40日元"
+            case "zh": return "约1~3元"
             case "ja": return "約30〜40円"
             case "ko": return "약 30~40엔"
             case "vi": return "~¥30-40"
@@ -56,7 +56,7 @@ enum PrintPaperSize: String, CaseIterable, Identifiable {
             }
         case .twoL:
             switch language {
-            case "zh": return "约80日元"
+            case "zh": return "约3~8元"
             case "ja": return "約80円"
             case "ko": return "약 80엔"
             case "vi": return "~¥80"

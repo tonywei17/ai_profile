@@ -48,7 +48,7 @@ final class PrintLayoutService {
                         width: Double(layout.photoWidthPx),
                         height: Double(layout.photoHeightPx)
                     )
-                    gc.draw(cgImage, in: rect)
+                    drawAspectFill(cgImage: cgImage, in: rect, context: gc)
                 }
             }
             gc.restoreGState()
@@ -57,6 +57,29 @@ final class PrintLayoutService {
                 drawGuides(ctx: ctx.cgContext, layout: layout)
             }
         }
+    }
+
+    /// Scale-to-fill while preserving aspect ratio, cropping any overflow to the target rect.
+    private func drawAspectFill(cgImage: CGImage, in rect: CGRect, context: CGContext) {
+        let imgW = CGFloat(cgImage.width)
+        let imgH = CGFloat(cgImage.height)
+        let scaleX = rect.width / imgW
+        let scaleY = rect.height / imgH
+        let scale = max(scaleX, scaleY)
+
+        let scaledW = imgW * scale
+        let scaledH = imgH * scale
+        let drawRect = CGRect(
+            x: rect.minX + (rect.width - scaledW) / 2,
+            y: rect.minY + (rect.height - scaledH) / 2,
+            width: scaledW,
+            height: scaledH
+        )
+
+        context.saveGState()
+        context.clip(to: rect)
+        context.draw(cgImage, in: drawRect)
+        context.restoreGState()
     }
 
     private func drawGuides(ctx: CGContext, layout: PrintLayoutInfo) {

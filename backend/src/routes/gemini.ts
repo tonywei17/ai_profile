@@ -91,6 +91,8 @@ async function callHivision(
     form1.append("dpi", "300");
     form1.append("human_matting_model", "modnet_photographic_portrait_matting");
     form1.append("face_detect_model", "mtcnn");
+    // head occupies ~2/3 of photo height per Chinese ID photo standards (GA461-2004)
+    form1.append("head_measure_ratio", "0.35");
 
     const res1 = await fetch(`${config.hivisionUrl}/idphoto`, {
       method: "POST",
@@ -394,6 +396,17 @@ router.post("/generate", async (req: Request, res: Response) => {
 
     const isPro = tier === "pro";
     const hasSpec = typeof specWidth === "number" && typeof specHeight === "number" && typeof specBgColor === "string";
+
+    if (hasSpec) {
+      if (!/^[0-9a-fA-F]{6}$/.test(specBgColor!.replace("#", ""))) {
+        res.status(400).json({ error: "Invalid background color format" });
+        return;
+      }
+      if (specWidth! < 100 || specWidth! > 2000 || specHeight! < 100 || specHeight! > 2000) {
+        res.status(400).json({ error: "Invalid spec dimensions" });
+        return;
+      }
+    }
 
     // Build provider chain dynamically per request
     const candidates: Array<{ name: string; call: () => Promise<{ image: string } | null> }> = [];

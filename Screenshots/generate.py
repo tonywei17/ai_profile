@@ -48,11 +48,16 @@ FONTS = {
     "ja_sub":   ("Hiragino Sans", "W5"),
     "en_title": ("Helvetica Neue", "Bold"),
     "en_sub":   ("Helvetica Neue", "Regular"),
-    "zh_title": ("PingFang SC", "Semibold"),
-    "zh_sub":   ("PingFang SC", "Regular"),
     "ko_title": ("Apple SD Gothic Neo", "Bold"),
     "ko_sub":   ("Apple SD Gothic Neo", "Regular"),
 }
+
+# PingFang SC (苹方简体) lives inside macOS font assets; index 0=Semibold, 3=Light
+_PINGFANG_PATH = (
+    "/System/Library/AssetsV2/com_apple_MobileAsset_Font8"
+    "/86ba2c91f017a3749571a82f2c6d890ac7ffb2fb.asset/AssetData/PingFang.ttc"
+)
+_PINGFANG_IDX = {"title": 0, "sub": 3}  # 0=Semibold, 3=Light
 
 SCREENSHOTS = {
     "ja": [
@@ -68,10 +73,10 @@ SCREENSHOTS = {
         {"img": "IMG_2282.PNG", "title": "Print-Ready Layout",  "subtitle": "Auto-layout for L-size & 2L paper",   "bg": "bg-4", "accent": "accent-4", "sub": "sub-4", "deco": "deco-4"},
     ],
     "zh-Hans": [
-        {"img": "IMG_2279.PNG", "title": "AI 智能证件照",   "subtitle": "选好规格 一键生成",               "bg": "bg-1", "accent": "accent-1", "sub": "sub-1", "deco": "deco-1"},
-        {"img": "IMG_2280.PNG", "title": "美颜 & 换装",     "subtitle": "美肌、发型、背景色自由定制",       "bg": "bg-2", "accent": "accent-2", "sub": "sub-2", "deco": "deco-2"},
-        {"img": "IMG_2281.PNG", "title": "前后对比",        "subtitle": "AI 生成效果一目了然",              "bg": "bg-3", "accent": "accent-3", "sub": "sub-3", "deco": "deco-3"},
-        {"img": "IMG_2282.PNG", "title": "排版即刻打印",    "subtitle": "L判/2L自动排版 便利店直接打印",     "bg": "bg-4", "accent": "accent-4", "sub": "sub-4", "deco": "deco-4"},
+        {"img": "IMG_2967.PNG", "title": "AI 智能证件照",   "subtitle": "10+ 规格 一键生成",                "bg": "bg-1", "accent": "accent-1", "sub": "sub-1", "deco": "deco-1"},
+        {"img": "IMG_2966.PNG", "title": "美颜 & 换装",     "subtitle": "服装、发型、背景随心定制",          "bg": "bg-2", "accent": "accent-2", "sub": "sub-2", "deco": "deco-2"},
+        {"img": "IMG_2959.PNG", "title": "前后对比",        "subtitle": "AI 生成效果一目了然",               "bg": "bg-3", "accent": "accent-3", "sub": "sub-3", "deco": "deco-3"},
+        {"img": "IMG_2964.PNG", "title": "一键打印排版",    "subtitle": "自动排版 带去打印店即可打印",        "bg": "bg-4", "accent": "accent-4", "sub": "sub-4", "deco": "deco-4"},
     ],
     "ko": [
         {"img": "IMG_2279.PNG", "title": "AI 증명사진",      "subtitle": "규격 선택, 원탭으로 생성",           "bg": "bg-1", "accent": "accent-1", "sub": "sub-1", "deco": "deco-1"},
@@ -145,15 +150,21 @@ def draw_deco(img, deco_key, W, H):
 
 def get_font(lang, kind, size):
     """Try to load a macOS system font."""
-    # Map lang codes for font lookup
     font_lang = lang.split("-")[0]  # zh-Hans -> zh
-    if font_lang not in ("ja", "en", "zh", "ko"):
+
+    # PingFang SC for Chinese (exact path + face index)
+    if font_lang == "zh" and os.path.exists(_PINGFANG_PATH):
+        idx = _PINGFANG_IDX.get(kind, 0)
+        try:
+            return ImageFont.truetype(_PINGFANG_PATH, size, index=idx)
+        except Exception:
+            pass
+
+    if font_lang not in ("ja", "en", "ko"):
         font_lang = "en"
     actual_key = f"{font_lang}_{kind}"
-
     name, weight = FONTS.get(actual_key, FONTS["en_title"])
 
-    # macOS font paths
     candidates = [
         f"/System/Library/Fonts/ヒラギノ角ゴシック {weight}.ttc",
         f"/System/Library/Fonts/Hiragino Sans {weight}.ttc",
@@ -165,7 +176,6 @@ def get_font(lang, kind, size):
         f"/System/Library/Fonts/{name}.ttf",
         f"/Library/Fonts/Apple SD Gothic Neo.ttc",
         f"/System/Library/Fonts/AppleSDGothicNeo.ttc",
-        f"/System/Library/Fonts/PingFang.ttc",
     ]
 
     for path in candidates:
@@ -175,7 +185,6 @@ def get_font(lang, kind, size):
             except Exception:
                 continue
 
-    # Fallback
     try:
         return ImageFont.truetype("/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc", size)
     except Exception:
@@ -283,17 +292,31 @@ def generate_screenshot(lang, item, num, out_dir, device="iphone"):
 
 
 def main():
-    # Parse CLI: python3 generate.py [iphone|ipad|all]
+    # Parse CLI: python3 generate.py [iphone|ipad|all] [lang]
+    # e.g. python3 generate.py iphone zh-Hans
     target = sys.argv[1] if len(sys.argv) > 1 else "all"
+    lang_filter = sys.argv[2] if len(sys.argv) > 2 else None
 
     jobs = []
     if target in ("iphone", "all"):
         for lang, items in SCREENSHOTS.items():
+            if lang_filter and lang != lang_filter:
+                continue
             for i, item in enumerate(items):
+                raw_path = os.path.join(RAW_DIR, item["img"])
+                if not os.path.exists(raw_path):
+                    print(f"  [skip] missing {raw_path}")
+                    continue
                 jobs.append((lang, item, i + 1, "iphone"))
     if target in ("ipad", "all"):
         for lang, items in IPAD_SCREENSHOTS.items():
+            if lang_filter and lang != lang_filter:
+                continue
             for i, item in enumerate(items):
+                raw_path = os.path.join(RAW_DIR, item["img"])
+                if not os.path.exists(raw_path):
+                    print(f"  [skip] missing {raw_path}")
+                    continue
                 jobs.append((lang, item, i + 1, "ipad"))
 
     total = len(jobs)
