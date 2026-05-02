@@ -98,9 +98,9 @@ IPAD_SCREENSHOTS = {
         {"img": "IMG_0052.PNG", "title": "Print-Ready Layout",  "subtitle": "Auto-layout for L-size & 2L paper",   "bg": "bg-4", "accent": "accent-4", "sub": "sub-4", "deco": "deco-4"},
     ],
     "zh-Hans": [
-        {"img": "IMG_0050.PNG", "title": "AI 智能证件照",   "subtitle": "选好规格 一键生成",               "bg": "bg-1", "accent": "accent-1", "sub": "sub-1", "deco": "deco-1"},
-        {"img": "IMG_0051.PNG", "title": "前后对比",        "subtitle": "AI 生成效果一目了然",              "bg": "bg-3", "accent": "accent-3", "sub": "sub-3", "deco": "deco-3"},
-        {"img": "IMG_0052.PNG", "title": "排版即刻打印",    "subtitle": "L判/2L自动排版 便利店直接打印",     "bg": "bg-4", "accent": "accent-4", "sub": "sub-4", "deco": "deco-4"},
+        {"img": "IMG_0060.PNG", "title": "AI 智能证件照",   "subtitle": "10+ 规格 一键生成",               "bg": "bg-1", "accent": "accent-1", "sub": "sub-1", "deco": "deco-1"},
+        {"img": "IMG_0061.PNG", "title": "前后对比",        "subtitle": "AI 生成效果一目了然",              "bg": "bg-3", "accent": "accent-3", "sub": "sub-3", "deco": "deco-3"},
+        {"img": "IMG_0062.PNG", "title": "一键打印排版",    "subtitle": "自动排版 带去打印店即可打印",        "bg": "bg-4", "accent": "accent-4", "sub": "sub-4", "deco": "deco-4"},
     ],
     "ko": [
         {"img": "IMG_0050.PNG", "title": "AI 증명사진",      "subtitle": "규격 선택, 원탭으로 생성",           "bg": "bg-1", "accent": "accent-1", "sub": "sub-1", "deco": "deco-1"},
