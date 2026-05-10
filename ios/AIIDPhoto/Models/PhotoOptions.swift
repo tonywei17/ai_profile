@@ -159,6 +159,17 @@ enum BackgroundColorOption: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Hex string (no #) sent to backend for background processing. nil = use spec default.
+    var bgColorHex: String? {
+        switch self {
+        case .specDefault: nil
+        case .pureWhite:   "ffffff"
+        case .lightBlue:   "d4e9f7"
+        case .lightGray:   "e8e8e8"
+        case .red:         "d03030"
+        }
+    }
+
     /// Swatch color for UI rendering. nil means "auto" icon.
     var swatchColor: Color? {
         switch self {

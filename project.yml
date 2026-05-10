@@ -75,9 +75,9 @@ targets:
           - vi
           - id
           - pt-BR
-        CFBundleDisplayName: AI证件照
+        CFBundleDisplayName: 光影形象馆
         CFBundleIdentifier: com.yufeicn.aiidphoto
-        CFBundleName: AI证件照
+        CFBundleName: 光影形象馆
         CFBundleVersion: "22"
         CFBundleShortVersionString: "1.1.1"
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]

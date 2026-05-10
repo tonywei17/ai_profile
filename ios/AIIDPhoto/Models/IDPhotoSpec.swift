@@ -17,7 +17,7 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
     case fullBody           // 全身照 102×152 (4R)
 
     // Pro
-    case chinaMarriage      // 结婚登记照 35×53 (双人)
+    case chinaMarriage      // 结婚登记照 53×35 横版 (双人合影)
     case oneInchLarge       // 大一寸 33×48
     case twoInchSmall       // 小二寸 35×45
     case ncreExam           // NCRE 32×40
@@ -96,7 +96,7 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
         case .standardPortrait: "35×45 mm"
         case .halfBody:         "89×127 mm"
         case .fullBody:         "102×152 mm"
-        case .chinaMarriage:    "35×53 mm"
+        case .chinaMarriage:    "53×35 mm"
         case .oneInchLarge:     "33×48 mm"
         case .twoInchSmall:     "35×45 mm"
         case .ncreExam:         "32×40 mm"
@@ -134,7 +134,7 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
         case .standardPortrait: (35, 45)
         case .halfBody:         (89, 127)
         case .fullBody:         (102, 152)
-        case .chinaMarriage:    (35, 53)
+        case .chinaMarriage:    (53, 35)
         case .oneInchLarge:     (33, 48)
         case .twoInchSmall:     (35, 45)
         case .ncreExam:         (32, 40)

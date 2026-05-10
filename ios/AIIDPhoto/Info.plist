@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>AI证件照</string>
+	<string>光影形象馆</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconName</key>
@@ -29,7 +29,7 @@
 		<string>pt-BR</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>AI证件照</string>
+	<string>光影形象馆</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
