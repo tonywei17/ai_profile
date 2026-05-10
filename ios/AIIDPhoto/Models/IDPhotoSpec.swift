@@ -158,9 +158,9 @@ enum IDPhotoSpec: String, CaseIterable, Identifiable {
 
     // MARK: - Generation Prompt (image-edit friendly imperative)
 
-    /// Keep face features and hair — outfit change is intentional and must not be blocked.
+    /// Protect facial identity only; hair/attire are controlled by user options.
     private var preserveSuffix: String {
-        "保持人物的脸部五官和发型完全不变。"
+        "保持人物的脸部五官完全不变。"
     }
 
     /// Standard Chinese ID photo framing per GB/GA461 and MPS specs:

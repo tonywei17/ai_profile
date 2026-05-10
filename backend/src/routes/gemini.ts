@@ -36,12 +36,13 @@ function checkDailyBudget(): boolean {
 }
 
 interface GenerateRequest {
-  image: string;       // base64
+  image: string;          // base64
   prompt: string;
+  cosmeticPrompt?: string; // 第二阶段：Hivision 输出后叠加的外观编辑指令（美颜/服装/表情等）
   tier?: string;
-  specWidth?: number;  // target pixel width at 300dpi (from IDPhotoSpec)
-  specHeight?: number; // target pixel height at 300dpi
-  specBgColor?: string; // hex color without #, e.g. "ffffff"
+  specWidth?: number;     // target pixel width at 300dpi (from IDPhotoSpec)
+  specHeight?: number;    // target pixel height at 300dpi
+  specBgColor?: string;   // hex color without #, e.g. "ffffff"
 }
 
 interface QwenImageEditResponse {
@@ -371,7 +372,7 @@ router.post("/generate", async (req: Request, res: Response) => {
   }
 
   try {
-    const { image, prompt, tier, specWidth, specHeight, specBgColor } = req.body as GenerateRequest;
+    const { image, prompt, cosmeticPrompt, tier, specWidth, specHeight, specBgColor } = req.body as GenerateRequest;
 
     if (!image || !prompt) {
       res.status(400).json({ error: "Missing required fields: image, prompt" });
@@ -408,24 +409,44 @@ router.post("/generate", async (req: Request, res: Response) => {
       }
     }
 
-    // Build provider chain dynamically per request
-    const candidates: Array<{ name: string; call: () => Promise<{ image: string } | null> }> = [];
+    const hasCosmeticPrompt = typeof cosmeticPrompt === "string" && cosmeticPrompt.trim().length > 3;
 
-    // 1. HivisionIDPhotos — all tiers, purpose-built for compliant ID photos
+    // ── 阶段一：HivisionIDPhotos 精准抠图 + 裁切 + 背景填色 ──────────────
     if (hasSpec && config.hivisionUrl) {
-      candidates.push({
-        name: "hivision",
-        call: () => callHivision(image, specWidth!, specHeight!, specBgColor!),
-      });
+      const hivisionResult = await callHivision(image, specWidth!, specHeight!, specBgColor!);
+      if (hivisionResult) {
+        // ── 阶段二（可选）：Qwen/Bailian 对 Hivision 输出叠加外观编辑 ──
+        if (hasCosmeticPrompt && config.bailianApiKey) {
+          console.log("[pipeline] Hivision succeeded, starting cosmetic pass");
+          let cosmeticResult: { image: string } | null = null;
+          if (isPro) {
+            cosmeticResult =
+              (await callQwenImageEdit("qwen-image-edit-plus", cosmeticPrompt!, hivisionResult.image)) ??
+              (await callQwenImageEdit("qwen-image-edit",       cosmeticPrompt!, hivisionResult.image));
+          }
+          if (!cosmeticResult) {
+            cosmeticResult = await callBailian(cosmeticPrompt!, hivisionResult.image);
+          }
+          if (cosmeticResult) {
+            res.json({ image: cosmeticResult.image, provider: "hivision+cosmetic" });
+            return;
+          }
+          // 第二阶段失败时，降级返回 Hivision 基础结果（保证质量底线）
+          console.warn("[pipeline] Cosmetic pass failed, returning Hivision base result");
+        }
+        res.json({ image: hivisionResult.image, provider: "hivision" });
+        return;
+      }
+      console.warn("[fallback] Hivision failed, falling back to prompt-based providers");
     }
 
-    // 2. qwen-image-edit-plus → qwen-image-edit — Pro only
+    // ── Fallback：Hivision 不可用或失败时，走完整 prompt 链 ─────────────
+    const candidates: Array<{ name: string; call: () => Promise<{ image: string } | null> }> = [];
+
     if (isPro && config.bailianApiKey) {
       candidates.push({ name: "qwen-image-edit-plus", call: () => callQwenImageEdit("qwen-image-edit-plus", prompt, image) });
       candidates.push({ name: "qwen-image-edit",      call: () => callQwenImageEdit("qwen-image-edit", prompt, image) });
     }
-
-    // 3. wanx2.1-imageedit — all tiers
     if (config.bailianApiKey) {
       candidates.push({ name: "bailian", call: () => callBailian(prompt, image) });
     }

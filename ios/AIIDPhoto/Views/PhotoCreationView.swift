@@ -23,10 +23,13 @@ struct PhotoCreationView: View {
     @State private var showMoreSizes = false
     @State private var showSubscriptionSheet = false
     @State private var errorMessage: String?
+    @State private var lastError: GeminiError?
     @State private var showSavedToast = false
     @State private var customBgColor: Color = Color(red: 0.83, green: 0.91, blue: 0.97)
     @State private var isCustomBgActive = false
     @State private var showColorPicker = false
+    @State private var showPrintLayout = false
+    @State private var showCameraDeniedAlert = false
 
     private let featuredSpecs: [IDPhotoSpec] = [.oneInch, .twoInch, .resume, .chinaPassport, .twoInchSmall]
     private let backgroundOptions: [BackgroundColorOption] = [.specDefault, .pureWhite, .red, .lightBlue, .lightGray]
@@ -56,6 +59,22 @@ struct PhotoCreationView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 20)
                             sectionDivider
+                            expressionSection
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                            sectionDivider
+                            beautySection
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                            sectionDivider
+                            attireSection
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                            sectionDivider
+                            hairSection
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                            sectionDivider
                             backgroundSection
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 20)
@@ -65,6 +84,8 @@ struct PhotoCreationView: View {
                             resultView
                         }
                     }
+                    .frame(maxWidth: 640)
+                    .frame(maxWidth: .infinity)
                     .padding(.bottom, 110)
                 }
             }
@@ -73,16 +94,16 @@ struct PhotoCreationView: View {
         }
         .navigationTitle("制作形象照")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Image(systemName: "ellipsis")
-                    .foregroundStyle(Color.inkBlack)
-            }
-        }
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedItem, matching: .images)
         .confirmationDialog("", isPresented: $showPhotoSourceDialog) {
             Button("从相册选择") { showPhotoPicker = true }
-            Button("拍摄照片") { showCamera = true }
+            Button("拍摄照片") { handleCameraTap() }
+        }
+        .alert("相机权限未开启", isPresented: $showCameraDeniedAlert) {
+            Button("去设置开启") { PermissionManager.openSettings() }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("请在「设置 → 光影形象馆 → 相机」中开启权限后再试。")
         }
         .sheet(isPresented: $showCamera) {
             CameraPicker(image: $inputImage).ignoresSafeArea()
@@ -116,6 +137,25 @@ struct PhotoCreationView: View {
                 .environmentObject(langManager)
                 .presentationDetents([.large])
         }
+        .sheet(isPresented: $showPrintLayout) {
+            if let output = outputImage {
+                PrintLayoutSheetView(
+                    image: output,
+                    photoSizeMM: selectedSpec.photoSizeMM,
+                    sizeLabel: selectedSpec.sizeLabel,
+                    isSubscribed: subscription.isSubscribed,
+                    onLockedTap: {
+                        showPrintLayout = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showSubscriptionSheet = true
+                        }
+                    }
+                )
+                .environmentObject(langManager)
+                .environmentObject(subscription)
+                .presentationDetents([.large])
+            }
+        }
         .task { await adManager.loadRewarded() }
         .onChange(of: selectedItem) { item in
             Task { await loadImage(item) }
@@ -123,10 +163,23 @@ struct PhotoCreationView: View {
         .onChange(of: inputImage) { img in
             if img != nil, currentStep == 1 { currentStep = 2 }
         }
-        .alert("错误", isPresented: Binding(
+        .alert("生成失败", isPresented: Binding(
             get: { errorMessage != nil },
-            set: { if !$0 { errorMessage = nil } }
+            set: { if !$0 { errorMessage = nil; lastError = nil } }
         )) {
+            if lastError?.isRetryable ?? true {
+                Button("重试") {
+                    errorMessage = nil
+                    let err = lastError
+                    lastError = nil
+                    Task {
+                        // 给短暂延迟让 alert 完全消失
+                        try? await Task.sleep(for: .milliseconds(200))
+                        await generate()
+                    }
+                    _ = err
+                }
+            }
             Button("好的", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
@@ -373,6 +426,238 @@ struct PhotoCreationView: View {
         }
     }
 
+    // MARK: - Expression Section
+
+    private var expressionSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("表情")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.inkBlack)
+
+            HStack(spacing: 8) {
+                ForEach(ExpressionStyle.allCases) { style in
+                    expressionButton(style: style)
+                }
+            }
+        }
+    }
+
+    private func expressionButton(style: ExpressionStyle) -> some View {
+        let isSelected = photoOptions.expression == style
+        return Button {
+            photoOptions.expression = style
+        } label: {
+            VStack(spacing: 7) {
+                Image(systemName: style.icon)
+                    .font(.system(size: 22))
+                    .foregroundStyle(isSelected ? Color.skyBlue : Color(.systemGray3))
+                Text(style.displayName(language: "zh"))
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isSelected ? Color.skyBlue.opacity(0.06) : Color(.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        isSelected ? Color.skyBlue : Color(.systemGray4),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            )
+        }
+    }
+
+    // MARK: - Beauty Section
+
+    private var beautySection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("美颜强度")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.inkBlack)
+
+            HStack(spacing: 8) {
+                ForEach(BeautyLevel.allCases) { level in
+                    beautyButton(level: level)
+                }
+            }
+        }
+    }
+
+    private func beautyButton(level: BeautyLevel) -> some View {
+        let isSelected = photoOptions.beauty == level
+        return Button {
+            if level.isPro && !subscription.isSubscribed {
+                showSubscriptionSheet = true
+            } else {
+                photoOptions.beauty = level
+            }
+        } label: {
+            VStack(spacing: 7) {
+                Image(systemName: level.icon)
+                    .font(.system(size: 22))
+                    .foregroundStyle(isSelected ? Color.skyBlue : Color(.systemGray3))
+                HStack(spacing: 3) {
+                    Text(level.displayName(language: "zh"))
+                        .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                        .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    if level.isPro && !subscription.isSubscribed {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(Color(.systemGray3))
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isSelected ? Color.skyBlue.opacity(0.06) : Color(.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        isSelected ? Color.skyBlue : Color(.systemGray4),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            )
+        }
+    }
+
+    // MARK: - Attire Section
+
+    private var attireSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("选择服装")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.inkBlack)
+
+            let cols = [GridItem(.flexible()), GridItem(.flexible())]
+            LazyVGrid(columns: cols, spacing: 8) {
+                ForEach(Attire.allCases) { attire in
+                    attireButton(attire: attire)
+                }
+            }
+        }
+    }
+
+    private func attireButton(attire: Attire) -> some View {
+        let isSelected = photoOptions.attire == attire
+        return Button {
+            if attire.isPro && !subscription.isSubscribed {
+                showSubscriptionSheet = true
+            } else {
+                photoOptions.attire = attire
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: attire.icon)
+                    .font(.system(size: 15))
+                    .foregroundStyle(isSelected ? Color.skyBlue : Color.branchGray)
+                    .frame(width: 20)
+                HStack(spacing: 4) {
+                    Text(attire.displayName(language: "zh"))
+                        .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                        .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    if attire.isPro && !subscription.isSubscribed {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(Color.branchGray)
+                    }
+                }
+                Spacer(minLength: 0)
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.skyBlue)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isSelected ? Color.skyBlue.opacity(0.06) : Color(.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        isSelected ? Color.skyBlue : Color(.systemGray4),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            )
+        }
+    }
+
+    // MARK: - Hair Section
+
+    private var hairSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("发型整理")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.inkBlack)
+
+            HStack(spacing: 8) {
+                ForEach(HairGrooming.allCases) { hair in
+                    hairButton(hair: hair)
+                }
+            }
+        }
+    }
+
+    private func hairButton(hair: HairGrooming) -> some View {
+        let isSelected = photoOptions.hair == hair
+        return Button {
+            if hair.isPro && !subscription.isSubscribed {
+                showSubscriptionSheet = true
+            } else {
+                photoOptions.hair = hair
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: hair.icon)
+                    .font(.system(size: 16))
+                    .foregroundStyle(isSelected ? Color.skyBlue : Color.branchGray)
+                HStack(spacing: 4) {
+                    Text(hair.displayName(language: "zh"))
+                        .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                        .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
+                    if hair.isPro && !subscription.isSubscribed {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.branchGray)
+                    }
+                }
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.skyBlue)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isSelected ? Color.skyBlue.opacity(0.06) : Color(.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        isSelected ? Color.skyBlue : Color(.systemGray4),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            )
+        }
+    }
+
     // MARK: - Background Section
 
     private var backgroundSection: some View {
@@ -521,6 +806,7 @@ struct PhotoCreationView: View {
                     .frame(maxWidth: .infinity, maxHeight: 380)
                     .padding(.horizontal, 16)
 
+                // 主操作行：重新生成 + 保存到相册
                 HStack(spacing: 12) {
                     Button {
                         withAnimation {
@@ -562,6 +848,29 @@ struct PhotoCreationView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                }
+                .padding(.horizontal, 16)
+
+                // 打印排版入口
+                Button { showPrintLayout = true } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "printer.fill")
+                            .font(.system(size: 14))
+                        Text("打印排版")
+                            .font(.system(size: 14, weight: .medium))
+                        Spacer()
+                        Text("自动生成打印店可用的排版图")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.branchGray)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.branchGray)
+                    }
+                    .foregroundStyle(Color.inkBlack)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .padding(.horizontal, 16)
             }
@@ -622,6 +931,8 @@ struct PhotoCreationView: View {
             .padding(.horizontal, 16)
             .padding(.top, 10)
             .padding(.bottom, 24)
+            .frame(maxWidth: 640)
+            .frame(maxWidth: .infinity)
             .background(Color(.systemBackground))
         }
     }
@@ -670,6 +981,19 @@ struct PhotoCreationView: View {
 
     // MARK: - Actions
 
+    private func handleCameraTap() {
+        PermissionManager.requestCameraAccess { status in
+            switch status {
+            case .authorized:
+                showCamera = true
+            case .denied, .restricted:
+                showCameraDeniedAlert = true
+            case .notDetermined:
+                break // 系统弹窗会在 requestAccess 内处理
+            }
+        }
+    }
+
     private func loadImage(_ item: PhotosPickerItem?) async {
         guard let item else { return }
         if let data = try? await item.loadTransferable(type: Data.self),
@@ -711,12 +1035,16 @@ struct PhotoCreationView: View {
             } else {
                 bgHex = photoOptions.background.bgColorHex ?? selectedSpec.backgroundColorHex
             }
+            // 始终传 specInfo，让 Hivision 做高质量抠图+裁切+底色（第一阶段）。
+            // 若有外观编辑选项，cosmeticPrompt 会触发后端第二阶段（Qwen/Bailian）叠加处理。
             let specInfo = GeminiService.SpecInfo(widthPx: px.width, heightPx: px.height, bgColorHex: bgHex)
+            let cosmeticPrompt = photoOptions.buildCosmeticPrompt()
             let result = try await GeminiService.shared.generateIDPhoto(
                 from: input,
                 prompt: finalPrompt,
                 tier: tier,
-                specInfo: specInfo
+                specInfo: specInfo,
+                cosmeticPrompt: cosmeticPrompt
             )
             outputImage = result
             usage.markUsed(isSubscribed: subscription.isSubscribed)
@@ -730,7 +1058,13 @@ struct PhotoCreationView: View {
             withAnimation { currentStep = 4 }
         } catch {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
-            errorMessage = error.localizedDescription
+            if let ge = error as? GeminiError {
+                lastError = ge
+                errorMessage = ge.errorDescription
+            } else {
+                lastError = nil
+                errorMessage = error.localizedDescription
+            }
             withAnimation { currentStep = 2 }
         }
     }

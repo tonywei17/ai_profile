@@ -12,7 +12,7 @@ struct PrintLayoutSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var selectedPaper: PrintPaperSize = .lSize
+    @State private var selectedPaper: PrintPaperSize = .sixInch
     @State private var showGuides = true
     @State private var renderedImage: UIImage?
     @State private var showSavedToast = false
@@ -51,6 +51,8 @@ struct PrintLayoutSheetView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 .padding(.bottom, 32)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
             }
             .background(Color(.systemBackground))
             .toolbar {
@@ -206,7 +208,7 @@ struct PrintLayoutSheetView: View {
                 Text(compatLabel)
                     .font(.callout)
                 Spacer()
-                Text("7-11 · Lawson · FamilyMart")
+                Text("照相馆 · 快印店 · 美团打印")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -442,28 +444,22 @@ struct PrintLayoutSheetView: View {
     }
     private var howToSteps: [String] {
         [
-            l("保存排版照片到相册",
-              "Save the layout image to Photos",
+            l("点击下方按钮，将排版图保存到相册",
+              "Save the layout image to your Photos app",
               "レイアウト写真をカメラロールに保存",
-              "레이아웃 사진을 사진 앱에 저장",
-              vi: "Lưu ảnh bố cục vào album",
-              id: "Simpan foto layout ke Galeri",
-              pt: "Salve a imagem de layout em Fotos"),
-            l("将排版图发到打印店（微信/U盘/邮件均可）",
-              "Send the layout to a print shop (WeChat / USB / email)",
-              "プリント店に画像を送信",
+              "레이아웃 사진을 사진 앱에 저장"),
+            l("通过微信发给附近照相馆或快印店，或用美团/大众点评搜索\"证件照打印\"",
+              "Send via WeChat to a local photo shop, or search for \"photo print\" on a delivery app",
+              "プリント店に画像を送信（WeChat 等）",
               "인쇄소에 이미지 전송"),
-            l("选择\"照片打印\" → 5 寸或 7 寸相纸",
-              "Select \"Photo Print\" → 5R or 7R photo paper",
-              "「写真プリント」→ 5R または 7R を選択",
-              "\"사진 인쇄\" → 5R 또는 7R 선택"),
-            l("打印后沿参考线裁剪即可使用",
+            l("告知打印\"6寸相纸，原图输出\"（不要拉伸或缩放）",
+              "Tell them: \"6R photo paper, print as-is (no stretch)\"",
+              "「6Rサイズ、原寸で印刷」を指定",
+              "\"6R 용지, 원본 크기로 인쇄\" 요청"),
+            l("打印后沿参考线裁剪即可，标准裁纸刀或剪刀均可",
               "Cut along the guide lines after printing",
               "印刷後、ガイドラインに沿って切り取り",
-              "인쇄 후 가이드라인을 따라 자르기",
-              vi: "Cắt theo đường hướng dẫn sau khi in",
-              id: "Potong sesuai garis panduan setelah dicetak",
-              pt: "Corte ao longo das linhas guia após imprimir"),
+              "인쇄 후 가이드라인을 따라 자르기"),
         ]
     }
 }

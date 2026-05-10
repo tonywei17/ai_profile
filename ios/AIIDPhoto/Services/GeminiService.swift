@@ -16,10 +16,46 @@ enum GeminiError: LocalizedError {
         case .invalidImage:
             return "图片格式不支持，请换一张照片"
         case .networkError(let code, let msg):
-            return "服务器错误（\(code)）：\(msg)"
+            return Self.localizedNetworkMessage(code: code, raw: msg)
         case .decodeFailed:
             return "生成结果解析失败，请重试"
         }
+    }
+
+    /// 是否可以通过重试解决（用于 UI 显示"重试"按钮）。
+    var isRetryable: Bool {
+        switch self {
+        case .invalidImage:                       return false
+        case .invalidConfig, .decodeFailed:       return true
+        case .networkError(let code, _):          return code >= 500 || code == 408 || code == 429
+        }
+    }
+
+    private static func localizedNetworkMessage(code: Int, raw: String) -> String {
+        // 把后端返回的英文消息映射为中文，未匹配的保留原文作为兜底。
+        let lower = raw.lowercased()
+        if code == 429 || lower.contains("too many") || lower.contains("rate limit") {
+            return "请求太频繁了，请稍后再试。"
+        }
+        if code == 503 || lower.contains("temporarily unavailable") {
+            return "服务繁忙，请稍后再试。"
+        }
+        if code == 413 || lower.contains("too large") {
+            return "图片太大了，请换一张更小的照片。"
+        }
+        if code == 400 && (lower.contains("invalid") || lower.contains("format")) {
+            return "照片格式或参数不正确，请换一张试试。"
+        }
+        if code == 502 || lower.contains("generation failed") {
+            return "生成失败，请重试。如多次失败请换一张更清晰的正面照。"
+        }
+        if code == 401 || code == 403 {
+            return "服务暂时无法访问，请稍后再试。"
+        }
+        if code >= 500 {
+            return "服务暂时不可用，请稍后再试。"
+        }
+        return raw.isEmpty ? "网络异常，请检查网络后重试。" : raw
     }
 }
 
@@ -28,6 +64,7 @@ enum GeminiError: LocalizedError {
 struct BackendGenerateRequest: Encodable {
     let image: String
     let prompt: String
+    let cosmeticPrompt: String?  // 第二阶段：Hivision 输出后叠加的外观编辑指令
     let tier: String
     let specWidth: Int?
     let specHeight: Int?
@@ -73,7 +110,7 @@ final class GeminiService {
         let bgColorHex: String
     }
 
-    func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro, specInfo: SpecInfo? = nil) async throws -> UIImage {
+    func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro, specInfo: SpecInfo? = nil, cosmeticPrompt: String? = nil) async throws -> UIImage {
         guard let backendURL = Config.backendBaseURL else {
             throw GeminiError.invalidConfig
         }
@@ -92,7 +129,8 @@ final class GeminiService {
         }.value
 
         let cleanPrompt = sanitizePrompt(prompt)
-        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, tier: tier, backendURL: backendURL, specInfo: specInfo)
+        let cleanCosmetic = cosmeticPrompt.map { sanitizePrompt($0) }
+        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, tier: tier, backendURL: backendURL, specInfo: specInfo, cosmeticPrompt: cleanCosmetic)
     }
 
     func generateIDPhoto(from image: UIImage) async throws -> UIImage {
@@ -111,7 +149,7 @@ final class GeminiService {
         return clean
     }
 
-    private func requestViaBackend(base64: String, prompt: String, tier: OutputTier, backendURL: URL, specInfo: SpecInfo? = nil) async throws -> UIImage {
+    private func requestViaBackend(base64: String, prompt: String, tier: OutputTier, backendURL: URL, specInfo: SpecInfo? = nil, cosmeticPrompt: String? = nil) async throws -> UIImage {
         let url = backendURL.appendingPathComponent("api/gemini/generate")
         var req = Config.authenticatedRequest(url: url)
         req.httpMethod = "POST"
@@ -121,6 +159,7 @@ final class GeminiService {
         let body = BackendGenerateRequest(
             image: base64,
             prompt: prompt,
+            cosmeticPrompt: cosmeticPrompt,
             tier: tier.apiValue,
             specWidth: specInfo?.widthPx,
             specHeight: specInfo?.heightPx,
@@ -129,19 +168,27 @@ final class GeminiService {
         req.httpBody = try encoder.encode(body)
 
         // Retry up to 2 times for transient network errors
-        var lastError: Error?
+        var lastURLError: URLError?
         for attempt in 0..<3 {
             do {
                 let (data, response) = try await URLSession.shared.data(for: req)
                 return try decodeBackendResponse(data: data, response: response)
             } catch let error as URLError where error.code == .timedOut || error.code == .networkConnectionLost || error.code == .notConnectedToInternet {
-                lastError = error
+                lastURLError = error
                 if attempt < 2 {
                     try await Task.sleep(for: .seconds(pow(2.0, Double(attempt))))
                 }
             }
         }
-        throw lastError ?? GeminiError.invalidConfig
+        // 网络重试均失败，包装为中文 GeminiError 让 UI 友好提示
+        let msg: String
+        switch lastURLError?.code {
+        case .timedOut:                msg = "请求超时，请检查网络后重试。"
+        case .notConnectedToInternet:  msg = "网络未连接，请检查网络设置后重试。"
+        case .networkConnectionLost:   msg = "网络连接中断，请重试。"
+        default:                       msg = "网络异常，请检查网络后重试。"
+        }
+        throw GeminiError.networkError(statusCode: 0, message: msg)
     }
 
     /// Robust base64 → UIImage: handles data URL prefix, whitespace, url-safe chars, padding.
