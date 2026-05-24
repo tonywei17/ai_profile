@@ -9,7 +9,7 @@ This folder follows the fixed-canvas workflow used in `takken_ai_2026/docs/13-ap
 Current product message:
 
 - No subscription.
-- Launch offer: `¥3.8/张`; regular target: `¥9.9/张`.
+- Launch offer: `¥3.80/张`; regular target: `¥9.90/张`.
 - One purchase grants 3 AI generation attempts.
 - User chooses the best result, then downloads HD photo and print layout.
 

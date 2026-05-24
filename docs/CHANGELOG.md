@@ -11,8 +11,13 @@
 - 生产 `REQUIRE_APP_KEY` 已启用，生成接口缺失 Key 返回 401。
 - 中国大陆法务网页部署到 `https://aiphoto-cn.foyli.cloud/legal/`，包含隐私政策、服务条款、支持页、个人信息清单、第三方服务清单、付费与退款说明和数据删除说明。
 - iOS 设置页和付费页法务链接切换到 `https://aiphoto-cn.foyli.cloud/legal`。
-- 商业模式从 Pro 订阅/广告改为 StoreKit 消耗型成片制作包：首发优惠价 ¥3.8/张，常规目标价 ¥9.9/张，每包 3 次生成机会，高清下载和打印排版包含在内。
+- 商业模式从 Pro 订阅/广告改为 StoreKit 消耗型成片制作包：首发优惠价 ¥3.80/张，常规目标价 ¥9.90/张，每包 3 次生成机会，高清下载和打印排版包含在内。
 - 后端 `.env.example` 改为当前 Hivision/百炼配置项。
+- 客户端 `APP_API_KEY` 改为 build setting 注入；推荐码 HMAC 使用独立 `REFERRAL_HMAC_SECRET`；安全文档改为阿里云 KMS Secrets Manager + ECS RAM Role 方案。
+- 设置页新增“恢复购买”入口，覆盖 App Store Restore Purchases 要求。
+- 删除历史 `UsageManager` / `AdManager` / `EditorialToggle` 死代码和注入。
+- 修复购买页/首页价格文案为 `¥3.80` / `¥9.90`，清理 iOS deprecation warning。
+- backend 依赖审计修复到 0 vulnerabilities。
 
 ### 已知阻断
 - 仍需真机端到端生成、StoreKit 消耗型购买、生成次数扣减、保存相册、权限弹窗回归。

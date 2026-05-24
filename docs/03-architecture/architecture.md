@@ -43,8 +43,6 @@ View
 
 Managers
 ├── SubscriptionManager   StoreKit 2 消耗型成片制作包 / 剩余生成次数
-├── UsageManager          历史免费/订阅额度模块，当前生成主流程不再依赖
-├── AdManager             历史广告模块，当前未接入广告 SDK
 ├── HistoryManager        本地生成历史
 ├── ReferralManager       推荐奖励
 └── LanguageManager       语言选择
@@ -70,7 +68,7 @@ Services
 backend/
 ├── src/
 │   ├── index.ts              # Express app
-│   ├── config.ts             # PORT / HIVISION_URL / BAILIAN_API_KEY / APP_API_KEY
+│   ├── config.ts             # PORT / HIVISION_URL / BAILIAN_API_KEY / APP_API_KEY / REFERRAL_HMAC_SECRET
 │   ├── routes/
 │   │   ├── gemini.ts         # POST /api/gemini/generate
 │   │   ├── referral.ts       # 推荐码

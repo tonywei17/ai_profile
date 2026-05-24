@@ -114,10 +114,11 @@ tail -n 100 /var/log/nginx/error.log
 | `HIVISION_URL` | HivisionIDPhotos endpoint |
 | `BAILIAN_API_KEY` | 阿里云百炼 API Key |
 | `APP_API_KEY` | iOS `X-App-Key` 校验 |
+| `REFERRAL_HMAC_SECRET` | 推荐码 HMAC 签名，必须与 `APP_API_KEY` 分离 |
 | `REQUIRE_APP_KEY` | 是否强制拒绝缺失/错误 App Key |
 | `DAILY_BUDGET` | 每日生成预算熔断 |
 
-不要把真实 Key 写入文档或提交到仓库。
+不要把真实 Key 写入文档或提交到仓库。生产最佳方案是把 `APP_API_KEY`、`REFERRAL_HMAC_SECRET`、`BAILIAN_API_KEY` 放入阿里云 KMS Secrets Manager，ECS 通过实例 RAM 角色最小权限读取；PM2 明文环境变量只作为过渡方案。
 
 ## 上线前检查
 

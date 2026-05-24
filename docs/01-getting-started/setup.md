@@ -38,7 +38,7 @@ xcodebuild \
 ```bash
 cd backend
 cp .env.example .env
-# 编辑 .env，填入 HIVISION_URL / BAILIAN_API_KEY / APP_API_KEY
+# 编辑 .env，填入 HIVISION_URL / BAILIAN_API_KEY / APP_API_KEY / REFERRAL_HMAC_SECRET
 npm install
 npm run dev
 ```
@@ -50,7 +50,7 @@ npm run dev
 | 键 | 值 | 说明 |
 |----|-----|------|
 | `BACKEND_BASE_URL` | `https://aiphoto-cn.foyli.cloud` | CN 生产环境阿里云后端地址 |
-| `APP_API_KEY` | App 侧调用密钥 | 由 iOS 通过 `X-App-Key` 发送给后端 |
+| `APP_API_KEY` | App 侧调用密钥 | 由 iOS 通过 `X-App-Key` 发送给后端；生产包通过 `AIIDPHOTO_APP_API_KEY` build setting 注入 |
 
 CN 线上后端当前运行在阿里云 ECS，通过 Nginx 反向代理到本机 PM2 进程。`aiphoto-cn.foyli.cloud` 已完成 DNS 和 HTTPS；上线前仍需真机端到端生成和 ATS 回归。
 
