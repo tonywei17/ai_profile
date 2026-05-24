@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.2-unreleased] — 2026-05-24
+
+### 改进
+- 文档主线更新为 CN 版：阿里云 ECS + Nginx + PM2 后端，HivisionIDPhotos + 阿里云百炼/Qwen/Wanx 生成链路。
+- iOS 权限文案改为中文；按张付费模型不再请求 ATT，也不再接入广告 SDK。
+- `BACKEND_BASE_URL` 切换到 `https://aiphoto-cn.foyli.cloud`。
+- 阿里云 DNS 和 Let's Encrypt HTTPS 配置完成，公网 `/health` 正常。
+- 本地最新后端代码部署到阿里云 ECS，服务器端构建通过并重启 PM2。
+- 生产 `REQUIRE_APP_KEY` 已启用，生成接口缺失 Key 返回 401。
+- 中国大陆法务网页部署到 `https://aiphoto-cn.foyli.cloud/legal/`，包含隐私政策、服务条款、支持页、个人信息清单、第三方服务清单、付费与退款说明和数据删除说明。
+- iOS 设置页和付费页法务链接切换到 `https://aiphoto-cn.foyli.cloud/legal`。
+- 商业模式从 Pro 订阅/广告改为 StoreKit 消耗型成片制作包：首发优惠价 ¥3.8/张，常规目标价 ¥9.9/张，每包 3 次生成机会，高清下载和打印排版包含在内。
+- 后端 `.env.example` 改为当前 Hivision/百炼配置项。
+
+### 已知阻断
+- 仍需真机端到端生成、StoreKit 消耗型购买、生成次数扣减、保存相册、权限弹窗回归。
+- 中国大陆 App Store 的 ICP/App 备案号仍需确认后填写。
+
 ## [1.1.1] — 2026-04-07
 
 ### 新增

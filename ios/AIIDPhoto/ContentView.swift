@@ -61,11 +61,7 @@ struct ContentView: View {
             get: { photoOptions.beauty != .natural },
             set: { newValue in
                 if newValue {
-                    if BeautyLevel.lightEnhance.isPro && !subscription.isSubscribed {
-                        showSubscriptionSheet = true
-                    } else {
-                        photoOptions.beauty = .lightEnhance
-                    }
+                    photoOptions.beauty = .lightEnhance
                 } else {
                     photoOptions.beauty = .natural
                 }
@@ -78,12 +74,8 @@ struct ContentView: View {
             get: { photoOptions.attire != .keepOriginal },
             set: { newValue in
                 if newValue {
-                    if Attire.darkSuit.isPro && !subscription.isSubscribed {
-                        showSubscriptionSheet = true
-                    } else {
-                        photoOptions.attire = .darkSuit
-                        photoOptions.background = .pureWhite
-                    }
+                    photoOptions.attire = .darkSuit
+                    photoOptions.background = .pureWhite
                 } else {
                     photoOptions.attire = .keepOriginal
                     photoOptions.background = .specDefault
@@ -127,7 +119,7 @@ struct ContentView: View {
                                     isCustomSize: $isCustomSize,
                                     specs: sortedSpecs,
                                     language: lang,
-                                    isSubscribed: subscription.isSubscribed,
+                                    isSubscribed: true,
                                     onLockedTap: { showSubscriptionSheet = true }
                                 )
 
@@ -137,7 +129,7 @@ struct ContentView: View {
 
                                 ProOptionsView(
                                     options: $photoOptions,
-                                    isSubscribed: subscription.isSubscribed,
+                                    isSubscribed: true,
                                     language: lang,
                                     onLockedTap: { showSubscriptionSheet = true }
                                 )
@@ -148,9 +140,6 @@ struct ContentView: View {
                                     resultCard.id("resultCard")
                                 }
 
-                                if !subscription.isSubscribed {
-                                    AdBannerViewWrapper().frame(height: 50)
-                                }
                             }
                             .padding(24)
                             .frame(maxWidth: sizeClass == .regular ? 600 : .infinity)
@@ -196,7 +185,7 @@ struct ContentView: View {
                     image: result,
                     photoSizeMM: isCustomSize ? customSize.photoSizeMM : selectedSpec.photoSizeMM,
                     sizeLabel: isCustomSize ? customSize.sizeLabel : selectedSpec.sizeLabel,
-                    isSubscribed: subscription.isSubscribed,
+                    isSubscribed: true,
                     onLockedTap: {
                         showPrintLayout = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
@@ -315,12 +304,14 @@ struct ContentView: View {
                         .foregroundStyle(Color.inkBlack)
                         .frame(width: 40, height: 40)
                 }
+                .accessibilityLabel(Text(historyNavLabel))
                 Button { showSettingsSheet = true } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 16))
                         .foregroundStyle(Color.inkBlack)
                         .frame(width: 40, height: 40)
                 }
+                .accessibilityLabel(Text(settingsNavLabel))
             }
         }
         .padding(.horizontal, 16)
@@ -339,6 +330,7 @@ struct ContentView: View {
                     .foregroundStyle(Color.inkBlack)
                     .frame(width: 44, height: 44)
             }
+            .accessibilityLabel(Text(backNavLabel))
 
             Text("光影形象馆")
                 .font(.system(size: 16, weight: .bold))
@@ -353,16 +345,18 @@ struct ContentView: View {
                         .foregroundStyle(Color.inkBlack)
                         .frame(width: 44, height: 44)
                 }
+                .accessibilityLabel(Text(historyNavLabel))
                 Button { showSubscriptionSheet = true } label: {
-                    Text(subscription.isSubscribed ? subscribedLabel : "PRO")
+                    Text(subscription.generationAttemptsLeft > 0 ? subscribedLabel : buyTaskLabel)
                         .font(.system(size: 10, weight: .bold))
                         .tracking(1)
-                        .foregroundStyle(subscription.isSubscribed ? Color.inkFillForeground : Color.inkBlack)
+                        .foregroundStyle(subscription.generationAttemptsLeft > 0 ? Color.inkFillForeground : Color.inkBlack)
                         .padding(.horizontal, 10)
                         .frame(height: 36)
-                        .background(subscription.isSubscribed ? Color.inkFill : Color.clear)
+                        .background(subscription.generationAttemptsLeft > 0 ? Color.inkFill : Color.clear)
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.inkBlack, lineWidth: 1))
                 }
+                .accessibilityLabel(Text(photoTaskNavLabel))
             }
         }
         .padding(.horizontal, 8)
@@ -375,9 +369,16 @@ struct ContentView: View {
 
     private var heroBannerSection: some View {
         ZStack(alignment: .trailing) {
+            Image("HomeHeroPortrait")
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .clipped()
+
             LinearGradient(
-                colors: [Color.skyBlue, Color.skyBlueMid],
-                startPoint: .leading, endPoint: .trailing
+                colors: [Color.skyBlue.opacity(0.28), Color.skyBlue.opacity(0.10), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
             )
 
             HStack(spacing: 0) {
@@ -395,13 +396,13 @@ struct ContentView: View {
                     Spacer()
 
                     HStack(spacing: 6) {
-                        Text("新用户限时体验")
+                        Text("限时优惠")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(.white)
-                        Text("9.9元起")
+                        Text("3.8元/张")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(Color.promoOrange)
-                        Text("原价29.9元")
+                        Text("原价9.9元")
                             .font(.system(size: 10))
                             .strikethrough(color: .white.opacity(0.6))
                             .foregroundStyle(.white.opacity(0.55))
@@ -413,26 +414,17 @@ struct ContentView: View {
                 }
                 .padding(.leading, 20)
                 .padding(.vertical, 22)
+                .frame(maxWidth: 245, alignment: .leading)
 
                 Spacer()
-
-                ZStack {
-                    Rectangle().fill(.white.opacity(0.10))
-                    VStack(spacing: 0) {
-                        Spacer()
-                        Image(systemName: "person.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 70)
-                            .foregroundStyle(.white.opacity(0.35))
-                            .padding(.bottom, 0)
-                    }
-                }
-                .frame(width: 130)
-                .clipped()
             }
         }
         .frame(height: 190)
+        .overlay(alignment: .topTrailing) {
+            aiGeneratedBadge
+                .padding(.top, 12)
+                .padding(.trailing, 18)
+        }
     }
 
     // MARK: - Service Categories
@@ -495,7 +487,7 @@ struct ContentView: View {
         HStack(spacing: 0) {
             statItem(highlight: "120万+", label: "用户", desc: "已服务")
             Rectangle().fill(Color(.systemGray4)).frame(width: 1, height: 36)
-            statItem(highlight: "7天内", label: "可重修", desc: "不满意免费重修")
+            statItem(highlight: "3次", label: "可重修", desc: "选最满意结果")
             Rectangle().fill(Color(.systemGray4)).frame(width: 1, height: 36)
             statItem(highlight: "隐私", label: "安全保护", desc: "照片仅自己可见")
         }
@@ -530,46 +522,29 @@ struct ContentView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.inkBlack)
                 Spacer()
-                HStack(spacing: 2) {
-                    Text("查看更多")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.branchGray)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color.branchGray)
-                }
             }
 
             HStack(spacing: 12) {
-                showcaseCard(label: "证件照优化")
-                showcaseCard(label: "职业形象照")
+                showcaseCard(imageName: "ShowcaseMaleComparison", label: "证件照优化")
+                showcaseCard(imageName: "ShowcaseFemaleComparison", label: "职业形象照")
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
     }
 
-    private func showcaseCard(label: String) -> some View {
+    private func showcaseCard(imageName: String, label: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 0) {
-                ZStack {
-                    Rectangle().fill(Color(.systemGray5))
-                    VStack(spacing: 4) {
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 28)).foregroundStyle(Color(.systemGray3))
-                        Text("Before")
-                            .font(.system(size: 9)).foregroundStyle(Color(.systemGray3))
-                    }
-                }
-                ZStack {
-                    Rectangle().fill(Color.skyBlue.opacity(0.12))
-                    VStack(spacing: 4) {
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 28)).foregroundStyle(Color.skyBlue.opacity(0.55))
-                        Text("After")
-                            .font(.system(size: 9)).foregroundStyle(Color.skyBlueMid)
-                    }
-                }
+            ZStack(alignment: .topTrailing) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 110)
+                    .clipped()
+
+                aiGeneratedBadge
+                    .padding(6)
             }
             .frame(height: 110)
             .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -582,37 +557,48 @@ struct ContentView: View {
         .frame(maxWidth: .infinity)
     }
 
+    private var aiGeneratedBadge: some View {
+        Text("AI生成")
+            .font(.system(size: 9, weight: .medium))
+            .foregroundStyle(.white.opacity(0.84))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Color.black.opacity(0.20))
+            .clipShape(Capsule())
+    }
+
     // MARK: - Home Bottom Bar
 
     private var homeBottomBar: some View {
         VStack(spacing: 0) {
             Color(.systemGray5).frame(height: 0.5)
-            HStack(spacing: 0) {
+            HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 11))
                             .foregroundStyle(Color.promoOrange)
-                        Text("新用户限时体验")
+                        Text("限时优惠")
                             .font(.system(size: 11))
                             .foregroundStyle(Color.branchGray)
                     }
                     HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text("9.9")
+                        Text("3.8")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundStyle(Color.skyBlue)
-                        Text("元起")
+                        Text("元/张")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Color.inkBlack)
-                        Text("原价29.9元")
+                        Text("原价9.9元")
                             .font(.system(size: 11))
                             .strikethrough(color: Color.branchGray)
                             .foregroundStyle(Color.branchGray)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
                 }
-                .padding(.leading, 16)
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 8)
 
                 Button { navigateToCreation = true } label: {
                     HStack(spacing: 6) {
@@ -622,7 +608,7 @@ struct ContentView: View {
                             .font(.system(size: 14, weight: .semibold))
                     }
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 26)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 14)
                     .background(
                         LinearGradient(
@@ -632,9 +618,12 @@ struct ContentView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 26))
                 }
-                .padding(.trailing, 16)
+                .layoutPriority(1)
+                .padding(.trailing, 8)
             }
-            .padding(.vertical, 12)
+            .padding(.horizontal, 32)
+            .padding(.top, 12)
+            .padding(.bottom, 16)
             .background(Color(.systemBackground))
         }
     }
@@ -651,25 +640,25 @@ struct ContentView: View {
                         .foregroundStyle(Color.inkBlack)
                         .frame(width: 44, height: 44)
                 }
-                .accessibilityLabel(Text("History"))
+                .accessibilityLabel(Text(historyNavLabel))
                 Button { showSettingsSheet = true } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 16))
                         .foregroundStyle(Color.inkBlack)
                         .frame(width: 44, height: 44)
                 }
-                .accessibilityLabel(Text("Settings"))
+                .accessibilityLabel(Text(settingsNavLabel))
                 Button { showSubscriptionSheet = true } label: {
-                    Text(subscription.isSubscribed ? subscribedLabel : "PRO")
+                    Text(subscription.generationAttemptsLeft > 0 ? subscribedLabel : buyTaskLabel)
                         .font(.system(size: 10, weight: .bold))
                         .tracking(1)
-                        .foregroundStyle(subscription.isSubscribed ? Color.inkFillForeground : Color.inkBlack)
+                        .foregroundStyle(subscription.generationAttemptsLeft > 0 ? Color.inkFillForeground : Color.inkBlack)
                         .padding(.horizontal, 10)
                         .frame(height: 44)
-                        .background(subscription.isSubscribed ? Color.inkFill : Color.clear)
+                        .background(subscription.generationAttemptsLeft > 0 ? Color.inkFill : Color.clear)
                         .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
                 }
-                .accessibilityLabel(Text("Subscription"))
+                .accessibilityLabel(Text(photoTaskNavLabel))
             }
         }
         .padding(.horizontal, 16)
@@ -915,26 +904,13 @@ struct ContentView: View {
             }
 
             Button {
-                if subscription.isSubscribed {
-                    showPrintLayout = true
-                } else {
-                    showSubscriptionSheet = true
-                    AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "printLayout"])
-                }
+                showPrintLayout = true
             } label: {
                 HStack(spacing: 6) {
                     Text("P")
                         .font(.system(size: 11, weight: .bold))
                     Text(printBottomLabel)
                         .font(.system(size: 14, weight: .medium))
-                    if !subscription.isSubscribed {
-                        Text("PRO")
-                            .font(.system(size: 9, weight: .bold))
-                            .tracking(0.5)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .overlay(Rectangle().stroke(Color.inkFillForeground.opacity(0.5), lineWidth: 1))
-                    }
                 }
                 .foregroundStyle(Color.inkFillForeground)
                 .frame(maxWidth: .infinity)
@@ -970,15 +946,9 @@ struct ContentView: View {
             }
             .disabled(isGenerating || inputImage == nil)
 
-            if !subscription.isSubscribed {
-                Text(freeUsageNote)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.branchGray)
-            } else {
-                Text(remainingCountText)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.branchGray)
-            }
+            Text(taskUsageNote)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.branchGray)
         }
         .padding(16)
         .background(Color(.systemBackground))
@@ -1017,9 +987,18 @@ struct ContentView: View {
     }
 
     private var appTitle:        String { l("光影形象馆", "AI ID Photo", "AI証明写真", "AI 증명사진", vi: "AI Ảnh Thẻ", id: "AI Foto ID", pt: "AI Foto Documento") }
-    private var memberSubtitle:  String { l("会员：无限生成 · 无广告 · 含排版打印", "Member: Unlimited · No Ads · Print Layout", "会員：無制限生成・広告なし・プリント込み", "회원: 무제한 · 광고 없음 · 인쇄 포함", vi: "Thành viên: Không giới hạn · Không QC · In ảnh", id: "Member: Tanpa batas · Tanpa iklan · Cetak", pt: "Membro: Ilimitado · Sem anúncios · Impressão") }
-    private var memberLabel:     String { l("会员", "Member", "会員", "회원", vi: "Thành viên", id: "Member", pt: "Membro") }
-    private var subscribedLabel: String { l("已订阅", "Subscribed", "購読中", "구독중", vi: "Đã đăng ký", id: "Berlangganan", pt: "Assinante") }
+    private var memberSubtitle:  String { l("制作包：3次生成 · 高清下载 · 含排版打印", "Photo task: 3 attempts · HD export · Print layout", "制作分：3回生成・HD保存・印刷込み", "제작권: 3회 생성 · HD 저장 · 인쇄 포함", vi: "Gói ảnh: 3 lần · HD · In ảnh", id: "Paket foto: 3 kali · HD · Cetak", pt: "Pacote: 3 tentativas · HD · Impressão") }
+    private var memberLabel:     String { l("制作包", "Photo Task", "制作分", "제작권", vi: "Gói ảnh", id: "Paket foto", pt: "Pacote") }
+    private var subscribedLabel: String { l("剩\(subscription.generationAttemptsLeft)次", "\(subscription.generationAttemptsLeft) left", "残\(subscription.generationAttemptsLeft)", "\(subscription.generationAttemptsLeft)회", vi: "Còn \(subscription.generationAttemptsLeft)", id: "Sisa \(subscription.generationAttemptsLeft)", pt: "\(subscription.generationAttemptsLeft) restam") }
+    private var buyTaskLabel:    String { l("购买", "Buy", "購入", "구매", vi: "Mua", id: "Beli", pt: "Comprar") }
+    private var historyNavLabel: String { l("历史记录", "History", "履歴", "기록", vi: "Lịch sử", id: "Riwayat", pt: "Histórico") }
+    private var settingsNavLabel: String { l("设置", "Settings", "設定", "설정", vi: "Cài đặt", id: "Pengaturan", pt: "Configurações") }
+    private var backNavLabel: String { l("返回首页", "Back to home", "ホームへ戻る", "홈으로 돌아가기", vi: "Về trang chính", id: "Kembali ke beranda", pt: "Voltar ao início") }
+    private var photoTaskNavLabel: String {
+        subscription.generationAttemptsLeft > 0
+            ? l("制作包剩余 \(subscription.generationAttemptsLeft) 次", "\(subscription.generationAttemptsLeft) photo task attempts left", "制作分 残り\(subscription.generationAttemptsLeft)回", "제작권 \(subscription.generationAttemptsLeft)회 남음")
+            : l("购买制作包", "Buy photo task", "制作分を購入", "제작권 구매", vi: "Mua gói ảnh", id: "Beli paket foto", pt: "Comprar pacote")
+    }
     private var uploadHint:      String { l("上传一张正面清晰的生活照", "Upload a clear front-facing photo", "正面の鮮明な写真をアップロード", "정면이 선명한 사진을 업로드하세요", vi: "Tải lên ảnh chính diện rõ nét", id: "Unggah foto wajah depan yang jelas", pt: "Envie uma foto frontal nítida") }
     private var albumLabel:      String { l("从相册选择", "Photo Library", "フォトライブラリ", "사진 보관함", vi: "Thư viện ảnh", id: "Galeri Foto", pt: "Biblioteca") }
     private var cameraLabel:     String { l("拍摄照片", "Take Photo", "カメラで撮影", "사진 촬영", vi: "Chụp ảnh", id: "Ambil Foto", pt: "Tirar Foto") }
@@ -1033,28 +1012,36 @@ struct ContentView: View {
         return l("生成\(specName)证件照", "Generate \(specName) Photo", "\(specName)写真を生成", "\(specName) 사진 생성",
                  vi: "Tạo ảnh \(specName)", id: "Buat Foto \(specName)", pt: "Gerar Foto \(specName)")
     }
-    private var freeSubtitle:    String { l("首次免费", "First gen free", "初回無料", "첫 생성 무료", vi: "Lần đầu miễn phí", id: "Pertama gratis", pt: "1ª vez grátis") }
-    private var freeUsageNote: String {
-        let left = usage.freeUsesRemaining
-        switch lang {
-        case "zh": return "今日剩余 \(left)/\(UsageManager.freeDailyLimit) 次 · \(left == UsageManager.freeDailyLimit ? "首次免费" : "需观看广告")"
-        case "ja": return "本日残り \(left)/\(UsageManager.freeDailyLimit)回 · \(left == UsageManager.freeDailyLimit ? "初回無料" : "広告視聴が必要")"
-        case "ko": return "오늘 남은 \(left)/\(UsageManager.freeDailyLimit)회 · \(left == UsageManager.freeDailyLimit ? "첫 생성 무료" : "광고 시청 필요")"
-        case "vi": return "Còn \(left)/\(UsageManager.freeDailyLimit) lần · \(left == UsageManager.freeDailyLimit ? "Lần đầu miễn phí" : "Cần xem QC")"
-        case "id": return "Sisa \(left)/\(UsageManager.freeDailyLimit) · \(left == UsageManager.freeDailyLimit ? "Pertama gratis" : "Perlu tonton iklan")"
-        case "pt": return "Restam \(left)/\(UsageManager.freeDailyLimit) · \(left == UsageManager.freeDailyLimit ? "1ª grátis" : "Requer anúncio")"
-        default:   return "\(left)/\(UsageManager.freeDailyLimit) left today · \(left == UsageManager.freeDailyLimit ? "First gen free" : "Ad required")"
+    private var freeSubtitle:    String { l("限时优惠", "Launch offer", "限定特価", "한정 할인", vi: "Ưu đãi", id: "Promo", pt: "Oferta") }
+    private var taskUsageNote: String {
+        let left = subscription.generationAttemptsLeft
+        if left > 0 {
+            return l("本制作包剩余 \(left) 次生成 · 选最满意的照片下载",
+                     "\(left) attempts left · Pick the best result to download",
+                     "残り\(left)回 · ベストな写真を保存",
+                     "\(left)회 남음 · 가장 좋은 사진을 저장")
         }
+        let bonus = referralManager.bonusGenerations
+        if bonus > 0 {
+            return l("奖励生成剩余 \(bonus) 次 · 可先体验后购买制作包",
+                     "\(bonus) bonus attempts left · Try before buying a task",
+                     "ボーナス残り\(bonus)回",
+                     "보너스 \(bonus)회 남음")
+        }
+        return l("限时 ¥3.8/张，原价 ¥9.9 · 含3次生成和排版下载",
+                 "Launch offer ¥3.8/photo · Includes 3 attempts and print layout",
+                 "特価 ¥3.8/枚 · 3回生成と印刷レイアウト込み",
+                 "할인가 ¥3.8/장 · 생성 3회와 인쇄 포함")
     }
     private var remainingCountText: String {
         switch lang {
-        case "zh": return "今日剩余次数：\(usage.subscriberUsesLeft)"
-        case "ja": return "本日残り：\(usage.subscriberUsesLeft)回"
-        case "ko": return "오늘 남은 횟수: \(usage.subscriberUsesLeft)회"
-        case "vi": return "Còn lại hôm nay: \(usage.subscriberUsesLeft)"
-        case "id": return "Sisa hari ini: \(usage.subscriberUsesLeft)"
-        case "pt": return "Restantes hoje: \(usage.subscriberUsesLeft)"
-        default:   return "Today's remaining: \(usage.subscriberUsesLeft)"
+        case "zh": return "剩余生成次数：\(subscription.generationAttemptsLeft)"
+        case "ja": return "残り：\(subscription.generationAttemptsLeft)回"
+        case "ko": return "남은 횟수: \(subscription.generationAttemptsLeft)회"
+        case "vi": return "Còn lại: \(subscription.generationAttemptsLeft)"
+        case "id": return "Sisa: \(subscription.generationAttemptsLeft)"
+        case "pt": return "Restantes: \(subscription.generationAttemptsLeft)"
+        default:   return "Attempts left: \(subscription.generationAttemptsLeft)"
         }
     }
     private var comparisonTitle: String { l("效果对比", "Before & After", "効果比較", "전후 비교", vi: "Trước & Sau", id: "Sebelum & Sesudah", pt: "Antes & Depois") }
@@ -1079,9 +1066,9 @@ struct ContentView: View {
     private var printToggleLabel:       String { l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃") }
     private var resetLabel:             String { l("重置", "Reset", "リセット", "리셋", vi: "Đặt lại", id: "Reset", pt: "Redefinir") }
     private var limitAlertTitle:        String { l("次数已用完", "Limit Reached", "回数上限に達しました", "횟수 초과", vi: "Đã hết lượt", id: "Batas Tercapai", pt: "Limite Atingido") }
-    private var limitReachedMessage:    String { l("今日免费次数已用完。升级会员可无限生成，无需观看广告。", "You've used all free generations for today. Upgrade to Pro for unlimited generations without ads.", "本日の無料回数を使い切りました。プロにアップグレードすると、広告なしで無制限に生成できます。", "오늘의 무료 횟수를 모두 사용했습니다. 프로로 업그레이드하면 광고 없이 무제한 생성할 수 있습니다.", vi: "Đã hết lượt miễn phí hôm nay. Nâng cấp Pro để tạo không giới hạn.", id: "Kuota gratis hari ini habis. Upgrade ke Pro untuk tanpa batas.", pt: "Gerações gratuitas esgotadas hoje. Assine Pro para ilimitado.") }
-    private var subscriberLimitMessage: String { l("今日生成次数已达上限，请明天再试。", "You've reached today's generation limit. Please try again tomorrow.", "本日の生成回数上限に達しました。明日もう一度お試しください。", "오늘의 생성 횟수 한도에 도달했습니다. 내일 다시 시도해 주세요.", vi: "Đã đạt giới hạn hôm nay. Vui lòng thử lại ngày mai.", id: "Batas hari ini tercapai. Coba lagi besok.", pt: "Limite de hoje atingido. Tente novamente amanhã.") }
-    private var upgradeLabel:           String { l("升级会员", "Upgrade", "アップグレード", "업그레이드", vi: "Nâng cấp", id: "Upgrade", pt: "Assinar") }
+    private var limitReachedMessage:    String { l("本制作包的生成次数已用完。购买后可再获得3次生成机会，并继续下载高清照片和排版图。", "This photo task is out of attempts. Buy another task for 3 more generations.", "この制作分の生成回数を使い切りました。追加購入で3回生成できます。", "이번 제작권의 생성 횟수를 모두 사용했습니다. 추가 구매로 3회 더 생성할 수 있습니다.", vi: "Đã hết lượt. Mua thêm để có 3 lần tạo ảnh.", id: "Percobaan habis. Beli lagi untuk 3 kali.", pt: "Tentativas esgotadas. Compre outro pacote para mais 3.") }
+    private var subscriberLimitMessage: String { limitReachedMessage }
+    private var upgradeLabel:           String { l("购买制作包", "Buy Task", "購入", "구매", vi: "Mua", id: "Beli", pt: "Comprar") }
     private var printBottomLabel:       String { l("打印店打印", "Print", "プリント", "인쇄") }
 
     // MARK: - Actions
@@ -1095,56 +1082,25 @@ struct ContentView: View {
             showAIConsent = true
             return
         }
-        if !subscription.isSubscribed && photoOptions.hasProSelection {
-            photoOptions = .defaults
-        }
-        let decision = usage.canGenerate(isSubscribed: subscription.isSubscribed)
-        switch decision {
-        case .allowed:
-            await performGenerate(input: input)
-        case .requireRewardedAd:
-            if referralManager.useBonusGeneration() {
-                await performGenerate(input: input)
-                return
-            }
-            await presentRewardedThenGenerate(input: input)
-        case .reachedDailyLimit:
-            limitAlertMessage = limitReachedMessage
-            showLimitAlert = true
-            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedDailyLimit"])
-        case .reachedLimit:
+        let usesReferralBonus = !subscription.canGenerate() && referralManager.bonusGenerations > 0
+        guard subscription.canGenerate() || usesReferralBonus else {
             limitAlertMessage = subscriberLimitMessage
             showLimitAlert = true
-            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedLimit"])
+            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "noGenerationAttempts"])
+            return
         }
+
+        await performGenerate(input: input, usesReferralBonus: usesReferralBonus)
     }
 
-    private func presentRewardedThenGenerate(input: UIImage) async {
-        await adManager.loadRewarded()
-        let rewarded = await adManager.showRewarded()
-        if rewarded {
-            AnalyticsManager.shared.track(AnalyticsManager.Event.adWatched)
-            usage.markUsed(isSubscribed: false)
-            await performGenerate(input: input)
-        } else {
-            errorMessage = l("未完成广告观看，无法继续生成。",
-                             "Ad not completed. Generation cancelled.",
-                             "広告が完了しませんでした。生成をキャンセルしました。",
-                             "광고가 완료되지 않았습니다. 생성이 취소되었습니다.",
-                             vi: "Chưa xem xong quảng cáo. Đã hủy tạo ảnh.",
-                             id: "Iklan belum selesai. Pembuatan dibatalkan.",
-                             pt: "Anúncio não concluído. Geração cancelada.")
-        }
-    }
-
-    private func performGenerate(input: UIImage) async {
+    private func performGenerate(input: UIImage, usesReferralBonus: Bool = false) async {
         lastGenerateTime = Date()
         isGenerating = true
         defer { isGenerating = false }
         do {
             let basePrompt = isCustomSize ? customSize.prompt : selectedSpec.prompt
             let finalPrompt = basePrompt + photoOptions.buildPromptSuffix()
-            let tier: GeminiService.OutputTier = subscription.isSubscribed ? .pro : .free
+            let tier: GeminiService.OutputTier = .pro
             let px = isCustomSize ? customSize.pixelSize : selectedSpec.pixelSize
             let bgHex = isCustomSize ? customSize.backgroundColorHex : selectedSpec.backgroundColorHex
             let specInfo = GeminiService.SpecInfo(widthPx: px.width, heightPx: px.height, bgColorHex: bgHex)
@@ -1155,7 +1111,11 @@ struct ContentView: View {
                 specInfo: specInfo
             )
             self.outputImage = result
-            usage.markUsed(isSubscribed: subscription.isSubscribed)
+            if usesReferralBonus {
+                _ = referralManager.useBonusGeneration()
+            } else {
+                subscription.consumeGenerationAttempt()
+            }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
 
             historyManager.addRecord(
@@ -1199,8 +1159,7 @@ struct ContentView: View {
 
     private func sharePhoto() {
         guard let img = outputImage else { return }
-        let shareImage = subscription.isSubscribed ? img : addWatermark(to: img)
-        let items: [Any] = [shareImage]
+        let items: [Any] = [img]
 
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.keyWindow?.rootViewController {
@@ -1281,17 +1240,5 @@ private struct GeneratingLabel: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Ad Banner Wrapper
-
-struct AdBannerViewWrapper: View {
-    var body: some View {
-        #if canImport(GoogleMobileAds)
-        AdBannerView()
-        #else
-        Color.clear
-        #endif
     }
 }

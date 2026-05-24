@@ -143,7 +143,7 @@ router.post("/redeem", (req: Request, res: Response) => {
   redeemedDevices.set(deviceId, deviceRedeemed);
   deviceTimestamps.set(deviceId, Date.now());
 
-  res.json({ granted: 3, message: "3 free Pro generations granted!" });
+  res.json({ granted: 3, message: "3 bonus generations granted!" });
 });
 
 function generateCode(deviceId: string): string {

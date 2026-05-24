@@ -12,7 +12,7 @@ import tripoRouter from "./routes/tripo";
 
 const app = express();
 
-// Trust Cloud Run's load balancer for correct req.ip
+// Trust the Nginx reverse proxy for correct req.ip on Alibaba Cloud ECS
 app.set("trust proxy", true);
 
 // Security headers

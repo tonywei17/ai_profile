@@ -30,19 +30,9 @@ struct AIIDPhotoApp: App {
                         .environmentObject(langManager)
                         .preferredColorScheme(langManager.appearance.colorScheme)
                 }
-                .onChange(of: hasSeenOnboarding) { seen in
-                    if seen {
-                        // Request ATT after onboarding is dismissed so the dialog is visible
-                        AppDelegate.requestTrackingIfNeeded()
-                    }
-                }
                 .task {
                     AnalyticsManager.shared.track(AnalyticsManager.Event.appOpen)
                     await referralManager.registerCode()
-                    // For returning users who already completed onboarding
-                    if hasSeenOnboarding {
-                        AppDelegate.requestTrackingIfNeeded()
-                    }
                 }
         }
     }

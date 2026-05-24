@@ -1,70 +1,46 @@
 import Foundation
 import StoreKit
 
-/// Represents a subscription plan option.
-enum SubscriptionPlan: String, CaseIterable, Identifiable {
-    case monthly = "com.yufeicn.aiidphoto.pro_monthly"
-    case annual  = "com.yufeicn.aiidphoto.pro_annual"
+/// One finished photo order: 3 AI generation attempts, then HD export and print layout.
+enum PaidProduct: String, CaseIterable, Identifiable {
+    case photoTask3 = "com.yufeicn.aiidphoto.photo_task_3"
 
     var id: String { rawValue }
 
     static let allProductIDs: Set<String> = Set(allCases.map(\.rawValue))
 }
 
-enum ConsumableProduct: String {
-    case printLayoutSingle = "com.yufeicn.aiidphoto.print_layout_single"
-}
-
 @MainActor
 final class SubscriptionManager: ObservableObject {
 
-    // MARK: - Debug Override
-    static var forceSubscribed: Bool {
-        #if DEBUG
-        return true  // Flip to true for local testing only
-        #else
-        return false  // Always false in release builds
-        #endif
-    }
+    static let attemptsPerPhotoTask = 3
+
+    // Keep this disabled for release parity. StoreKit config should be used for local purchase tests.
+    static var forceSubscribed: Bool { false }
 
     // MARK: - Published State
 
-    @Published private(set) var isSubscribed: Bool = false
-    @Published private(set) var expirationDate: Date?
-    @Published private(set) var willAutoRenew: Bool = true
+    @Published private(set) var generationAttemptsLeft: Int = 0
     @Published private(set) var isPurchasing: Bool = false
     @Published private(set) var isRestoring: Bool = false
     @Published var purchaseError: String?
 
-    @Published var selectedPlan: SubscriptionPlan = .annual
-
-    @Published private(set) var monthlyDisplayPrice: String?
-    @Published private(set) var annualDisplayPrice: String?
-    @Published private(set) var printLayoutSingleDisplayPrice: String?
-
-    /// Print layout credits (consumable purchases)
-    @Published private(set) var printLayoutCredits: Int = 0
+    @Published private(set) var photoTaskDisplayPrice: String?
 
     // MARK: - Private
 
-    private var products: [SubscriptionPlan: Product] = [:]
-    private var consumableProducts: [ConsumableProduct: Product] = [:]
+    private var products: [PaidProduct: Product] = [:]
     private var updateListenerTask: Task<Void, Never>?
 
-    private static let fallbackMonthlyPrice = "$3.99 USD"
-    private static let fallbackAnnualPrice  = "$22.99 USD"
-    private static let fallbackPrintSinglePrice = "$3.49 USD"
-
-    private let kPrintLayoutCredits = "aiid.printLayout.credits"
+    private static let fallbackPhotoTaskPrice = "¥3.80"
+    private let kGenerationAttemptsLeft = "aiid.photoTask.generationAttemptsLeft"
 
     // MARK: - Init / Deinit
 
     init() {
-        if Self.forceSubscribed { isSubscribed = true }
-        printLayoutCredits = UserDefaults.standard.integer(forKey: kPrintLayoutCredits)
+        generationAttemptsLeft = UserDefaults.standard.integer(forKey: kGenerationAttemptsLeft)
         updateListenerTask = Task { await listenForUpdates() }
         Task { await refreshProducts() }
-        Task { await checkCurrentEntitlements() }
     }
 
     deinit { updateListenerTask?.cancel() }
@@ -72,207 +48,97 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Product Loading
 
     func refreshProducts() async {
-        let allIDs = SubscriptionPlan.allProductIDs.union([ConsumableProduct.printLayoutSingle.rawValue])
         do {
-            let loaded = try await Product.products(for: allIDs)
-            let currencyCode = Locale.current.currency?.identifier ?? ""
+            let loaded = try await Product.products(for: PaidProduct.allProductIDs)
+            for product in loaded {
+                guard let paidProduct = PaidProduct(rawValue: product.id) else { continue }
+                products[paidProduct] = product
+                let price = product.displayPrice
 
-            for p in loaded {
-                let price = "\(p.displayPrice) \(currencyCode)"
-
-                if let plan = SubscriptionPlan(rawValue: p.id) {
-                    products[plan] = p
-                    switch plan {
-                    case .monthly: monthlyDisplayPrice = price
-                    case .annual:  annualDisplayPrice = price
-                    }
-                } else if let consumable = ConsumableProduct(rawValue: p.id) {
-                    consumableProducts[consumable] = p
-                    switch consumable {
-                    case .printLayoutSingle: printLayoutSingleDisplayPrice = price
-                    }
+                switch paidProduct {
+                case .photoTask3:
+                    photoTaskDisplayPrice = price
                 }
+
                 #if DEBUG
-                print("[SubscriptionManager] loaded: \(p.id) -> \(price)")
+                print("[PurchaseManager] loaded: \(product.id) -> \(price)")
                 #endif
             }
 
-            if monthlyDisplayPrice == nil {
-                monthlyDisplayPrice = Self.fallbackMonthlyPrice
-            }
-            if annualDisplayPrice == nil {
-                annualDisplayPrice = Self.fallbackAnnualPrice
-            }
-            if printLayoutSingleDisplayPrice == nil {
-                printLayoutSingleDisplayPrice = Self.fallbackPrintSinglePrice
-            }
+            applyFallbackPricesIfNeeded()
         } catch {
             #if DEBUG
-            print("[SubscriptionManager] products error: \(error)")
+            print("[PurchaseManager] products error: \(error)")
             #endif
-            if monthlyDisplayPrice == nil { monthlyDisplayPrice = Self.fallbackMonthlyPrice }
-            if annualDisplayPrice == nil  { annualDisplayPrice = Self.fallbackAnnualPrice }
-            if printLayoutSingleDisplayPrice == nil { printLayoutSingleDisplayPrice = Self.fallbackPrintSinglePrice }
+            applyFallbackPricesIfNeeded()
         }
     }
 
-    var displayPrice: String? {
-        switch selectedPlan {
-        case .monthly: return monthlyDisplayPrice
-        case .annual:  return annualDisplayPrice
-        }
+    var hasGenerationAttempts: Bool {
+        Self.forceSubscribed || generationAttemptsLeft > 0
     }
 
-    // MARK: - Print Layout Access
-
-    var canUsePrintLayout: Bool {
-        isSubscribed || printLayoutCredits > 0
+    var remainingAttemptsText: String {
+        "\(generationAttemptsLeft)"
     }
 
-    func consumePrintLayoutCredit() {
-        guard !isSubscribed, printLayoutCredits > 0 else { return }
-        printLayoutCredits -= 1
-        UserDefaults.standard.set(printLayoutCredits, forKey: kPrintLayoutCredits)
+    // MARK: - Generation Attempts
+
+    func canGenerate() -> Bool {
+        hasGenerationAttempts
     }
 
-    // MARK: - Entitlement Checking
+    func consumeGenerationAttempt() {
+        guard !Self.forceSubscribed, generationAttemptsLeft > 0 else { return }
+        generationAttemptsLeft -= 1
+        persistAttempts()
+    }
 
-    func checkCurrentEntitlements() async {
-        if Self.forceSubscribed {
-            isSubscribed = true
-            expirationDate = Calendar.current.date(byAdding: .year, value: 1, to: Date())
-            return
-        }
-        var foundActive = false
-        var latestExpiration: Date?
-        for await result in Transaction.currentEntitlements {
-            if case .verified(let t) = result,
-               SubscriptionPlan.allProductIDs.contains(t.productID) {
-                let active = t.revocationDate == nil &&
-                             (t.expirationDate ?? .distantFuture) > Date()
-                if active {
-                    foundActive = true
-                    if let exp = t.expirationDate,
-                       (latestExpiration == nil || exp > latestExpiration!) {
-                        latestExpiration = exp
-                    }
-                }
-                await t.finish()
-            }
-        }
+    private func grantPhotoTask() {
+        generationAttemptsLeft += Self.attemptsPerPhotoTask
+        persistAttempts()
+    }
 
-        // Also check subscription status for grace period / billing retry
-        if !foundActive {
-            foundActive = await checkGracePeriod()
-        }
+    private func persistAttempts() {
+        UserDefaults.standard.set(generationAttemptsLeft, forKey: kGenerationAttemptsLeft)
+    }
 
-        isSubscribed = foundActive
-        expirationDate = foundActive ? latestExpiration : nil
+    private func applyFallbackPricesIfNeeded() {
+        if photoTaskDisplayPrice == nil { photoTaskDisplayPrice = Self.fallbackPhotoTaskPrice }
+    }
 
-        // Check auto-renew status via subscription info
-        if foundActive {
-            willAutoRenew = await checkAutoRenewStatus()
+    // MARK: - Purchase
+
+    func purchasePhotoTask() async {
+        guard !isPurchasing else { return }
+        isPurchasing = true
+        purchaseError = nil
+        defer { isPurchasing = false }
+
+        let product: Product
+        if let loadedProduct = products[.photoTask3] {
+            product = loadedProduct
         } else {
-            willAutoRenew = false
-        }
-    }
-
-    /// Check if the active subscription will auto-renew (false = user cancelled).
-    private func checkAutoRenewStatus() async -> Bool {
-        for (_, product) in products {
-            guard let statuses = try? await product.subscription?.status else { continue }
-            for status in statuses {
-                if case .verified(let renewalInfo) = status.renewalInfo,
-                   status.state == .subscribed || status.state == .inGracePeriod {
-                    return renewalInfo.willAutoRenew
-                }
+            await refreshProducts()
+            guard let loadedProduct = products[.photoTask3] else {
+                purchaseError = "购买商品暂时不可用，请稍后重试。"
+                return
             }
-        }
-        return true // default to true if we can't determine
-    }
-
-    /// Check if any subscription product is in grace period or billing retry.
-    private func checkGracePeriod() async -> Bool {
-        for (_, product) in products {
-            guard let statuses = try? await product.subscription?.status else { continue }
-            for status in statuses {
-                switch status.state {
-                case .subscribed, .inGracePeriod, .inBillingRetryPeriod:
-                    return true
-                default:
-                    continue
-                }
-            }
-        }
-        return false
-    }
-
-    private func listenForUpdates() async {
-        for await result in Transaction.updates {
-            await handle(result)
-        }
-    }
-
-    private func handle(_ result: VerificationResult<Transaction>) async {
-        guard case .verified(let t) = result else { return }
-
-        if SubscriptionPlan.allProductIDs.contains(t.productID) {
-            let active = t.revocationDate == nil &&
-                         (t.expirationDate ?? .distantFuture) > Date()
-            if active {
-                isSubscribed = true
-                expirationDate = t.expirationDate
-            } else {
-                // Re-check all entitlements — another plan may still be active
-                await checkCurrentEntitlements()
-            }
-        } else if t.productID == ConsumableProduct.printLayoutSingle.rawValue {
-            printLayoutCredits += 1
-            UserDefaults.standard.set(printLayoutCredits, forKey: kPrintLayoutCredits)
+            product = loadedProduct
         }
 
-        await t.finish()
-    }
-
-    // MARK: - Purchase Subscription
-
-    func purchase() async {
-        guard let p = products[selectedPlan], !isPurchasing else { return }
-        isPurchasing = true
-        purchaseError = nil
-        defer { isPurchasing = false }
         do {
-            let result = try await p.purchase()
+            let result = try await product.purchase()
             switch result {
-            case .success(let verification): await handle(verification)
-            case .userCancelled:             break
-            case .pending:                   break
-            @unknown default:                break
+            case .success(let verification):
+                await handle(verification)
+            case .userCancelled, .pending:
+                break
+            @unknown default:
+                break
             }
         } catch StoreKitError.userCancelled {
-            // user dismissed — no error
-        } catch {
-            purchaseError = error.localizedDescription
-        }
-    }
-
-    // MARK: - Purchase Consumable
-
-    func purchasePrintLayout() async {
-        guard let p = consumableProducts[.printLayoutSingle], !isPurchasing else { return }
-        isPurchasing = true
-        purchaseError = nil
-        defer { isPurchasing = false }
-        do {
-            let result = try await p.purchase()
-            switch result {
-            case .success(let verification): await handle(verification)
-            case .userCancelled:             break
-            case .pending:                   break
-            @unknown default:                break
-            }
-        } catch StoreKitError.userCancelled {
-            // user dismissed — no error
+            // User dismissed the purchase sheet.
         } catch {
             purchaseError = error.localizedDescription
         }
@@ -284,11 +150,29 @@ final class SubscriptionManager: ObservableObject {
         isRestoring = true
         purchaseError = nil
         defer { isRestoring = false }
+
         do {
             try await AppStore.sync()
-            await checkCurrentEntitlements()
         } catch {
             purchaseError = error.localizedDescription
         }
+    }
+
+    // MARK: - Transaction Updates
+
+    private func listenForUpdates() async {
+        for await result in Transaction.updates {
+            await handle(result)
+        }
+    }
+
+    private func handle(_ result: VerificationResult<Transaction>) async {
+        guard case .verified(let transaction) = result else { return }
+
+        if transaction.productID == PaidProduct.photoTask3.rawValue {
+            grantPhotoTask()
+        }
+
+        await transaction.finish()
     }
 }

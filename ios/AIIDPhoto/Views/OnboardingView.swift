@@ -183,18 +183,18 @@ struct OnboardingView: View {
     }
 
     private var readySubtitle: String {
-        l("首次生成完全免费，无需注册",
-          "Your first generation is completely free. No sign-up required.",
-          "初回生成は完全無料、登録不要",
-          "첫 생성은 완전 무료, 가입 필요 없음",
-          vi: "Lần đầu hoàn toàn miễn phí. Không cần đăng ký.",
-          id: "Generasi pertama gratis. Tanpa daftar.",
-          pt: "A primeira geração é grátis. Sem cadastro.")
+        l("购买一个制作包，最多生成3次，选最满意的照片下载",
+          "Buy one photo task, generate up to 3 times, then download the best result.",
+          "制作分を購入し、最大3回生成してベストな写真を保存",
+          "제작권 하나로 최대 3회 생성하고 가장 좋은 결과를 저장",
+          vi: "Mua một gói ảnh, tạo tối đa 3 lần rồi tải kết quả tốt nhất.",
+          id: "Beli satu paket foto, buat hingga 3 kali, lalu unduh hasil terbaik.",
+          pt: "Compre um pacote, gere até 3 vezes e baixe o melhor resultado.")
     }
 
     private var startLabel: String {
-        l("免费开始", "Start Free", "無料で始める", "무료로 시작",
-          vi: "Bắt đầu Miễn phí", id: "Mulai Gratis", pt: "Começar Grátis")
+        l("开始制作", "Start", "開始", "시작",
+          vi: "Bắt đầu", id: "Mulai", pt: "Começar")
     }
 
     private var skipLabel: String {

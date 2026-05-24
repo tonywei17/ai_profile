@@ -111,7 +111,7 @@ struct PhotoCreationView: View {
         .sheet(isPresented: $showMoreSizes) {
             MoreSizesSheet(
                 selectedSpec: $selectedSpec,
-                isSubscribed: subscription.isSubscribed,
+                isSubscribed: true,
                 onLockedTap: {
                     showMoreSizes = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -143,7 +143,7 @@ struct PhotoCreationView: View {
                     image: output,
                     photoSizeMM: selectedSpec.photoSizeMM,
                     sizeLabel: selectedSpec.sizeLabel,
-                    isSubscribed: subscription.isSubscribed,
+                    isSubscribed: true,
                     onLockedTap: {
                         showPrintLayout = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -156,7 +156,6 @@ struct PhotoCreationView: View {
                 .presentationDetents([.large])
             }
         }
-        .task { await adManager.loadRewarded() }
         .onChange(of: selectedItem) { item in
             Task { await loadImage(item) }
         }
@@ -490,11 +489,7 @@ struct PhotoCreationView: View {
     private func beautyButton(level: BeautyLevel) -> some View {
         let isSelected = photoOptions.beauty == level
         return Button {
-            if level.isPro && !subscription.isSubscribed {
-                showSubscriptionSheet = true
-            } else {
-                photoOptions.beauty = level
-            }
+            photoOptions.beauty = level
         } label: {
             VStack(spacing: 7) {
                 Image(systemName: level.icon)
@@ -506,11 +501,6 @@ struct PhotoCreationView: View {
                         .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
-                    if level.isPro && !subscription.isSubscribed {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 9))
-                            .foregroundStyle(Color(.systemGray3))
-                    }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -549,11 +539,7 @@ struct PhotoCreationView: View {
     private func attireButton(attire: Attire) -> some View {
         let isSelected = photoOptions.attire == attire
         return Button {
-            if attire.isPro && !subscription.isSubscribed {
-                showSubscriptionSheet = true
-            } else {
-                photoOptions.attire = attire
-            }
+            photoOptions.attire = attire
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: attire.icon)
@@ -566,11 +552,6 @@ struct PhotoCreationView: View {
                         .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
-                    if attire.isPro && !subscription.isSubscribed {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 9))
-                            .foregroundStyle(Color.branchGray)
-                    }
                 }
                 Spacer(minLength: 0)
                 if isSelected {
@@ -614,11 +595,7 @@ struct PhotoCreationView: View {
     private func hairButton(hair: HairGrooming) -> some View {
         let isSelected = photoOptions.hair == hair
         return Button {
-            if hair.isPro && !subscription.isSubscribed {
-                showSubscriptionSheet = true
-            } else {
-                photoOptions.hair = hair
-            }
+            photoOptions.hair = hair
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: hair.icon)
@@ -628,11 +605,6 @@ struct PhotoCreationView: View {
                     Text(hair.displayName(language: "zh"))
                         .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
                         .foregroundStyle(isSelected ? Color.skyBlue : Color.inkBlack)
-                    if hair.isPro && !subscription.isSubscribed {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(Color.branchGray)
-                    }
                 }
                 Spacer()
                 if isSelected {
@@ -888,7 +860,7 @@ struct PhotoCreationView: View {
                         guard inputImage != nil else { showPhotoSourceDialog = true; return }
                         Task { await generate() }
                     } label: {
-                        Text(inputImage == nil ? "上传照片后生成" : "开始生成")
+                        Text(generateButtonTitle)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -906,7 +878,7 @@ struct PhotoCreationView: View {
                     }
                     .disabled(isGenerating)
 
-                    Text("预计1-2分钟生成，支持预览后再购买")
+                    Text(generateBarFootnote)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.branchGray)
                 } else if currentStep == 4 {
@@ -935,6 +907,25 @@ struct PhotoCreationView: View {
             .frame(maxWidth: .infinity)
             .background(Color(.systemBackground))
         }
+    }
+
+    private var generateButtonTitle: String {
+        guard inputImage != nil else { return "上传照片后生成" }
+        let left = subscription.generationAttemptsLeft
+        if left > 0 { return "开始生成（剩余\(left)次）" }
+        let bonus = referralManager.bonusGenerations
+        return bonus > 0 ? "开始生成（奖励\(bonus)次）" : "购买后生成（3次机会）"
+    }
+
+    private var generateBarFootnote: String {
+        let left = subscription.generationAttemptsLeft
+        if left > 0 {
+            return "本制作包剩余 \(left) 次，可选择最满意照片下载"
+        }
+        let bonus = referralManager.bonusGenerations
+        return bonus > 0
+            ? "奖励生成剩余 \(bonus) 次，可先体验后购买制作包"
+            : "限时3.8元/张，原价9.9元，含3次生成和排版下载"
     }
 
     // MARK: - Toast
@@ -1005,17 +996,10 @@ struct PhotoCreationView: View {
     private func generate() async {
         guard let input = inputImage, !isGenerating else { return }
 
-        // Check usage limits and ad gate
-        switch usage.canGenerate(isSubscribed: subscription.isSubscribed) {
-        case .reachedDailyLimit, .reachedLimit:
+        let usesReferralBonus = !subscription.canGenerate() && referralManager.bonusGenerations > 0
+        guard subscription.canGenerate() || usesReferralBonus else {
             showSubscriptionSheet = true
             return
-        case .requireRewardedAd:
-            let earned = await adManager.showRewarded()
-            guard earned else { return }
-            await adManager.loadRewarded() // preload next ad
-        case .allowed:
-            break
         }
 
         isGenerating = true
@@ -1026,7 +1010,7 @@ struct PhotoCreationView: View {
             if isCustomBgActive {
                 finalPrompt += "将照片背景替换为纯色 \(colorToHex(customBgColor))，覆盖之前的底色设定。"
             }
-            let tier: GeminiService.OutputTier = subscription.isSubscribed ? .pro : .free
+            let tier: GeminiService.OutputTier = .pro
             let px = selectedSpec.pixelSize
             // Effective bg hex: custom > preset override > spec default
             let bgHex: String
@@ -1047,7 +1031,11 @@ struct PhotoCreationView: View {
                 cosmeticPrompt: cosmeticPrompt
             )
             outputImage = result
-            usage.markUsed(isSubscribed: subscription.isSubscribed)
+            if usesReferralBonus {
+                _ = referralManager.useBonusGeneration()
+            } else {
+                subscription.consumeGenerationAttempt()
+            }
             historyManager.addRecord(
                 image: result,
                 specRawValue: selectedSpec.rawValue,

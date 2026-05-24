@@ -18,7 +18,7 @@ setInterval(() => {
 
 /**
  * Extract client IP using Express trust proxy (set in index.ts).
- * Cloud Run sets x-forwarded-for correctly; Express parses it via req.ip.
+ * Nginx sets x-forwarded-for correctly; Express parses it via req.ip.
  */
 export function extractClientIp(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";

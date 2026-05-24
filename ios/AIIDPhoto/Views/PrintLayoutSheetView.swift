@@ -221,82 +221,17 @@ struct PrintLayoutSheetView: View {
     // MARK: - Save
 
     private var saveButton: some View {
-        Group {
-            if isSubscribed {
-                Button {
-                    savePrintLayout()
-                } label: {
-                    Label(saveLayoutLabel, systemImage: "square.and.arrow.down")
-                        .font(.system(size: 15, weight: .medium))
-                        .tracking(0.5)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .foregroundStyle(.white)
-                }
-                .background(Color.inkBlack)
-            } else if subscription.printLayoutCredits > 0 {
-                Button {
-                    subscription.consumePrintLayoutCredit()
-                    savePrintLayout()
-                } label: {
-                    Label(saveWithCreditLabel, systemImage: "square.and.arrow.down")
-                        .font(.system(size: 15, weight: .medium))
-                        .tracking(0.5)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .foregroundStyle(.white)
-                }
-                .background(Color.inkBlack)
-            } else {
-                VStack(spacing: 12) {
-                    Button {
-                        Task { await subscription.purchasePrintLayout() }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "cart.fill")
-                                .font(.body)
-                            Text(singlePurchaseLabel)
-                                .font(.system(size: 15, weight: .medium))
-                            Spacer()
-                            Text(subscription.printLayoutSingleDisplayPrice ?? "---")
-                                .font(.system(size: 14, weight: .bold))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .foregroundStyle(.white)
-                    }
-                    .disabled(subscription.isPurchasing)
-                    .background(Color.inkBlack)
-
-                    Button { onLockedTap() } label: {
-                        HStack(spacing: 10) {
-                            Text("PRO")
-                                .font(.system(size: 10, weight: .bold))
-                                .tracking(1)
-                                .foregroundStyle(Color.inkBlack)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(subscribeHintLabel)
-                                    .font(.system(size: 14, weight: .medium))
-                                Text(subscribeHintDesc)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Color.branchGray)
-                                    .multilineTextAlignment(.leading)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 11))
-                                .foregroundStyle(Color.branchGray)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .foregroundStyle(Color.inkBlack)
-                    }
-                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
-                }
-            }
+        Button {
+            savePrintLayout()
+        } label: {
+            Label(saveLayoutLabel, systemImage: "square.and.arrow.down")
+                .font(.system(size: 15, weight: .medium))
+                .tracking(0.5)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .foregroundStyle(.white)
         }
+        .background(Color.inkBlack)
         .alert(errorAlertTitle, isPresented: Binding(
             get: { subscription.purchaseError != nil },
             set: { if !$0 { subscription.purchaseError = nil } }
@@ -409,26 +344,25 @@ struct PrintLayoutSheetView: View {
           vi: "Lưu ảnh bố cục", id: "Simpan Layout Cetak", pt: "Salvar Layout")
     }
     private var saveWithCreditLabel: String {
-        let c = subscription.printLayoutCredits
-        return l("使用额度保存（剩余\(c)次）", "Save with Credit (\(c) left)", "クレジットで保存（残り\(c)回）", "크레딧으로 저장 (\(c)회 남음)",
-                 vi: "Lưu bằng credit (\(c) còn lại)", id: "Simpan dengan kredit (\(c) sisa)", pt: "Salvar com crédito (\(c) restante)")
+        l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장",
+          vi: "Lưu ảnh bố cục", id: "Simpan Layout Cetak", pt: "Salvar Layout")
     }
     private var singlePurchaseLabel: String {
-        l("单次购买排版", "Buy Single Print", "1回分を購入", "1회 인쇄 구매",
-          vi: "Mua 1 lần in", id: "Beli 1x Cetak", pt: "Comprar 1 Impressão")
+        l("购买制作包", "Buy Photo Task", "制作分を購入", "제작권 구매",
+          vi: "Mua gói ảnh", id: "Beli paket foto", pt: "Comprar pacote")
     }
     private var subscribeHintLabel: String {
-        l("订阅更划算", "Subscribe & Save", "定額でもっとお得", "구독하면 더 저렴",
-          vi: "Đăng ký tiết kiệm hơn", id: "Langganan Lebih Hemat", pt: "Assine e Economize")
+        l("排版已包含", "Layout Included", "レイアウト込み", "레이아웃 포함",
+          vi: "Đã gồm bố cục", id: "Layout termasuk", pt: "Layout incluído")
     }
     private var subscribeHintDesc: String {
-        l("同样价格享受一整月无限次排版 + 无限生成 + 无广告",
-          "Same price for a full month: unlimited prints + generations + no ads",
-          "同じ金額で1ヶ月間：無制限プリント＋生成＋広告なし",
-          "같은 가격으로 한 달간: 무제한 인쇄 + 생성 + 광고 없음",
-          vi: "Cùng giá cho 1 tháng: in không giới hạn + tạo ảnh + không QC",
-          id: "Harga sama untuk sebulan: cetak + buat tanpa batas + tanpa iklan",
-          pt: "Mesmo preço por 1 mês: impressão + geração ilimitada + sem anúncios")
+        l("购买成片后可直接保存高清图和排版图",
+          "After purchase, HD export and print layout are both included.",
+          "購入後、HD画像と印刷レイアウトを保存できます。",
+          "구매 후 HD 이미지와 인쇄 레이아웃을 저장할 수 있습니다.",
+          vi: "Sau khi mua, có thể lưu ảnh HD và bố cục in.",
+          id: "Setelah membeli, HD dan layout cetak termasuk.",
+          pt: "Depois da compra, HD e layout estão incluídos.")
     }
     private var errorAlertTitle: String {
         l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패",

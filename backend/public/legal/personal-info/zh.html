@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>个人信息收集清单 - 光影形象馆</title>
+  <link rel="stylesheet" href="/legal/style.css">
+</head>
+<body>
+  <main class="container">
+    <p class="eyebrow">光影形象馆</p>
+    <h1>个人信息收集清单</h1>
+    <p class="meta">最后更新：2026年5月24日</p>
+
+    <article class="doc">
+      <p>本清单用于逐项说明本应用在不同功能中可能处理的个人信息。若某功能不是你主动使用的，相关信息通常不会被收集或处理。</p>
+
+      <table>
+        <tr><th>功能</th><th>个人信息类型</th><th>是否敏感</th><th>处理目的</th><th>处理方式与保存期限</th></tr>
+        <tr><td>拍照/相册选择</td><td>原始照片、人像、面部特征</td><td>是</td><td>作为证件照生成输入</td><td>由你主动选择；服务器不持久化保存</td></tr>
+        <tr><td>证件照规格</td><td>所选尺寸、背景色、国家/地区规格、裁切参数</td><td>否</td><td>生成符合规格的照片</td><td>随请求处理；不单独保存为用户档案</td></tr>
+        <tr><td>外观编辑</td><td>照片、换装/发型/美颜/背景等编辑选项</td><td>照片属于敏感信息</td><td>完成二阶段图像编辑</td><td>传输至阿里云百炼等 AI 服务处理；不用于训练</td></tr>
+        <tr><td>保存结果</td><td>生成照片、打印排版图</td><td>可能包含人像</td><td>保存到你的系统相册</td><td>仅在你授权后写入设备相册，由你自行管理</td></tr>
+        <tr><td>成片制作包购买</td><td>商品 ID、交易状态、剩余生成次数</td><td>否</td><td>发放和扣减生成次数，识别高清下载和打印排版权益</td><td>Apple 处理交易；App 本地保存必要状态</td></tr>
+        <tr><td>推荐奖励</td><td>设备 ID 派生的邀请码、兑换记录、IP 限速信息</td><td>否</td><td>生成邀请码、防止重复兑换和滥用</td><td>服务器内存记录；推荐码约 7 天，兑换设备记录约 30 天</td></tr>
+        <tr><td>安全日志</td><td>IP 地址、请求时间、请求路径、状态码、请求 ID</td><td>否</td><td>故障排查、限速、反滥用</td><td>服务器日志轮转保存；不记录请求体和图片内容</td></tr>
+      </table>
+
+      <h2>我们不主动收集的信息</h2>
+      <p>姓名、身份证号、手机号、通讯录、短信、精确位置、银行卡号、健康信息、聊天记录等。</p>
+
+      <h2>拒绝或撤回的影响</h2>
+      <ul>
+        <li>拒绝相机权限：不能拍照，但仍可选择相册照片。</li>
+        <li>拒绝相册写入权限：不能保存生成图片到系统相册。</li>
+        <li>不上传照片：无法使用核心生成能力。</li>
+      </ul>
+    </article>
+
+    <footer>
+      <p><a href="/legal/">返回法务与支持中心</a></p>
+      <p>运营者：广西玉飞科技有限公司 · <a href="mailto:liuchengcheng@foyli-ai.com">liuchengcheng@foyli-ai.com</a></p>
+    </footer>
+  </main>
+</body>
+</html>

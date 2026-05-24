@@ -4,116 +4,42 @@
   "nonRenewingSubscriptionProducts" : [],
   "products" : [
     {
-      "displayPrice" : "3.49",
+      "displayPrice" : "3.80",
       "familyShareable" : false,
-      "internalID" : "print_layout_single_001",
+      "internalID" : "photo_task_3_001",
       "localizations" : [
         {
-          "description" : "Save one print-ready layout for convenience store printing.",
-          "displayName" : "Print Layout (1 Use)",
+          "description" : "Includes 3 AI generation attempts, HD export, and print-ready layout.",
+          "displayName" : "AI ID Photo Result (3 Attempts)",
           "locale" : "en_US"
         },
         {
-          "description" : "コンビニプリント用レイアウトを1回保存できます。",
-          "displayName" : "コンビニプリント（1回）",
-          "locale" : "ja_JP"
-        },
-        {
-          "description" : "打印店排版照片单次保存。",
-          "displayName" : "打印店排版（1次）",
+          "description" : "含3次AI生成机会，可选最满意结果，下载高清证件照和打印排版图。",
+          "displayName" : "AI证件照成片（3次生成）",
           "locale" : "zh_CN"
         },
         {
-          "description" : "편의점 인쇄용 레이아웃 1회 저장.",
-          "displayName" : "편의점 인쇄 (1회)",
+          "description" : "3回のAI生成、HD保存、プリント用レイアウトが含まれます。",
+          "displayName" : "AI証明写真（3回生成）",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "AI 생성 3회, HD 저장, 인쇄용 레이아웃이 포함됩니다.",
+          "displayName" : "AI 증명사진 완성본 (3회 생성)",
           "locale" : "ko_KR"
         }
       ],
-      "productID" : "com.yufeicn.aiidphoto.print_layout_single",
-      "referenceName" : "Print Layout Single Use",
+      "productID" : "com.yufeicn.aiidphoto.photo_task_3",
+      "referenceName" : "Photo Task 3 Attempts",
       "type" : "Consumable"
     }
   ],
   "settings" : {
     "_applicationInternalID" : "aiidphoto",
-    "_storefront" : "USA,840",
+    "_storefront" : "CHN,156",
     "_storeKitErrors" : []
   },
-  "subscriptionGroups" : [
-    {
-      "id" : "pro_group_001",
-      "localizations" : [],
-      "name" : "Pro",
-      "subscriptions" : [
-        {
-          "adHocOfferCodesEnabled" : false,
-          "displayPrice" : "3.99",
-          "familyShareable" : false,
-          "groupNumber" : 2,
-          "internalID" : "pro_monthly_001",
-          "localizations" : [
-            {
-              "description" : "Unlimited AI generations, no ads, all formats, print layout included.",
-              "displayName" : "AI ID Photo Pro (Monthly)",
-              "locale" : "en_US"
-            },
-            {
-              "description" : "無制限AI生成、広告なし、全フォーマット、コンビニプリント込み。",
-              "displayName" : "AI証明写真 Pro（月額）",
-              "locale" : "ja_JP"
-            },
-            {
-              "description" : "无限 AI 生成，无广告，全规格，含打印店排版。",
-              "displayName" : "AI证件照 Pro（月付）",
-              "locale" : "zh_CN"
-            },
-            {
-              "description" : "무제한 AI 생성, 광고 없음, 모든 규격, 편의점 인쇄 포함.",
-              "displayName" : "AI 증명사진 Pro (월간)",
-              "locale" : "ko_KR"
-            }
-          ],
-          "productID" : "com.yufeicn.aiidphoto.pro_monthly",
-          "referenceName" : "Pro Monthly",
-          "subscriptionPeriod" : "1 Month",
-          "type" : "RecurringSubscription"
-        },
-        {
-          "adHocOfferCodesEnabled" : false,
-          "displayPrice" : "22.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "pro_annual_001",
-          "localizations" : [
-            {
-              "description" : "Unlimited AI generations, no ads, all formats, print layout included.",
-              "displayName" : "AI ID Photo Pro",
-              "locale" : "en_US"
-            },
-            {
-              "description" : "無制限AI生成、広告なし、全フォーマット、コンビニプリント込み。",
-              "displayName" : "AI証明写真 Pro",
-              "locale" : "ja_JP"
-            },
-            {
-              "description" : "无限 AI 生成，无广告，全规格，含打印店排版。",
-              "displayName" : "AI证件照 Pro",
-              "locale" : "zh_CN"
-            },
-            {
-              "description" : "무제한 AI 생성, 광고 없음, 모든 규격, 편의점 인쇄 포함.",
-              "displayName" : "AI 증명사진 Pro",
-              "locale" : "ko_KR"
-            }
-          ],
-          "productID" : "com.yufeicn.aiidphoto.pro_annual",
-          "referenceName" : "Pro Annual",
-          "subscriptionPeriod" : "1 Year",
-          "type" : "RecurringSubscription"
-        }
-      ]
-    }
-  ],
+  "subscriptionGroups" : [],
   "version" : {
     "major" : 3,
     "minor" : 0

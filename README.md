@@ -1,16 +1,15 @@
-# ai_profile
+# 光影形象馆 / AIIDPhoto CN
 
-SwiftUI iOS app scaffold for AI ID Photo generation.
+SwiftUI iOS app for AI ID photo and professional profile photo generation, customized for the China mainland edition.
 
 - Source code lives under `ios/AIIDPhoto/`
-- Features: SwiftUI glass UI, AdMob Banner/Rewarded, StoreKit 2 subscription, Gemini (nanobanana) service stub, daily usage limits
+- Features: SwiftUI UI, StoreKit 2 consumable photo task, HivisionIDPhotos + Alibaba Cloud Bailian backend pipeline, 3-attempt generation flow, HD export, print layout
 
 ## Quick start
-1. Open Xcode and create a new SwiftUI App.
-2. Add all files from `ios/AIIDPhoto/` to your target.
-3. Configure Info.plist keys (GEMINI_ENDPOINT, GEMINI_API_KEY, GADApplicationIdentifier) and permissions.
-4. Add GoogleMobileAds via SPM if showing ads.
-5. Run on simulator or device.
+1. Generate/open `AIIDPhoto.xcodeproj`.
+2. Confirm `project.yml` Info.plist values and StoreKit product ID `com.yufeicn.aiidphoto.photo_task_3`.
+3. Run on simulator or device.
 
-## Repo
-This repository is initialized from the local workspace and pushed to GitHub.
+## Backend
+
+The CN backend runs as a Node/Express service on Alibaba Cloud ECS behind Nginx. See `docs/07-deployment/cloud-run-deploy.md` for the current deployment notes. The filename is historical.

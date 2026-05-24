@@ -9,13 +9,14 @@
 | [03-architecture/](03-architecture/) | 系统架构设计 |
 | [04-features/](04-features/) | 功能规范（按功能分目录） |
 | [05-security/](05-security/) | 安全策略、API Key 管理 |
-| [07-deployment/](07-deployment/) | 部署指南（iOS + Cloud Run） |
+| [07-deployment/](07-deployment/) | 部署指南（iOS + 阿里云 ECS；历史文件名仍含 Cloud Run） |
 | [dev-logs/](dev-logs/) | 每日开发日志 |
 
 ## 快速链接
 
 - [项目概览](PROJECT-OVERVIEW.md)
 - [更新日志](CHANGELOG.md)
-- [今日开发日志](dev-logs/2026-03-01.md)
+- [今日开发日志](dev-logs/2026-05-24.md)
 - [架构设计](03-architecture/architecture.md)
-- [部署指南](07-deployment/cloud-run-deploy.md)
+- [CN 后端部署指南](07-deployment/cloud-run-deploy.md)
+- [CN iOS 上线状态报告](07-deployment/release-readiness-2026-05-24.md)

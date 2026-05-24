@@ -1,126 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hans">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>隐私政策 — AI证件照</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; line-height: 1.8; color: #222; }
-  h1 { font-size: 1.6em; border-bottom: 2px solid #007AFF; padding-bottom: 8px; }
-  h2 { font-size: 1.2em; margin-top: 2em; color: #007AFF; }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-  th { background: #f5f5f7; }
-  .lang-nav { text-align: right; margin-bottom: 16px; font-size: 0.9em; }
-  .lang-nav a { margin-left: 12px; color: #007AFF; text-decoration: none; }
-  .contact { background: #f5f5f7; padding: 16px; border-radius: 8px; margin-top: 24px; }
-  .update { color: #888; font-size: 0.9em; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>隐私政策 - 光影形象馆</title>
+  <link rel="stylesheet" href="/legal/style.css">
 </head>
 <body>
-<div class="lang-nav">
-  <a href="en.html">English</a>
-  <a href="ja.html">日本語</a>
-  <a href="ko.html">한국어</a>
-  <a href="vi.html">Tiếng Việt</a>
-  <a href="id.html">Indonesia</a>
-  <a href="pt.html">Português</a>
-</div>
+  <main class="container">
+    <p class="eyebrow">光影形象馆</p>
+    <h1>隐私政策</h1>
+    <p class="meta">生效日期：2026年5月24日；最后更新：2026年5月24日</p>
 
-<h1>隐私政策</h1>
-<p class="update">最后更新：2026年3月2日</p>
+    <article class="doc">
+      <p>本隐私政策适用于广西玉飞科技有限公司（以下简称“我们”）运营的 iOS 应用“光影形象馆”（Bundle ID: <code>com.yufeicn.aiidphoto</code>，以下简称“本应用”）。本政策说明我们如何收集、使用、保存、共享和保护你的个人信息，以及你如何行使相关权利。</p>
 
-<p>本隐私政策说明了 <strong>Wei Wenxin</strong>（以下简称"开发者"、"我们"）在您使用 <strong>AI证件照</strong> 移动应用程序（以下简称"本应用"）时，如何收集、使用和保护您的信息。</p>
+      <div class="warning">
+        <strong>重要提示：</strong>你上传的人像照片可能包含面部特征，属于敏感个人信息。请在确认你本人或被拍摄人已同意后再上传照片。若你不同意本政策中关于照片处理、AI 服务处理或跨境处理的说明，请不要使用照片生成功能。
+      </div>
 
-<h2>1. 收集的信息</h2>
+      <div class="toc">
+        <strong>快速入口：</strong>
+        <a href="/legal/personal-info/zh.html">个人信息收集清单</a> ·
+        <a href="/legal/third-party-sdk/zh.html">第三方 SDK 与服务清单</a> ·
+        <a href="/legal/data-deletion/zh.html">数据删除与撤回授权</a> ·
+        <a href="/legal/support/zh.html">用户支持</a>
+      </div>
 
-<table>
-<tr><th>数据类型</th><th>用途</th><th>存储方式</th></tr>
-<tr><td><strong>您上传的照片</strong></td><td>AI证件照生成</td><td>不存储 — 实时处理后立即销毁</td></tr>
-<tr><td><strong>生成的照片</strong></td><td>在应用内展示供您保存</td><td>仅存储在您的设备上</td></tr>
-<tr><td><strong>使用数据</strong></td><td>管理每日生成次数限制</td><td>仅存储在设备上（UserDefaults）</td></tr>
-<tr><td><strong>订阅状态</strong></td><td>管理Pro会员</td><td>由Apple管理（StoreKit 2）</td></tr>
-<tr><td><strong>广告标识符</strong></td><td>展示广告（仅免费用户）</td><td>由Google AdMob管理</td></tr>
-</table>
+      <h2>1. 个人信息处理者</h2>
+      <p>名称：广西玉飞科技有限公司</p>
+      <p>联系邮箱：<a href="mailto:liuchengcheng@foyli-ai.com">liuchengcheng@foyli-ai.com</a></p>
 
-<p><strong>我们不收集：</strong>您的姓名、电子邮箱、电话号码、位置信息、通讯录或上述以外的任何个人身份信息。</p>
+      <h2>2. 我们处理哪些信息</h2>
+      <table>
+        <tr><th>场景</th><th>信息类型</th><th>用途</th><th>保存期限</th></tr>
+        <tr><td>证件照/形象照生成</td><td>你主动上传的原始照片、所选规格、背景色、外观编辑选项、提示词</td><td>生成证件照、换底色、裁切、排版、美颜或换装</td><td>服务器不做持久化保存；处理完成或失败后不保留图片文件</td></tr>
+        <tr><td>生成结果展示与保存</td><td>生成后的图片、打印排版图片</td><td>在 App 内展示，供你保存到相册</td><td>仅保存在你的设备或相册中</td></tr>
+        <tr><td>成片制作包购买</td><td>Apple StoreKit 返回的交易状态、商品 ID、剩余生成次数</td><td>发放和扣减生成次数，识别高清下载和打印排版权益</td><td>交易由 Apple 管理；App 本地保存必要权益状态</td></tr>
+        <tr><td>推荐奖励</td><td>设备标识生成的推荐码、兑换记录、IP 限速信息</td><td>生成邀请码、防止重复兑换和滥用</td><td>推荐码约 7 天；设备兑换记录约 30 天；服务器重启可能清除内存记录</td></tr>
+        <tr><td>安全与运维</td><td>请求时间、路径、状态码、请求 ID、IP 地址</td><td>排查故障、限速、防止滥用</td><td>按服务器日志轮转策略保留；不记录请求体和照片内容</td></tr>
+      </table>
+      <p>我们不会主动要求你提供姓名、身份证号、手机号、通讯录、精确位置、通讯内容等与本应用基本功能无关的信息。</p>
 
-<h2>2. 照片的处理方式</h2>
+      <h2>3. 照片和 AI 生成如何处理</h2>
+      <ol>
+        <li>你在设备上选择或拍摄照片。</li>
+        <li>App 将照片压缩后，通过 HTTPS 发送至我们的阿里云 ECS 后端。</li>
+        <li>后端调用 HivisionIDPhotos 服务进行人像检测、裁切、抠图和换底色。</li>
+        <li>如你选择外观编辑，后端可能调用阿里云百炼/通义万相进行二阶段图像编辑。</li>
+        <li>处理结果返回 App 后，由你决定是否保存到相册。</li>
+      </ol>
+      <p>我们不会将你的照片用于训练模型、公开展示、出售或与本政策未列明的第三方共享。</p>
 
-<p>当您上传照片时，将经历以下处理流程：</p>
-<ol>
-  <li>在您的设备上进行压缩和缩放（免费用户：512px，Pro用户：1024px）</li>
-  <li>通过HTTPS加密传输至我们的后端服务器（托管于 <strong>Google Cloud Platform 东京区域</strong>）</li>
-  <li>转发至 <strong>Google Gemini API</strong> 进行AI证件照生成</li>
-  <li>将生成结果返回给您，原始照片<strong>立即销毁</strong></li>
-</ol>
+      <h2>4. 第三方 SDK 与服务</h2>
+      <p>本应用及后端使用 Apple StoreKit、阿里云 ECS、阿里云百炼和 HivisionIDPhotos 等服务。完整清单见 <a href="/legal/third-party-sdk/zh.html">第三方 SDK 与服务清单</a>。</p>
 
-<p><strong>我们不会在服务器上存储、记录或保留您的照片。</strong>照片仅在处理期间（通常不超过30秒）存在于服务器内存中。</p>
+      <h2>5. 共享、委托处理与跨境处理</h2>
+      <p>为实现照片生成，我们会把必要数据提供给本政策列明的服务方处理。HivisionIDPhotos 当前由我们通过云服务部署，服务区域可能位于中国大陆以外；你的照片可能在处理过程中传输至该区域。跨境处理的数据类型为你主动上传的照片、目标规格和生成参数，目的仅限完成本次生成，处理完成后不做持久化保存。</p>
+      <p>阿里云百炼用于外观编辑时，会接收你的照片和文本编辑指令。Apple StoreKit 处理 App Store 购买交易。</p>
 
-<h2>3. 第三方服务</h2>
+      <h2>6. 设备权限</h2>
+      <table>
+        <tr><th>权限</th><th>用途</th><th>是否必须</th></tr>
+        <tr><td>相机</td><td>拍摄待处理照片</td><td>可选；你也可以从相册选择</td></tr>
+        <tr><td>相册读取</td><td>选择待处理照片</td><td>可选；仅在你主动选择照片时使用</td></tr>
+        <tr><td>相册写入</td><td>保存生成图片或打印排版图</td><td>可选；不授权则不能保存到相册</td></tr>
+      </table>
 
-<p>我们与以下第三方服务共享数据。各服务按照其各自的隐私政策处理数据：</p>
+      <h2>7. 你的权利</h2>
+      <p>你可以通过 <a href="mailto:liuchengcheng@foyli-ai.com">liuchengcheng@foyli-ai.com</a> 联系我们，要求查询、更正、删除、复制个人信息，撤回同意，或投诉我们的个人信息处理行为。我们会在验证身份后依法处理。</p>
+      <p>由于照片不在服务器持久化保存，你可通过删除 App、本地历史记录或相册文件来删除设备侧数据。购买问题和退款由 Apple 提供入口，详见 <a href="/legal/subscription/zh.html">付费与退款说明</a>。</p>
 
-<table>
-<tr><th>服务</th><th>提供商</th><th>共享的数据</th><th>用途</th></tr>
-<tr><td><strong>Gemini API</strong></td><td>Google LLC</td><td>您上传的照片 + 文本提示词</td><td>AI图像生成</td></tr>
-<tr><td><strong>AdMob</strong></td><td>Google LLC</td><td>广告标识符、设备信息</td><td>展示广告（仅免费用户）</td></tr>
-<tr><td><strong>StoreKit 2</strong></td><td>Apple Inc.</td><td>订阅交易数据</td><td>支付处理</td></tr>
-</table>
+      <h2>8. 未成年人保护</h2>
+      <p>本应用不面向 14 周岁以下儿童。若监护人帮助未成年人制作证件照，应确保已获得必要同意并承担监护责任。如你认为我们错误处理了未成年人个人信息，请联系我们删除或处理。</p>
 
-<p>使用本应用即表示您知悉并同意您的照片将被发送至 <strong>Google Gemini API</strong> 用于AI证件照生成。Google按照 <a href="https://policies.google.com/privacy" target="_blank">Google隐私政策</a> 处理数据。</p>
+      <h2>9. 安全措施</h2>
+      <ul>
+        <li>照片和接口请求通过 HTTPS/TLS 传输。</li>
+        <li>后端仅通过服务器保存 AI 服务密钥，客户端不包含 AI provider API Key。</li>
+        <li>服务器日志不记录请求体，不记录照片 base64 内容。</li>
+        <li>生成接口启用 App Key、IP 限速和预算控制以降低滥用风险。</li>
+      </ul>
 
-<h2>4. 数据安全</h2>
+      <h2>10. 政策更新</h2>
+      <p>如本政策发生重大变化，我们会在本页面更新生效日期。若变化涉及敏感个人信息、处理目的、共享对象或用户权利的重大调整，我们会在 App 内或页面显著位置提示。</p>
+    </article>
 
-<ul>
-  <li>所有数据传输均使用 <strong>HTTPS/TLS加密</strong></li>
-  <li>后端服务器运行于 <strong>Google Cloud Run</strong> 东京区域（asia-northeast1）</li>
-  <li>用户照片和个人数据不存储在数据库中</li>
-  <li>API密钥存储在Google Cloud Secret Manager中，不包含在客户端代码中</li>
-</ul>
-
-<h2>5. 数据保留</h2>
-
-<ul>
-  <li><strong>照片：</strong>不保留 — 实时处理后立即销毁</li>
-  <li><strong>使用数据：</strong>仅存储在设备上；卸载应用后删除</li>
-  <li><strong>订阅数据：</strong>由Apple管理，遵循Apple的数据保留政策</li>
-  <li><strong>广告数据：</strong>由Google AdMob管理，遵循Google的数据保留政策</li>
-</ul>
-
-<h2>6. 您的权利</h2>
-
-<ul>
-  <li><strong>删除数据：</strong>由于我们不在服务器上存储您的照片或个人数据，因此没有需要删除的服务器端数据。卸载应用将删除设备上的所有数据。</li>
-  <li><strong>退出个性化广告：</strong>您可以在设备的"设置 > 隐私与安全 > 跟踪"中进行限制。</li>
-  <li><strong>撤回同意：</strong>您可以随时停止使用本应用。</li>
-  <li><strong>信息查询：</strong>联系我们了解数据处理方式。</li>
-</ul>
-
-<h2>7. 儿童隐私</h2>
-
-<p>本应用不面向13岁以下（或您所在司法管辖区适用的同意年龄以下）的儿童。我们不会故意收集儿童的个人信息。</p>
-
-<h2>8. 地区合规</h2>
-
-<h3>中国个人信息保护法（PIPL）</h3>
-<p>面部照片属于敏感个人信息。我们仅在您明确同意（通过上传照片的行为）的情况下处理您的面部照片，且仅用于生成证件照。照片处理后不予保存。</p>
-
-<h3>日本个人信息保护法（APPI）</h3>
-<p>我们将面部照片视为敏感个人信息，仅在获得您的明确同意后处理。</p>
-
-<h2>9. 政策变更</h2>
-
-<p>我们可能会不时更新本隐私政策。变更将发布在本页面并更新修订日期。变更后继续使用本应用即视为接受修订后的政策。</p>
-
-<div class="contact">
-<h2>10. 联系我们</h2>
-<p>如果您对本隐私政策有任何疑问，请联系：</p>
-<p>
-  <strong>Wei Wenxin</strong><br>
-  邮箱：<a href="mailto:nexuswei.dev@gmail.com">nexuswei.dev@gmail.com</a>
-</p>
-</div>
-
+    <footer>
+      <p><a href="/legal/">返回法务与支持中心</a></p>
+      <p>运营者：广西玉飞科技有限公司 · <a href="mailto:liuchengcheng@foyli-ai.com">liuchengcheng@foyli-ai.com</a></p>
+    </footer>
+  </main>
 </body>
 </html>
