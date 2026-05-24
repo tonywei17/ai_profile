@@ -4,8 +4,6 @@ import SwiftUI
 struct AIIDPhotoApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var subscription = SubscriptionManager()
-    @StateObject private var usage = UsageManager()
-    @StateObject private var adManager = AdManager()
     @StateObject private var langManager = LanguageManager()
     @StateObject private var historyManager = HistoryManager()
     @StateObject private var referralManager = ReferralManager()
@@ -16,8 +14,6 @@ struct AIIDPhotoApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(subscription)
-                .environmentObject(usage)
-                .environmentObject(adManager)
                 .environmentObject(langManager)
                 .environmentObject(historyManager)
                 .environmentObject(referralManager)

@@ -341,7 +341,7 @@ struct SubscriptionSheetView: View {
     private var perPhotoLabel: String { l("/ 张", "/ photo", "/ 枚", "/ 장") }
     private var originalPriceLabel: String { l("原价 ¥9.90", "Was ¥9.90", "通常 ¥9.90", "정가 ¥9.90") }
     private var displayPriceText: String {
-        if lang == "zh" { return "¥3.8" }
+        if lang == "zh" { return "¥3.80" }
         return subscription.photoTaskDisplayPrice ?? "¥3.80"
     }
     private var priceExplainLabel: String {
@@ -375,7 +375,7 @@ struct SubscriptionSheetView: View {
     }
 
     private var ctaTitle: String { l("购买制作包", "Buy Photo Task", "制作分を購入", "제작권 구매") }
-    private var ctaSubtitle: String { l("¥3.8 优惠价 · 原价 ¥9.9/张", "Launch offer ¥3.8 · Regular ¥9.9/photo", "特価 ¥3.8 · 通常 ¥9.9/枚", "할인가 ¥3.8 · 정가 ¥9.9/장") }
+    private var ctaSubtitle: String { l("¥3.80 优惠价 · 原价 ¥9.90/张", "Launch offer ¥3.80 · Regular ¥9.90/photo", "特価 ¥3.80 · 通常 ¥9.90/枚", "할인가 ¥3.80 · 정가 ¥9.90/장") }
     private var legalNote: String {
         l("本商品为消耗型购买，不是订阅，不会自动续费；购买由 Apple 处理，退款按 App Store 规则执行。",
           "This is a consumable purchase, not a subscription. It does not auto-renew.",
@@ -400,7 +400,13 @@ private enum LegalURLs {
     }
 
     private static func legalLang(_ code: String) -> String {
-        return "zh"
+        if code.hasPrefix("zh") { return "zh" }
+        if code.hasPrefix("ja") { return "ja" }
+        if code.hasPrefix("ko") { return "ko" }
+        if code.hasPrefix("vi") { return "vi" }
+        if code.hasPrefix("id") { return "id" }
+        if code.hasPrefix("pt") { return "pt" }
+        return "en"
     }
 }
 

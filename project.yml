@@ -26,6 +26,9 @@ targets:
     platform: iOS
     productName: AIIDPhoto
     deploymentTarget: "26.0"
+    configFiles:
+      Debug: ios/AIIDPhoto/Configuration/App.xcconfig
+      Release: ios/AIIDPhoto/Configuration/App.xcconfig
     sources:
       - path: ios/AIIDPhoto
         excludes:
@@ -85,5 +88,5 @@ targets:
         NSPhotoLibraryAddUsageDescription: "用于将生成后的证件照和打印排版保存到相册。"
         # CN production backend on Alibaba Cloud ECS.
         BACKEND_BASE_URL: "https://aiphoto-cn.foyli.cloud"
-        APP_API_KEY: "1cce8f8bb9e33377925ae7798457c36fdf3e46945fe32db3cea04db3bd8175f2"
+        APP_API_KEY: "$(AIIDPHOTO_APP_API_KEY)"
         CFBundleIconName: AppIcon

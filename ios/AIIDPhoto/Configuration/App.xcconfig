@@ -1,0 +1,6 @@
+// Shared build settings for AIIDPhoto.
+// Local secrets are optional and ignored by git.
+
+AIIDPHOTO_APP_API_KEY =
+
+#include? "Secrets.xcconfig"

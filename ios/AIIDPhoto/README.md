@@ -18,10 +18,11 @@ SwiftUI iOS app for CN ID photos and professional profile images:
 - Current bundle ID: `com.yufeicn.aiidphoto`.
 - Current display name: `光影形象馆`.
 
-2. Info.plist Keys
-Add the following (String) keys:
-- `BACKEND_BASE_URL` = https://your-backend.example.com
-- `APP_API_KEY` = <app_calling_key>
+2. Info.plist / Secret Build Settings
+- `BACKEND_BASE_URL` is generated from `project.yml`; CN production points to `https://aiphoto-cn.foyli.cloud`.
+- `APP_API_KEY` is generated as `$(AIIDPHOTO_APP_API_KEY)` and must be supplied by CI or a local xcconfig, not committed in `Info.plist`.
+- XcodeGen loads `ios/AIIDPhoto/Configuration/App.xcconfig`, which optionally includes the gitignored `Secrets.xcconfig`.
+- For local release builds, copy `ios/AIIDPhoto/Configuration/Secrets.xcconfig.example` to `ios/AIIDPhoto/Configuration/Secrets.xcconfig` and fill `AIIDPHOTO_APP_API_KEY`.
 
 And usage descriptions:
 - `NSCameraUsageDescription` explains camera capture for ID/profile photos.
@@ -39,6 +40,7 @@ And usage descriptions:
 - `GeminiService` is a historical class name. It sends image, tier, prompt, `specInfo`, and optional `cosmeticPrompt` to the backend.
 - Auth uses `X-App-Key` with `APP_API_KEY`.
 - CN production backend currently runs on Alibaba Cloud ECS behind Nginx/PM2 at `https://aiphoto-cn.foyli.cloud`.
+- Production provider secrets should live in Alibaba Cloud KMS Secrets Manager and be read by ECS through an instance RAM role; PM2 plaintext env vars are a transition path only.
 
 5. Usage Logic
 - One photo task grants 3 attempts.

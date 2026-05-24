@@ -4,8 +4,6 @@ import PhotosUI
 struct PhotoCreationView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var subscription: SubscriptionManager
-    @EnvironmentObject var usage: UsageManager
-    @EnvironmentObject var adManager: AdManager
     @EnvironmentObject var langManager: LanguageManager
     @EnvironmentObject var historyManager: HistoryManager
     @EnvironmentObject var referralManager: ReferralManager
@@ -33,6 +31,7 @@ struct PhotoCreationView: View {
 
     private let featuredSpecs: [IDPhotoSpec] = [.oneInch, .twoInch, .resume, .chinaPassport, .twoInchSmall]
     private let backgroundOptions: [BackgroundColorOption] = [.specDefault, .pureWhite, .red, .lightBlue, .lightGray]
+    private let includedFeatureAccess = true
 
     private let steps = ["上传照片", "选择场景", "AI优化", "下载保存"]
 
@@ -111,7 +110,7 @@ struct PhotoCreationView: View {
         .sheet(isPresented: $showMoreSizes) {
             MoreSizesSheet(
                 selectedSpec: $selectedSpec,
-                isSubscribed: true,
+                isSubscribed: includedFeatureAccess,
                 onLockedTap: {
                     showMoreSizes = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -143,7 +142,7 @@ struct PhotoCreationView: View {
                     image: output,
                     photoSizeMM: selectedSpec.photoSizeMM,
                     sizeLabel: selectedSpec.sizeLabel,
-                    isSubscribed: true,
+                    isSubscribed: includedFeatureAccess,
                     onLockedTap: {
                         showPrintLayout = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -156,10 +155,10 @@ struct PhotoCreationView: View {
                 .presentationDetents([.large])
             }
         }
-        .onChange(of: selectedItem) { item in
+        .onChange(of: selectedItem) { _, item in
             Task { await loadImage(item) }
         }
-        .onChange(of: inputImage) { img in
+        .onChange(of: inputImage) { _, img in
             if img != nil, currentStep == 1 { currentStep = 2 }
         }
         .alert("生成失败", isPresented: Binding(
@@ -845,17 +844,34 @@ struct PhotoCreationView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .padding(.horizontal, 16)
+
+                Button { sharePhoto() } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 14))
+                        Text("分享照片")
+                            .font(.system(size: 14, weight: .medium))
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.skyBlue)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .background(Color.skyBlue.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .padding(.horizontal, 16)
             }
         }
     }
 
     // MARK: - Generate Bar
 
+    @ViewBuilder
     private var generateBarView: some View {
-        VStack(spacing: 0) {
-            Color(.systemGray5).frame(height: 0.5)
-            VStack(spacing: 6) {
-                if currentStep <= 2 {
+        if currentStep <= 2 {
+            VStack(spacing: 0) {
+                Color(.systemGray5).frame(height: 0.5)
+                VStack(spacing: 6) {
                     Button {
                         guard inputImage != nil else { showPhotoSourceDialog = true; return }
                         Task { await generate() }
@@ -881,31 +897,14 @@ struct PhotoCreationView: View {
                     Text(generateBarFootnote)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.branchGray)
-                } else if currentStep == 4 {
-                    Button { sharePhoto() } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 14))
-                            Text("分享照片")
-                                .font(.system(size: 16, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(colors: [Color.skyBlue, Color.skyBlueMid],
-                                           startPoint: .leading, endPoint: .trailing)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .padding(.bottom, 24)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
+                .background(Color(.systemBackground))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
-            .padding(.bottom, 24)
-            .frame(maxWidth: 640)
-            .frame(maxWidth: .infinity)
-            .background(Color(.systemBackground))
         }
     }
 
@@ -925,7 +924,7 @@ struct PhotoCreationView: View {
         let bonus = referralManager.bonusGenerations
         return bonus > 0
             ? "奖励生成剩余 \(bonus) 次，可先体验后购买制作包"
-            : "限时3.8元/张，原价9.9元，含3次生成和排版下载"
+            : "限时3.80元/张，原价9.90元，含3次生成和排版下载"
     }
 
     // MARK: - Toast

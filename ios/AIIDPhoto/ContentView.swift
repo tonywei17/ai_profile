@@ -4,8 +4,6 @@ import StoreKit
 
 struct ContentView: View {
     @EnvironmentObject var subscription: SubscriptionManager
-    @EnvironmentObject var usage: UsageManager
-    @EnvironmentObject var adManager: AdManager
     @EnvironmentObject var langManager: LanguageManager
     @EnvironmentObject var historyManager: HistoryManager
     @EnvironmentObject var referralManager: ReferralManager
@@ -50,39 +48,10 @@ struct ContentView: View {
     @AppStorage("successfulGenerations") private var successfulGenerations: Int = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion: String = ""
     @AppStorage("hasGivenAIConsent") private var hasGivenAIConsent: Bool = false
-    @AppStorage("printLayoutEnabled") private var printLayoutEnabled: Bool = true
 
     @State private var showAIConsent = false
     @State private var pendingGenerateAfterConsent = false
-
-    // Processing toggle bindings
-    private var beautyBinding: Binding<Bool> {
-        Binding(
-            get: { photoOptions.beauty != .natural },
-            set: { newValue in
-                if newValue {
-                    photoOptions.beauty = .lightEnhance
-                } else {
-                    photoOptions.beauty = .natural
-                }
-            }
-        )
-    }
-
-    private var outfitBinding: Binding<Bool> {
-        Binding(
-            get: { photoOptions.attire != .keepOriginal },
-            set: { newValue in
-                if newValue {
-                    photoOptions.attire = .darkSuit
-                    photoOptions.background = .pureWhite
-                } else {
-                    photoOptions.attire = .keepOriginal
-                    photoOptions.background = .specDefault
-                }
-            }
-        )
-    }
+    private let includedFeatureAccess = true
 
     @State private var navigateToCreation = false
 
@@ -119,7 +88,7 @@ struct ContentView: View {
                                     isCustomSize: $isCustomSize,
                                     specs: sortedSpecs,
                                     language: lang,
-                                    isSubscribed: true,
+                                    isSubscribed: includedFeatureAccess,
                                     onLockedTap: { showSubscriptionSheet = true }
                                 )
 
@@ -129,7 +98,7 @@ struct ContentView: View {
 
                                 ProOptionsView(
                                     options: $photoOptions,
-                                    isSubscribed: true,
+                                    isSubscribed: includedFeatureAccess,
                                     language: lang,
                                     onLockedTap: { showSubscriptionSheet = true }
                                 )
@@ -145,7 +114,7 @@ struct ContentView: View {
                             .frame(maxWidth: sizeClass == .regular ? 600 : .infinity)
                             .frame(maxWidth: .infinity)
                         }
-                        .onChange(of: outputImage) { newValue in
+                        .onChange(of: outputImage) { _, newValue in
                             if newValue != nil {
                                 withAnimation { proxy.scrollTo("resultCard", anchor: .top) }
                             }
@@ -156,7 +125,7 @@ struct ContentView: View {
                 }
             }
         }
-        .onChange(of: selectedItem) { newItem in
+        .onChange(of: selectedItem) { _, newItem in
             outputImage = nil
             Task { await loadSelectedImage(newItem) }
         }
@@ -185,7 +154,7 @@ struct ContentView: View {
                     image: result,
                     photoSizeMM: isCustomSize ? customSize.photoSizeMM : selectedSpec.photoSizeMM,
                     sizeLabel: isCustomSize ? customSize.sizeLabel : selectedSpec.sizeLabel,
-                    isSubscribed: true,
+                    isSubscribed: includedFeatureAccess,
                     onLockedTap: {
                         showPrintLayout = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
@@ -210,7 +179,6 @@ struct ContentView: View {
             SettingsView()
                 .environmentObject(langManager)
                 .environmentObject(subscription)
-                .environmentObject(usage)
                 .environmentObject(referralManager)
                 .presentationDetents([.large])
                 .preferredColorScheme(sheetColorScheme)
@@ -239,7 +207,7 @@ struct ContentView: View {
         } message: {
             Text(limitAlertMessage)
         }
-        .onChange(of: selectedSpec) { _ in
+        .onChange(of: selectedSpec) { _, _ in
             photoOptions.background = .specDefault
             isCustomSize = false
         }
@@ -267,8 +235,6 @@ struct ContentView: View {
         .navigationDestination(isPresented: $navigateToCreation) {
             PhotoCreationView()
                 .environmentObject(subscription)
-                .environmentObject(usage)
-                .environmentObject(adManager)
                 .environmentObject(langManager)
                 .environmentObject(historyManager)
                 .environmentObject(referralManager)
@@ -399,10 +365,10 @@ struct ContentView: View {
                         Text("限时优惠")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(.white)
-                        Text("3.8元/张")
+                        Text("3.80元/张")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(Color.promoOrange)
-                        Text("原价9.9元")
+                        Text("原价9.90元")
                             .font(.system(size: 10))
                             .strikethrough(color: .white.opacity(0.6))
                             .foregroundStyle(.white.opacity(0.55))
@@ -583,13 +549,13 @@ struct ContentView: View {
                             .foregroundStyle(Color.branchGray)
                     }
                     HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text("3.8")
+                        Text("3.80")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundStyle(Color.skyBlue)
                         Text("元/张")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Color.inkBlack)
-                        Text("原价9.9元")
+                        Text("原价9.90元")
                             .font(.system(size: 11))
                             .strikethrough(color: Color.branchGray)
                             .foregroundStyle(Color.branchGray)
@@ -626,44 +592,6 @@ struct ContentView: View {
             .padding(.bottom, 16)
             .background(Color(.systemBackground))
         }
-    }
-
-    // MARK: - Top Toolbar (kept for reference, replaced by homeHeader / generationHeader)
-
-    private var topToolbar: some View {
-        HStack {
-            Spacer()
-            HStack(spacing: 12) {
-                Button { showHistory = true } label: {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color.inkBlack)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel(Text(historyNavLabel))
-                Button { showSettingsSheet = true } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color.inkBlack)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel(Text(settingsNavLabel))
-                Button { showSubscriptionSheet = true } label: {
-                    Text(subscription.generationAttemptsLeft > 0 ? subscribedLabel : buyTaskLabel)
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(1)
-                        .foregroundStyle(subscription.generationAttemptsLeft > 0 ? Color.inkFillForeground : Color.inkBlack)
-                        .padding(.horizontal, 10)
-                        .frame(height: 44)
-                        .background(subscription.generationAttemptsLeft > 0 ? Color.inkFill : Color.clear)
-                        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
-                }
-                .accessibilityLabel(Text(photoTaskNavLabel))
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 2)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Hero Section
@@ -728,86 +656,10 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(height: max(UIScreen.main.bounds.height * 0.22, 180))
+        .frame(height: 190)
         .clipped()
         .overlay(alignment: .bottom) {
             Color.inkBlack.frame(height: 1)
-        }
-    }
-
-    // MARK: - Processing Section
-
-    private var processingSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(processingSectionLabel)
-                .font(.system(size: 11, weight: .regular))
-                .tracking(1.5)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.branchGray)
-
-            VStack(spacing: 0) {
-                featureToggleRow(
-                    title: beautyToggleTitle,
-                    description: beautyToggleDesc,
-                    isOn: beautyBinding
-                )
-                Color.inkBlack.frame(height: 1)
-                featureToggleRow(
-                    title: outfitToggleTitle,
-                    description: outfitToggleDesc,
-                    isOn: outfitBinding
-                )
-            }
-            .overlay(alignment: .top) { Color.inkBlack.frame(height: 1) }
-            .overlay(alignment: .bottom) { Color.inkBlack.frame(height: 1) }
-        }
-    }
-
-    private func featureToggleRow(title: String, description: String, isOn: Binding<Bool>) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.inkBlack)
-                Text(description)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.branchGray)
-            }
-            Spacer()
-            EditorialToggle(isOn: isOn)
-        }
-        .padding(.vertical, 16)
-    }
-
-    // MARK: - Output Section
-
-    private var outputSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(outputSectionLabel)
-                .font(.system(size: 11, weight: .regular))
-                .tracking(1.5)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.branchGray)
-
-            HStack {
-                HStack(spacing: 8) {
-                    ZStack {
-                        Rectangle()
-                            .stroke(Color.inkBlack, lineWidth: 1)
-                            .frame(width: 24, height: 24)
-                        Text("P")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Color.inkBlack)
-                    }
-                    Text(printToggleLabel)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.inkBlack)
-                }
-                Spacer()
-                EditorialToggle(isOn: $printLayoutEnabled)
-            }
-            .padding(16)
-            .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
         }
     }
 
@@ -1028,10 +880,10 @@ struct ContentView: View {
                      "ボーナス残り\(bonus)回",
                      "보너스 \(bonus)회 남음")
         }
-        return l("限时 ¥3.8/张，原价 ¥9.9 · 含3次生成和排版下载",
-                 "Launch offer ¥3.8/photo · Includes 3 attempts and print layout",
-                 "特価 ¥3.8/枚 · 3回生成と印刷レイアウト込み",
-                 "할인가 ¥3.8/장 · 생성 3회와 인쇄 포함")
+        return l("限时 ¥3.80/张，原价 ¥9.90 · 含3次生成和排版下载",
+                 "Launch offer ¥3.80/photo · Includes 3 attempts and print layout",
+                 "特価 ¥3.80/枚 · 3回生成と印刷レイアウト込み",
+                 "할인가 ¥3.80/장 · 생성 3회와 인쇄 포함")
     }
     private var remainingCountText: String {
         switch lang {
@@ -1057,13 +909,6 @@ struct ContentView: View {
 
     // Editorial strings
     private var uploadActionLabel:      String { l("撮影 / 選択", "Take / Select", "撮影 / 選択", "촬영 / 선택", vi: "Chụp / Chọn", id: "Ambil / Pilih", pt: "Tirar / Selecionar") }
-    private var processingSectionLabel: String { l("02. 处理", "02. Processing", "02. Processing", "02. 처리", vi: "02. Xử lý", id: "02. Processing", pt: "02. Processamento") }
-    private var outputSectionLabel:     String { l("03. 输出", "03. Output", "03. Output", "03. 출력", vi: "03. Đầu ra", id: "03. Output", pt: "03. Saída") }
-    private var beautyToggleTitle:      String { l("AI 美颜补正", "AI Beauty", "AI 美顔補正", "AI 뷰티 보정", vi: "AI Làm đẹp", id: "AI Kecantikan", pt: "AI Beleza") }
-    private var beautyToggleDesc:       String { l("自然肌肤修正与面部倾斜调整", "Natural skin correction & face alignment", "自然な肌補正と顔の傾き調整", "자연스러운 피부 보정과 얼굴 기울기 조정", vi: "Chỉnh sửa da tự nhiên", id: "Koreksi kulit alami", pt: "Correção natural da pele") }
-    private var outfitToggleTitle:      String { l("服装・背景替换", "Outfit & Background", "服装・背景置換", "복장·배경 교체", vi: "Trang phục & Nền", id: "Pakaian & Latar", pt: "Traje & Fundo") }
-    private var outfitToggleDesc:       String { l("自动换装西装与白底背景", "Auto suit change & white background", "スーツへの自動着せ替えと白背景化", "자동 정장 착용 및 흰색 배경", vi: "Tự động đổi vest & nền trắng", id: "Otomatis ganti jas & latar putih", pt: "Traje automático & fundo branco") }
-    private var printToggleLabel:       String { l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃") }
     private var resetLabel:             String { l("重置", "Reset", "リセット", "리셋", vi: "Đặt lại", id: "Reset", pt: "Redefinir") }
     private var limitAlertTitle:        String { l("次数已用完", "Limit Reached", "回数上限に達しました", "횟수 초과", vi: "Đã hết lượt", id: "Batas Tercapai", pt: "Limite Atingido") }
     private var limitReachedMessage:    String { l("本制作包的生成次数已用完。购买后可再获得3次生成机会，并继续下载高清照片和排版图。", "This photo task is out of attempts. Buy another task for 3 more generations.", "この制作分の生成回数を使い切りました。追加購入で3回生成できます。", "이번 제작권의 생성 횟수를 모두 사용했습니다. 추가 구매로 3회 더 생성할 수 있습니다.", vi: "Đã hết lượt. Mua thêm để có 3 lần tạo ảnh.", id: "Percobaan habis. Beli lagi untuk 3 kali.", pt: "Tentativas esgotadas. Compre outro pacote para mais 3.") }
@@ -1171,25 +1016,6 @@ struct ContentView: View {
             root.present(ac, animated: true)
         }
         AnalyticsManager.shared.track(AnalyticsManager.Event.photoShared)
-    }
-
-    private func addWatermark(to image: UIImage) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: image.size)
-        return renderer.image { _ in
-            image.draw(at: .zero)
-            let text = "光影形象馆"
-            let fontSize = max(image.size.width * 0.035, 14)
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold),
-                .foregroundColor: UIColor.white.withAlphaComponent(0.5),
-            ]
-            let textSize = text.size(withAttributes: attrs)
-            let point = CGPoint(
-                x: image.size.width - textSize.width - 16,
-                y: image.size.height - textSize.height - 16
-            )
-            text.draw(at: point, withAttributes: attrs)
-        }
     }
 
     private func showSavedToastBriefly() {

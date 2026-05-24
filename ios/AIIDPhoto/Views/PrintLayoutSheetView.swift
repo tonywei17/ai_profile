@@ -69,8 +69,8 @@ struct PrintLayoutSheetView: View {
             if showSavedToast { savedToast }
         }
         .task { updateLayout(); renderPreview() }
-        .onChange(of: selectedPaper) { _ in updateLayout(); renderPreview() }
-        .onChange(of: showGuides) { _ in renderPreview() }
+        .onChange(of: selectedPaper) { _, _ in updateLayout(); renderPreview() }
+        .onChange(of: showGuides) { _, _ in renderPreview() }
     }
 
     // MARK: - Header

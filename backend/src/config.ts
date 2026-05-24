@@ -12,6 +12,7 @@ export const config = {
   // App key authentication
   appApiKey: process.env.APP_API_KEY || "",
   requireAppKey: process.env.REQUIRE_APP_KEY === "true",
+  referralHmacSecret: process.env.REFERRAL_HMAC_SECRET || "",
   // Daily budget circuit breaker
   dailyBudget: parseInt(process.env.DAILY_BUDGET || "5000", 10),
 };

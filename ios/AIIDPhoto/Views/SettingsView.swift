@@ -3,7 +3,6 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var langManager: LanguageManager
     @EnvironmentObject var subscription: SubscriptionManager
-    @EnvironmentObject var usage: UsageManager
     @EnvironmentObject var referralManager: ReferralManager
     @Environment(\.dismiss) private var dismiss
 
@@ -11,6 +10,7 @@ struct SettingsView: View {
     @State private var redeemCodeInput = ""
     @State private var isRedeeming = false
     @State private var showRedeemSuccess = false
+    @State private var showRestoreComplete = false
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
@@ -69,6 +69,23 @@ struct SettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(referralManager.redeemError ?? "")
+        }
+        .alert(restoreCompleteTitle, isPresented: $showRestoreComplete) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(restoreCompleteMessage)
+        }
+        .alert(
+            sectionTitle("Purchase Error", "购买错误", "購入エラー", "구매 오류",
+                         vi: "Lỗi mua hàng", id: "Kesalahan pembelian", pt: "Erro de compra"),
+            isPresented: Binding(
+                get: { subscription.purchaseError != nil },
+                set: { if !$0 { subscription.purchaseError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(subscription.purchaseError ?? "")
         }
     }
 
@@ -192,6 +209,35 @@ struct SettingsView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 24))
                 }
+
+                Button {
+                    Task {
+                        await subscription.restore()
+                        if subscription.purchaseError == nil {
+                            showRestoreComplete = true
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        iconTile("arrow.clockwise.icloud.fill", color: Color.skyBlue)
+                        Text(restoreLabel)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.inkBlack)
+                        Spacer()
+                        if subscription.isRestoring {
+                            ProgressView().scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.branchGray)
+                        }
+                    }
+                    .padding(12)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(.systemGray5), lineWidth: 1))
+                }
+                .disabled(subscription.isRestoring)
             }
         }
     }
@@ -568,7 +614,20 @@ struct SettingsView: View {
     private var notSubscribedLabel:String { sectionTitle("No Photo Task", "暂无制作包", "制作分なし", "제작권 없음", vi: "Chưa có gói ảnh", id: "Belum ada paket", pt: "Sem pacote") }
     private var upgradeLabel:      String { sectionTitle("Buy Photo Task", "购买制作包", "制作分を購入", "제작권 구매", vi: "Mua gói ảnh", id: "Beli paket foto", pt: "Comprar pacote") }
     private var manageLabel:       String { sectionTitle("Purchase History", "购买记录", "購入履歴", "구매 내역", vi: "Lịch sử mua", id: "Riwayat pembelian", pt: "Histórico") }
-    private var restoreLabel:      String { sectionTitle("Sync Purchases", "同步购买", "購入を同期", "구매 동기화", vi: "Đồng bộ mua hàng", id: "Sinkronkan pembelian", pt: "Sincronizar compras") }
+    private var restoreLabel:      String { sectionTitle("Restore Purchases", "恢复购买", "購入を復元", "구매 복원", vi: "Khôi phục mua hàng", id: "Pulihkan pembelian", pt: "Restaurar compras") }
+    private var restoreCompleteTitle: String {
+        sectionTitle("Purchases Restored", "购买已恢复", "購入を復元しました", "구매 복원 완료",
+                     vi: "Đã khôi phục", id: "Pembelian dipulihkan", pt: "Compras restauradas")
+    }
+    private var restoreCompleteMessage: String {
+        sectionTitle("If App Store has pending transactions, they will be reflected automatically.",
+                     "如果 App Store 有待处理交易，系统会自动同步到当前制作包状态。",
+                     "App Store に未処理の取引がある場合、自動的に反映されます。",
+                     "App Store에 보류 중인 거래가 있으면 자동으로 반영됩니다.",
+                     vi: "Nếu App Store có giao dịch đang chờ, ứng dụng sẽ tự động cập nhật.",
+                     id: "Jika ada transaksi tertunda di App Store, status akan diperbarui otomatis.",
+                     pt: "Se houver transações pendentes na App Store, elas serão refletidas automaticamente.")
+    }
     private var freeUserDesc:      String { sectionTitle("Buy once for 3 AI attempts", "购买后获得 3 次 AI 生成机会", "購入後AI生成3回", "구매 후 AI 생성 3회", vi: "Mua một lần có 3 lượt", id: "Beli sekali untuk 3 kali", pt: "Compre para 3 tentativas") }
     private var todayRemainingText: String {
         let n = subscription.generationAttemptsLeft
@@ -666,7 +725,12 @@ private enum LegalURLs {
     }
 
     private static func legalLang(_ code: String) -> String {
-        // CN release legal pages are maintained in Simplified Chinese.
-        return "zh"
+        if code.hasPrefix("zh") { return "zh" }
+        if code.hasPrefix("ja") { return "ja" }
+        if code.hasPrefix("ko") { return "ko" }
+        if code.hasPrefix("vi") { return "vi" }
+        if code.hasPrefix("id") { return "id" }
+        if code.hasPrefix("pt") { return "pt" }
+        return "en"
     }
 }

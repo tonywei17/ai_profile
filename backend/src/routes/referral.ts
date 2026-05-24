@@ -147,7 +147,7 @@ router.post("/redeem", (req: Request, res: Response) => {
 });
 
 function generateCode(deviceId: string): string {
-  const salt = config.appApiKey || "default-salt";
+  const salt = config.referralHmacSecret || "dev-referral-salt-change-me";
   const hash = crypto.createHmac("sha256", salt).update(deviceId).digest("hex");
   return hash.substring(0, 8).toUpperCase();
 }

@@ -5,6 +5,8 @@
 build/
 !.claude/skills/build/
 DerivedData/
+ios/AIIDPhoto/Configuration/Secrets.xcconfig
+ios/AIIDPhoto/Configuration/*.local.xcconfig
 *.xcodeproj/
 *.pbxuser
 !default.pbxuser
