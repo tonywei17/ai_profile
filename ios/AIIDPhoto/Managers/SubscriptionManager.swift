@@ -16,7 +16,13 @@ final class SubscriptionManager: ObservableObject {
     static let attemptsPerPhotoTask = 3
 
     // Keep this disabled for release parity. StoreKit config should be used for local purchase tests.
-    static var forceSubscribed: Bool { false }
+    static var forceSubscribed: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
 
     // MARK: - Published State
 
