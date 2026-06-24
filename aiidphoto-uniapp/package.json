@@ -10,8 +10,8 @@
     "build:app": "cross-env UNI_INPUT_DIR=. uni build -p app",
     "dev:h5": "cross-env UNI_INPUT_DIR=. uni -p h5",
     "build:h5": "cross-env UNI_INPUT_DIR=. uni build -p h5",
-    "upload:mp-weixin": "node scripts/upload-wechat.mjs",
-    "release:mp-weixin": "npm run build:mp-weixin && node scripts/upload-wechat.mjs"
+    "upload:mp-weixin": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first node scripts/upload-wechat.mjs",
+    "release:mp-weixin": "npm run build:mp-weixin && cross-env NODE_OPTIONS=--dns-result-order=ipv4first node scripts/upload-wechat.mjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4020920240930001",
