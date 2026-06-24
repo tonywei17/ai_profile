@@ -9,7 +9,9 @@
     "dev:app": "cross-env UNI_INPUT_DIR=. uni -p app",
     "build:app": "cross-env UNI_INPUT_DIR=. uni build -p app",
     "dev:h5": "cross-env UNI_INPUT_DIR=. uni -p h5",
-    "build:h5": "cross-env UNI_INPUT_DIR=. uni build -p h5"
+    "build:h5": "cross-env UNI_INPUT_DIR=. uni build -p h5",
+    "upload:mp-weixin": "node scripts/upload-wechat.mjs",
+    "release:mp-weixin": "npm run build:mp-weixin && node scripts/upload-wechat.mjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4020920240930001",
@@ -36,6 +38,7 @@
     "@vue/runtime-core": "3.4.21",
     "@vue/shared": "3.4.21",
     "cross-env": "^7.0.3",
+    "miniprogram-ci": "^2.1.31",
     "sass": "^1.77.0",
     "sass-loader": "^14.1.1",
     "vite": "5.2.8",
