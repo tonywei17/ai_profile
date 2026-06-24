@@ -80,3 +80,7 @@ backend/.env
 backend/.env.local
 backend/certs/
 backend/data/
+
+# 微信小程序代码上传私钥(任何位置都不入库)
+private.*.key
+*.private.key

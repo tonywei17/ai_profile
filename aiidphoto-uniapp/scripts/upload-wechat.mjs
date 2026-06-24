@@ -19,6 +19,7 @@ import ci from 'miniprogram-ci'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { homedir } from 'node:os'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const projectPath = resolve(root, 'dist/build/mp-weixin')
@@ -32,14 +33,20 @@ const appid = JSON.parse(
   readFileSync(resolve(projectPath, 'project.config.json'), 'utf8')
 ).appid
 
-const privateKeyPath = resolve(
-  root,
-  process.env.WX_PRIVATE_KEY_PATH || `private.${appid}.key`
-)
-if (!existsSync(privateKeyPath)) {
+// 私钥查找优先级：环境变量 > 系统安全目录(repo 外) > 仓库内 gitignored 兜底。
+// 安全目录是推荐位置，密钥不应放在仓库内。
+const keyCandidates = [
+  process.env.WX_PRIVATE_KEY_PATH && resolve(root, process.env.WX_PRIVATE_KEY_PATH),
+  resolve(homedir(), '.config/foyli/wechat', `${appid}.key`),
+  resolve(root, `private.${appid}.key`),
+].filter(Boolean)
+const privateKeyPath = keyCandidates.find((p) => existsSync(p))
+if (!privateKeyPath) {
   console.error(
-    `✖ 未找到上传私钥：${privateKeyPath}\n` +
-      `  从微信公众平台下载「代码上传密钥」放到该路径，或用 WX_PRIVATE_KEY_PATH 指定。`
+    `✖ 未找到上传私钥，已查找：\n` +
+      keyCandidates.map((p) => `    - ${p}`).join('\n') +
+      `\n  从微信公众平台下载「代码上传密钥」放到 ~/.config/foyli/wechat/${appid}.key，` +
+      `或用 WX_PRIVATE_KEY_PATH 指定。`
   )
   process.exit(1)
 }
