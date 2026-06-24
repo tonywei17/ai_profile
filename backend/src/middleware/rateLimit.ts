@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 const windowMs = 60 * 1000; // 1 minute
-const maxRequests = 10; // max 10 requests per minute per IP
+const maxRequests = 120; // ordinary authenticated API traffic per minute per IP
 const MAX_MAP_SIZE = 10_000; // OOM prevention
 
 const requests = new Map<string, { count: number; resetAt: number }>();
@@ -25,6 +25,11 @@ export function extractClientIp(req: Request): string {
 }
 
 export function rateLimit(req: Request, res: Response, next: NextFunction) {
+  if (req.path === "/api/payment/wechat/notify") {
+    next();
+    return;
+  }
+
   const ip = extractClientIp(req);
   const now = Date.now();
   const entry = requests.get(ip);

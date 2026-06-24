@@ -1,6 +1,11 @@
 import { Router, Request, Response } from "express";
 import { config } from "../config";
 import { extractClientIp } from "../middleware/rateLimit";
+import { AttemptType, paymentStore } from "../services/paymentStore";
+import {
+  labelGeneratedImage,
+  recordUnmarkedExport,
+} from "../services/aigcLabelService";
 
 const router = Router();
 
@@ -65,6 +70,23 @@ const QWEN_TIMEOUT_MS = 90_000;
 const BAILIAN_TIMEOUT_MS = 90_000;
 const BAILIAN_POLL_INTERVAL_MS = 3_000;
 const MAX_PROMPT_LENGTH = 2000;
+
+function sendGeneratedImage(
+  req: Request,
+  res: Response,
+  image: string,
+  provider: string
+): void {
+  const authenticatedUser = (req as any).user as
+    | { userId: string; openid: string }
+    | undefined;
+  const labeled = labelGeneratedImage(
+    image,
+    provider,
+    authenticatedUser?.userId
+  );
+  res.json({ ...labeled, provider });
+}
 
 // ============================================================
 // Provider 0: HivisionIDPhotos — 专业证件照，精确尺寸 + 人脸自动居中
@@ -346,6 +368,15 @@ async function callQwenImageEdit(
 // POST /generate
 // ============================================================
 router.post("/generate", async (req: Request, res: Response) => {
+  let reservedAttempt: AttemptType | null = null;
+  let reservedUserId: string | null = null;
+  const restoreReservedAttempt = () => {
+    if (reservedAttempt && reservedUserId) {
+      paymentStore.restoreAttempt(reservedUserId, reservedAttempt);
+      reservedAttempt = null;
+    }
+  };
+
   // Per-IP rate limit
   const clientIp = extractClientIp(req);
   const now = Date.now();
@@ -410,6 +441,21 @@ router.post("/generate", async (req: Request, res: Response) => {
     }
 
     const hasCosmeticPrompt = typeof cosmeticPrompt === "string" && cosmeticPrompt.trim().length > 3;
+    const authenticatedUser = (req as any).user as
+      | { userId: string; openid: string }
+      | undefined;
+    if (authenticatedUser) {
+      paymentStore.ensureUser(authenticatedUser.userId, authenticatedUser.openid);
+      reservedAttempt = paymentStore.reserveAttempt(
+        authenticatedUser.userId,
+        isPro ? "pro" : "free"
+      );
+      reservedUserId = authenticatedUser.userId;
+      if (!reservedAttempt) {
+        res.status(402).json({ error: "No generation attempts remaining" });
+        return;
+      }
+    }
 
     // ── 阶段一：HivisionIDPhotos 精准抠图 + 裁切 + 背景填色 ──────────────
     if (hasSpec && config.hivisionUrl) {
@@ -428,13 +474,20 @@ router.post("/generate", async (req: Request, res: Response) => {
             cosmeticResult = await callBailian(cosmeticPrompt!, hivisionResult.image);
           }
           if (cosmeticResult) {
-            res.json({ image: cosmeticResult.image, provider: "hivision+cosmetic" });
+            sendGeneratedImage(
+              req,
+              res,
+              cosmeticResult.image,
+              "hivision+cosmetic"
+            );
+            reservedAttempt = null;
             return;
           }
           // 第二阶段失败时，降级返回 Hivision 基础结果（保证质量底线）
           console.warn("[pipeline] Cosmetic pass failed, returning Hivision base result");
         }
-        res.json({ image: hivisionResult.image, provider: "hivision" });
+        sendGeneratedImage(req, res, hivisionResult.image, "hivision");
+        reservedAttempt = null;
         return;
       }
       console.warn("[fallback] Hivision failed, falling back to prompt-based providers");
@@ -452,6 +505,7 @@ router.post("/generate", async (req: Request, res: Response) => {
     }
 
     if (candidates.length === 0) {
+      restoreReservedAttempt();
       res.status(500).json({ error: "Server API key not configured" });
       return;
     }
@@ -462,18 +516,44 @@ router.post("/generate", async (req: Request, res: Response) => {
       }
       const result = await candidates[i].call();
       if (result) {
-        res.json({ image: result.image, provider: candidates[i].name });
+        sendGeneratedImage(req, res, result.image, candidates[i].name);
+        reservedAttempt = null;
         return;
       }
     }
 
     const tried = candidates.map((c) => c.name).join(" → ");
     console.error(`[generate] All providers failed: ${tried}`);
+    restoreReservedAttempt();
     res.status(502).json({ error: "Generation failed, please try again" });
   } catch (err: unknown) {
     console.error("Generate error:", err);
+    restoreReservedAttempt();
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+router.post("/export-log", (req: Request, res: Response) => {
+  const authenticatedUser = (req as any).user as
+    | { userId: string; openid: string }
+    | undefined;
+  if (!authenticatedUser) {
+    res.status(401).json({ success: false, error: "Authentication required" });
+    return;
+  }
+  const produceId = String(req.body?.produceId || "");
+  const exportType = String(req.body?.exportType || "photo");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      produceId
+    ) ||
+    !["photo", "print-layout"].includes(exportType)
+  ) {
+    res.status(400).json({ success: false, error: "Invalid export log data" });
+    return;
+  }
+  recordUnmarkedExport(produceId, authenticatedUser.userId, exportType);
+  res.json({ success: true });
 });
 
 export default router;

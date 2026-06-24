@@ -10,25 +10,29 @@
   <main class="container">
     <p class="eyebrow">光影形象馆</p>
     <h1>第三方 SDK 与服务清单</h1>
-    <p class="meta">最后更新：2026年5月24日</p>
+    <p class="meta">最后更新：2026年6月12日</p>
 
     <article class="doc">
-      <p>以下清单列明本应用或服务器为实现功能可能接入的第三方 SDK、系统框架和云服务。</p>
+      <p>以下清单列明微信小程序、iOS 应用及服务器为实现功能接入的第三方平台、系统能力和云服务。</p>
 
       <table>
         <tr><th>名称</th><th>提供方</th><th>接入位置</th><th>处理的信息</th><th>用途</th></tr>
+        <tr><td>微信小程序基础能力</td><td>深圳市腾讯计算机系统有限公司</td><td>微信小程序</td><td>登录临时凭证、OpenID、你主动选择或拍摄的照片、相册保存结果</td><td>账号识别、选择照片、调用相机、保存生成结果</td></tr>
+        <tr><td>微信小程序虚拟支付</td><td>财付通支付科技有限公司及腾讯相关主体</td><td>微信小程序</td><td>商品 ID、业务订单号、支付状态、交易单号、退款及投诉信息</td><td>完成虚拟商品支付、发货、退款和交易管理</td></tr>
         <tr><td>StoreKit 2</td><td>Apple Inc.</td><td>iOS App</td><td>Apple ID 侧交易状态、商品 ID</td><td>成片制作包购买、发放生成次数、处理购买问题</td></tr>
         <tr><td>阿里云 ECS / Nginx / Node.js</td><td>阿里云计算有限公司及我们自有后端</td><td>服务器</td><td>照片请求、生成参数、IP、请求日志</td><td>后端代理、限速、安全控制、请求转发</td></tr>
         <tr><td>阿里云百炼 / 通义万相</td><td>阿里云计算有限公司</td><td>服务器侧 API</td><td>照片、文本编辑指令、生成参数</td><td>外观编辑、换装、美颜、发型等图像编辑</td></tr>
-        <tr><td>HivisionIDPhotos</td><td>开源项目及我们部署的图像处理服务</td><td>服务器侧服务</td><td>照片、目标尺寸、背景色</td><td>人像检测、抠图、裁切、证件照底色生成</td></tr>
+        <tr><td>HivisionIDPhotos</td><td>我们部署的开源图像处理服务</td><td>服务器侧服务</td><td>照片、目标尺寸、背景色</td><td>人像检测、抠图、裁切、证件照底色生成</td></tr>
+        <tr><td>Google Cloud</td><td>Google LLC</td><td>中国大陆以外云基础设施</td><td>传输至 HivisionIDPhotos 的照片、目标尺寸和背景色</td><td>承载我们部署的 HivisionIDPhotos 服务，完成本次图像处理</td></tr>
         <tr><td>PhotosUI / AVFoundation</td><td>Apple Inc.</td><td>iOS 系统框架</td><td>你选择或拍摄的照片</td><td>相册选择、拍照</td></tr>
       </table>
 
       <h2>第三方隐私政策参考</h2>
       <ul>
         <li>Apple 隐私政策：<a href="https://www.apple.com.cn/privacy/" rel="noopener">https://www.apple.com.cn/privacy/</a></li>
-        <li>Google 隐私政策：<a href="https://policies.google.com/privacy" rel="noopener">https://policies.google.com/privacy</a></li>
+        <li>微信隐私保护指引：<a href="https://weixin.qq.com/cgi-bin/readtemplate?lang=zh_CN&amp;t=weixin_agreement&amp;s=privacy" rel="noopener">微信隐私保护指引</a></li>
         <li>阿里云隐私政策：<a href="https://terms.aliyun.com/legal-agreement/terms/suit_bu1_ali_cloud/suit_bu1_ali_cloud202108111057_17873.html" rel="noopener">阿里云隐私政策</a></li>
+        <li>Google Cloud 隐私与数据保护：<a href="https://cloud.google.com/security/privacy" rel="noopener">Google Cloud Privacy</a></li>
       </ul>
 
       <p>第三方 SDK 或服务版本、处理规则可能随服务商更新而变化。我们会在发生实质变化时更新本清单。</p>
@@ -36,7 +40,7 @@
 
     <footer>
       <p><a href="/legal/">返回法务与支持中心</a></p>
-      <p>运营者：广西玉飞科技有限公司 · <a href="mailto:liuchengcheng@foyli-ai.com">liuchengcheng@foyli-ai.com</a></p>
+      <p>运营者：羽飞科技(广西)有限责任公司 · <a href="mailto:liuchengcheng@foyli-ai.com">liuchengcheng@foyli-ai.com</a></p>
     </footer>
   </main>
 </body>

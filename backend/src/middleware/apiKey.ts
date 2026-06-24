@@ -1,32 +1,41 @@
 import { Request, Response, NextFunction } from "express";
 import { config } from "../config";
+import { WechatAuthService } from "../services/wechatAuthService";
 
-/**
- * App Key authentication middleware.
- * Validates X-App-Key header against APP_API_KEY secret.
- * When REQUIRE_APP_KEY=false (transition period), logs warnings but allows through.
- */
 export function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
-  // Skip health check
-  if (req.path === "/health") return next();
-  // Skip static files
-  if (req.path.startsWith("/legal")) return next();
-
-  const appKey = req.headers["x-app-key"] as string | undefined;
-
-  if (!config.appApiKey) {
-    // No key configured — allow (development mode)
-    return next();
+  if (
+    req.path === "/health" ||
+    req.path.startsWith("/legal") ||
+    req.path === "/api/wechat/login" ||
+    req.path === "/api/payment/wechat/notify"
+  ) {
+    next();
+    return;
   }
 
-  if (!appKey || appKey !== config.appApiKey) {
-    if (config.requireAppKey) {
-      res.status(401).json({ error: "Unauthorized" });
+  const bearer = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+  if (bearer) {
+    const validation = WechatAuthService.validateToken(bearer);
+    if (validation.valid) {
+      (req as any).user = {
+        userId: validation.userId,
+        openid: validation.openid,
+      };
+      next();
       return;
     }
-    // Transition period: warn but allow
-    console.warn(`[apiKeyAuth] Missing/invalid X-App-Key from ${req.ip} ${req.method} ${req.path}`);
   }
 
-  next();
+  const appKey = req.headers["x-app-key"] as string | undefined;
+  if (config.appApiKey && appKey === config.appApiKey) {
+    next();
+    return;
+  }
+
+  if (!config.requireAppKey && !config.appApiKey) {
+    next();
+    return;
+  }
+
+  res.status(401).json({ error: "Unauthorized" });
 }

@@ -1,0 +1,232 @@
+{
+  "app": {
+    "name": "AIIDPhoto",
+    "slogan": "AI Professional Photo & ID Photo Assistant"
+  },
+  "home": {
+    "title": "AI Professional Photo",
+    "subtitle": "Resume Photo · ID Photo",
+    "tagline": "More Professional · More Natural · More Outstanding",
+    "limitedOffer": "Generation Pack",
+    "price": "¥3.80 / 3 generations",
+    "priceNumber": "3.80",
+    "priceUnit": "/3 generations",
+    "originalPrice": "One-time purchase",
+    "start": "Start Now",
+    "categories": {
+      "idCard": "ID Card Photo",
+      "idCardDesc": "1-inch · White · Universal",
+      "passport": "Passport Visa Photo",
+      "passportDesc": "33×48mm · White",
+      "driverLicense": "Driver License Photo",
+      "driverLicenseDesc": "22×32mm · White",
+      "resume": "Resume Photo",
+      "resumeDesc": "25×35mm · Blue/White",
+      "student": "Student ID Photo",
+      "studentDesc": "35×45mm · Blue",
+      "avatar": "Social Avatar",
+      "avatarDesc": "Square · Custom"
+    },
+    "trust": {
+      "users": "3",
+      "usersLabel": "Generations",
+      "usersDesc": "Per Pack",
+      "retry": "3 Times",
+      "retryLabel": "Retry",
+      "retryDesc": "Choose Best Result",
+      "privacy": "Privacy",
+      "privacyLabel": "Secure",
+      "privacyDesc": "Photos Visible Only to You"
+    },
+    "showcase": {
+      "title": "Example Results",
+      "idCard": "ID Photo Enhancement",
+      "portrait": "Professional Portrait",
+      "badge": "AI-generated example",
+      "disclaimer": "Examples show supported processing types. Actual results vary with the source photo, selected specification, and editing options."
+    },
+    "startCreating": "Start Creating",
+    "userStatus": "User Status",
+    "basicUser": "Basic User",
+    "premiumUser": "Premium User",
+    "remainingAttempts": "Remaining Attempts",
+    "purchaseMore": "Purchase More",
+    "aiGenerated": "AI Generated"
+  },
+  "settings": {
+    "title": "Settings",
+    "app": {
+      "name": "AIIDPhoto"
+    },
+    "subscription": {
+      "freeUser": "Basic User",
+      "freeDesc": "Get 3 AI generations after purchase",
+      "features": "3 Generations · HD Download · Print Layout",
+      "title": "Generation Credits",
+      "currentStatus": "Current Status",
+      "upgradeDesc": "Get 3 generations after purchase",
+      "upgrade": "Buy Generations",
+      "restore": "Refresh Purchase Status"
+    },
+    "referral": {
+      "title": "Invite Friends",
+      "inviteCode": "Invite Code",
+      "bonusCount": "Bonus Count",
+      "shareCode": "Share Invite Code",
+      "redeemPlaceholder": "Enter redeem code",
+      "redeem": "Redeem"
+    },
+    "language": "Language",
+    "legal": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "support": {
+      "title": "Purchase Support",
+      "email": "liuchengcheng@foyli-ai.com",
+      "copied": "Support email copied"
+    }
+  },
+  "creation": {
+    "format": "01. Format",
+    "upload": {
+      "title": "Click to Upload Photo",
+      "subtitle": "Support JPG/PNG format, max 20MB",
+      "tips": "Front-facing, well-lit, no obstructions recommended",
+      "changePhoto": "Change Photo"
+    },
+    "specs": {
+      "chinaID": "China ID Card",
+      "oneInch": "One Inch",
+      "twoInch": "Two Inch",
+      "chinaPassport": "China Passport",
+      "usVisa": "US Visa",
+      "smallPassport": "Small Passport",
+      "resume": "Resume",
+      "studentCard": "Student ID",
+      "driverLicense": "Driver License",
+      "socialSecurity": "Social Security",
+      "socialAvatar": "Social Avatar"
+    },
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "customSize": "Custom Size",
+    "aiCustomize": "AI Customize",
+    "beauty": "Beauty",
+    "attire": "Attire",
+    "hair": "Hair",
+    "background": "Background",
+    "accessories": "Accessories",
+    "natural": "Natural",
+    "lightEnhance": "Light Enhance",
+    "proRetouch": "Pro Retouch",
+    "keepOriginal": "Original",
+    "darkSuit": "Dark Suit",
+    "navySuit": "Navy Suit",
+    "whiteShirt": "White Shirt",
+    "professionalBlouse": "Blouse/Blazer",
+    "tidyUp": "Tidy Up",
+    "default": "Default",
+    "pureWhite": "White",
+    "lightBlue": "Light Blue",
+    "lightGray": "Light Gray",
+    "red": "Red",
+    "keepAsIs": "Keep As Is",
+    "removeGlasses": "Remove Glasses",
+    "neutral": "Neutral",
+    "subtleSmile": "Subtle Smile",
+    "naturalSmile": "Natural Smile",
+    "generate": "Generate ID Photo",
+    "generating": "Generating...",
+    "retake": "Retake",
+    "changePhoto": "Change Photo",
+    "footnote": "¥3.80 includes 3 generations and layout downloads with no auto-renewal"
+  },
+  "result": {
+    "title": "Result",
+    "comparison": "Comparison",
+    "info": "Image Info",
+    "spec": "Specification",
+    "size": "Size",
+    "createdAt": "Created",
+    "save": "Save",
+    "share": "Share",
+    "print": "Print Layout",
+    "retake": "Retake",
+    "saved": "Saved",
+    "saveFailed": "Save Failed",
+    "shareUnsupported": "Share Not Supported",
+    "shareFailed": "Share Failed",
+    "printSaved": "Print Image Saved",
+    "printFailed": "Print Failed",
+    "original": "Original",
+    "aiGenerated": "AI Generated",
+    "time": {
+      "justNow": "Just Now",
+      "minutesAgo": " minutes ago",
+      "hoursAgo": " hours ago"
+    }
+  },
+  "history": {
+    "title": "History",
+    "empty": "No History",
+    "clearAll": "Clear",
+    "viewDetail": "View Details",
+    "imageUnavailable": "Image is no longer available",
+    "confirmDelete": "Confirm Delete",
+    "deleteConfirm": "Are you sure to delete this record?",
+    "deleted": "Deleted",
+    "deleteFailed": "Delete Failed",
+    "confirmClear": "Confirm Clear",
+    "clearConfirm": "Are you sure to clear all history?",
+    "cleared": "Cleared",
+    "clearFailed": "Clear Failed",
+    "time": {
+      "justNow": "Just Now",
+      "minutesAgo": " minutes ago",
+      "hoursAgo": " hours ago",
+      "daysAgo": " days ago"
+    }
+  },
+  "printLayout": {
+    "title": "Print Layout",
+    "paperSize": "Paper Size",
+    "preview": "Preview",
+    "info": "Print Info",
+    "photosPerSheet": "Photos per Sheet",
+    "photoSize": "Photo Size",
+    "resolution": "Resolution",
+    "generate": "Generate Print",
+    "generateFailed": "Generate Failed"
+  },
+  "common": {
+    "cancel": "Cancel"
+  },
+  "subscription": {
+    "title": "Buy Generations",
+    "discount": "One-time Purchase",
+    "heroTitle": "Buy 3 Generations",
+    "heroSubtitle": "One purchase includes 3 AI ID photo generations and print layout downloads",
+    "perPhoto": "/photo",
+    "noSubscription": "3-Generation Pack",
+    "priceExplain": "One-time purchase with no automatic renewal",
+    "included": "Included",
+    "unlimitedGenerations": "3 AI Photo Generations",
+    "allSpecs": "All ID Photo Specs",
+    "proOptions": "All Pro Options",
+    "customSize": "Custom Size",
+    "printLayout": "Print Layout",
+    "purchase": "Purchase Now",
+    "restore": "Refresh Purchase Status",
+    "close": "Close"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "back": "Back",
+    "error": "Error",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "pro": "PRO",
+    "locked": "Locked"
+  }
+}

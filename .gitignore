@@ -65,3 +65,18 @@ playground.xcworkspace
 # Node (Playwright screenshot tooling)
 node_modules/
 package-lock.json
+
+# uni-app generated output and local environment
+aiidphoto-uniapp/unpackage/
+aiidphoto-uniapp/dist/
+aiidphoto-uniapp/.env
+aiidphoto-uniapp/.env.local
+aiidphoto-uniapp/project.private.config.json
+!aiidphoto-uniapp/package-lock.json
+!backend/package-lock.json
+
+# Backend runtime secrets and state
+backend/.env
+backend/.env.local
+backend/certs/
+backend/data/
