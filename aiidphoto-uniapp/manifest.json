@@ -5,6 +5,12 @@
   "versionName": "1.0.0",
   "versionCode": "100",
   "transformPx": false,
+  "networkTimeout": {
+    "request": 150000,
+    "connectSocket": 150000,
+    "uploadFile": 150000,
+    "downloadFile": 150000
+  },
   "app-plus": {
     "usingComponents": true,
     "nvueStyleCompiler": "uni-app",

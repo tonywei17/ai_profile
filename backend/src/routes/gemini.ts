@@ -25,19 +25,28 @@ setInterval(() => {
 // Daily budget circuit breaker
 let dailyBudget = { count: 0, date: "" };
 
-function checkDailyBudget(): boolean {
+function rollDailyBudget(): void {
   const today = new Date().toISOString().slice(0, 10);
   if (dailyBudget.date !== today) {
     dailyBudget = { count: 0, date: today };
   }
-  if (dailyBudget.count >= config.dailyBudget) {
-    return false;
-  }
+}
+
+// Read-only: is the daily budget already exhausted? Does NOT increment, so
+// invalid/unauthenticated/failed requests cannot burn the quota.
+function isDailyBudgetExhausted(): boolean {
+  rollDailyBudget();
+  return dailyBudget.count >= config.dailyBudget;
+}
+
+// Increment the daily counter. Call this only once a request is actually
+// committed to invoking a paid provider (after validation + auth + reserve).
+function consumeDailyBudget(): void {
+  rollDailyBudget();
+  dailyBudget.count++;
   if (dailyBudget.count >= config.dailyBudget * 0.8) {
     console.warn(`[budget] Daily generation count at ${dailyBudget.count}/${config.dailyBudget} (80%+ threshold)`);
   }
-  dailyBudget.count++;
-  return true;
 }
 
 interface GenerateRequest {
@@ -377,6 +386,29 @@ router.post("/generate", async (req: Request, res: Response) => {
     }
   };
 
+  // The client (WeChat 小程序 默认 60s / 前端 150s) can give up long before a
+  // two-stage generation finishes. If that happens, the socket closes while we
+  // are still working. Track it so we can refund the reserved attempt instead
+  // of charging the user for an image they never received.
+  let clientDisconnected = false;
+  req.on("close", () => {
+    if (!res.writableEnded) {
+      clientDisconnected = true;
+    }
+  });
+
+  // Commit a successful result: if the client already walked away, refund the
+  // attempt and skip writing to a dead socket; otherwise deliver and consume.
+  const commitAndSend = (image: string, provider: string): void => {
+    if (clientDisconnected) {
+      console.warn(`[generate] Client disconnected before delivery, refunding attempt (provider=${provider})`);
+      restoreReservedAttempt();
+      return;
+    }
+    sendGeneratedImage(req, res, image, provider);
+    reservedAttempt = null;
+  };
+
   // Per-IP rate limit
   const clientIp = extractClientIp(req);
   const now = Date.now();
@@ -395,8 +427,10 @@ router.post("/generate", async (req: Request, res: Response) => {
     generateLimiter.set(clientIp, { count: 1, resetAt: now + GENERATE_WINDOW_MS });
   }
 
-  // Daily budget check
-  if (!checkDailyBudget()) {
+  // Daily budget check (read-only here — the counter is consumed later, right
+  // before we actually invoke a provider, so invalid/rejected requests don't
+  // drain the daily quota).
+  if (isDailyBudgetExhausted()) {
     console.error(`[budget] Daily budget exceeded: ${config.dailyBudget}`);
     res.status(503).json({ error: "Service temporarily unavailable, please try again later" });
     return;
@@ -457,12 +491,22 @@ router.post("/generate", async (req: Request, res: Response) => {
       }
     }
 
+    // Committed to invoking a provider now — count it against the daily budget.
+    consumeDailyBudget();
+
+    // 免费额度规则：终身免费 3 次只开放「基础功能」——即 Hivision 基础证件照
+    // （抠图/裁切/换纯色背景），不调用任何付费 AI（美颜/换装/付费兜底）。
+    // 付费次数（reservedAttempt === "paid"）或非小程序鉴权（iOS X-App-Key，
+    // reservedAttempt 为 null）不受此限制。
+    const basicOnly = reservedAttempt === "free";
+
     // ── 阶段一：HivisionIDPhotos 精准抠图 + 裁切 + 背景填色 ──────────────
     if (hasSpec && config.hivisionUrl) {
       const hivisionResult = await callHivision(image, specWidth!, specHeight!, specBgColor!);
       if (hivisionResult) {
         // ── 阶段二（可选）：Qwen/Bailian 对 Hivision 输出叠加外观编辑 ──
-        if (hasCosmeticPrompt && config.bailianApiKey) {
+        // 免费额度跳过此付费阶段（basicOnly），避免免费请求触发付费美颜。
+        if (hasCosmeticPrompt && !basicOnly && config.bailianApiKey) {
           console.log("[pipeline] Hivision succeeded, starting cosmetic pass");
           let cosmeticResult: { image: string } | null = null;
           if (isPro) {
@@ -474,23 +518,25 @@ router.post("/generate", async (req: Request, res: Response) => {
             cosmeticResult = await callBailian(cosmeticPrompt!, hivisionResult.image);
           }
           if (cosmeticResult) {
-            sendGeneratedImage(
-              req,
-              res,
-              cosmeticResult.image,
-              "hivision+cosmetic"
-            );
-            reservedAttempt = null;
+            commitAndSend(cosmeticResult.image, "hivision+cosmetic");
             return;
           }
           // 第二阶段失败时，降级返回 Hivision 基础结果（保证质量底线）
           console.warn("[pipeline] Cosmetic pass failed, returning Hivision base result");
         }
-        sendGeneratedImage(req, res, hivisionResult.image, "hivision");
-        reservedAttempt = null;
+        commitAndSend(hivisionResult.image, "hivision");
         return;
       }
       console.warn("[fallback] Hivision failed, falling back to prompt-based providers");
+    }
+
+    // 免费额度不走付费兜底：基础引擎（Hivision）未能出图时，直接失败并退还本次
+    // 免费次数，而不是调用付费的 Qwen/Bailian。
+    if (basicOnly) {
+      console.warn("[free-tier] Basic engine unavailable/failed; free attempt does not fall back to paid providers");
+      restoreReservedAttempt();
+      res.status(502).json({ error: "Generation failed, please try again" });
+      return;
     }
 
     // ── Fallback：Hivision 不可用或失败时，走完整 prompt 链 ─────────────
@@ -516,8 +562,7 @@ router.post("/generate", async (req: Request, res: Response) => {
       }
       const result = await candidates[i].call();
       if (result) {
-        sendGeneratedImage(req, res, result.image, candidates[i].name);
-        reservedAttempt = null;
+        commitAndSend(result.image, candidates[i].name);
         return;
       }
     }

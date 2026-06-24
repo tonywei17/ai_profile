@@ -74,33 +74,31 @@ const generateIDPhoto = async (params) => {
     backgroundPrompt
   } = params
 
-  // 构建完整的提示词
+  // 第二段（阿里云百炼 qwen-image-edit / wanx2.1-imageedit）的外观编辑指令：
+  // 换装 / 发型 / 配饰 / 美颜。必须作为独立的 cosmeticPrompt 字段发送，后端才会
+  // 在 Hivision 出图后触发百炼修图阶段（此前被拼进 prompt 丢失，导致第二段从不生效）。
+  // 强制「保持人脸 / 身份不变」，避免证件照失真。背景由 Hivision 填纯色，不进此段。
+  const cosmeticEdits = [attirePrompt, hairPrompt, accessoryPrompt, cosmeticPrompt].filter(Boolean)
+  const composedCosmeticPrompt = cosmeticEdits.length
+    ? `在保持人物五官、身份和肤色不变的前提下，${cosmeticEdits.join('，')}，证件照风格`
+    : ''
+
+  // prompt 仅用于 Hivision 不可用时的兜底链，保留原拼接行为
   let fullPrompt = prompt
-  
-  // 添加Pro选项提示词
-  if (attirePrompt) {
-    fullPrompt += `，${attirePrompt}`
-  }
-  if (hairPrompt) {
-    fullPrompt += `，${hairPrompt}`
-  }
-  if (accessoryPrompt) {
-    fullPrompt += `，${accessoryPrompt}`
-  }
-  if (backgroundPrompt) {
-    fullPrompt += `，${backgroundPrompt}`
-  }
-  if (cosmeticPrompt) {
-    fullPrompt += `，${cosmeticPrompt}`
+  for (const part of [attirePrompt, hairPrompt, accessoryPrompt, backgroundPrompt, cosmeticPrompt]) {
+    if (part) {
+      fullPrompt += `，${part}`
+    }
   }
 
-  console.log('完整提示词:', fullPrompt)
-  console.log('Pro选项参数:', { attirePrompt, hairPrompt, accessoryPrompt, backgroundPrompt, cosmeticPrompt })
+  console.log('兜底 prompt:', fullPrompt)
+  console.log('第二段 cosmeticPrompt:', composedCosmeticPrompt || '(无，走基础)')
 
   const requestBody = {
     image,
     prompt: fullPrompt,
     tier,
+    ...(composedCosmeticPrompt && { cosmeticPrompt: composedCosmeticPrompt }),
     ...(specWidth && { specWidth }),
     ...(specHeight && { specHeight }),
     ...(specBgColor && { specBgColor })
