@@ -74,10 +74,21 @@ interface QwenImageEditResponse {
 }
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
-const HIVISION_TIMEOUT_MS = 90_000;
-const QWEN_TIMEOUT_MS = 90_000;
-const BAILIAN_TIMEOUT_MS = 90_000;
+// Timeouts bounded so that 第一段(Hivision) + 单次第二段(Qwen/Bailian) 在客户端
+// 150s 超时内完成；任一段超时即优雅降级，避免请求挂死触发 504 / 客户端白等。
+const HIVISION_TIMEOUT_MS = 70_000;
+const QWEN_TIMEOUT_MS = 70_000;
+const BAILIAN_TIMEOUT_MS = 70_000;
 const BAILIAN_POLL_INTERVAL_MS = 3_000;
+// 第二段（美颜/换装）多模型备份的时间预算：总时限 + 单次调用上限 + 最小重试余量。
+// 设计目标：Hivision(典型 20-30s) + 第二段(≤110s) 落在客户端 150s 内，
+// 同时给至少 2 个百炼模型互为备份的机会；时间不够即降级为 Hivision 基础图。
+const COSMETIC_DEADLINE_MS = 110_000;
+const COSMETIC_CALL_TIMEOUT_MS = 55_000;
+const COSMETIC_MIN_ATTEMPT_MS = 25_000;
+// 下载 provider 返回的结果图(OSS URL)的超时。此前无超时，OSS 偶发慢/不可达时
+// 会无限挂起，既不受调用超时约束，又会耗尽 undici 连接池拖垮后续请求 → 504。
+const IMG_DOWNLOAD_TIMEOUT_MS = 25_000;
 const MAX_PROMPT_LENGTH = 2000;
 
 function sendGeneratedImage(
@@ -209,7 +220,8 @@ interface BailianTaskResponse {
 
 async function callBailian(
   prompt: string,
-  imageBase64: string
+  imageBase64: string,
+  timeoutMs: number = BAILIAN_TIMEOUT_MS
 ): Promise<{ image: string } | null> {
   if (!config.bailianApiKey) return null;
 
@@ -250,7 +262,7 @@ async function callBailian(
   }
 
   // Step 2: 轮询直到完成或超时
-  const deadline = Date.now() + BAILIAN_TIMEOUT_MS;
+  const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, BAILIAN_POLL_INTERVAL_MS));
 
@@ -268,7 +280,9 @@ async function callBailian(
           console.error("[bailian] No image URL in SUCCEEDED response");
           return null;
         }
-        const imgRes = await fetch(imageUrl);
+        const imgRes = await fetch(imageUrl, {
+          signal: AbortSignal.timeout(IMG_DOWNLOAD_TIMEOUT_MS),
+        });
         const imgBuffer = await imgRes.arrayBuffer();
         const base64 = Buffer.from(imgBuffer).toString("base64");
         console.log("[bailian] Task succeeded, image bytes:", base64.length);
@@ -302,12 +316,13 @@ const QWEN_IMAGE_EDIT_ENDPOINT =
 async function callQwenImageEdit(
   model: string,
   prompt: string,
-  imageBase64: string
+  imageBase64: string,
+  timeoutMs: number = QWEN_TIMEOUT_MS
 ): Promise<{ image: string } | null> {
   if (!config.bailianApiKey) return null;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), QWEN_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(QWEN_IMAGE_EDIT_ENDPOINT, {
@@ -352,7 +367,9 @@ async function callQwenImageEdit(
       const dataUrlMatch = block.image.match(/^data:image\/[^;]+;base64,(.+)$/);
       if (dataUrlMatch) return { image: dataUrlMatch[1] };
       if (block.image.startsWith("http")) {
-        const imgRes = await fetch(block.image);
+        const imgRes = await fetch(block.image, {
+          signal: AbortSignal.timeout(IMG_DOWNLOAD_TIMEOUT_MS),
+        });
         const base64 = Buffer.from(await imgRes.arrayBuffer()).toString("base64");
         return { image: base64 };
       }
@@ -386,25 +403,9 @@ router.post("/generate", async (req: Request, res: Response) => {
     }
   };
 
-  // The client (WeChat 小程序 默认 60s / 前端 150s) can give up long before a
-  // two-stage generation finishes. If that happens, the socket closes while we
-  // are still working. Track it so we can refund the reserved attempt instead
-  // of charging the user for an image they never received.
-  let clientDisconnected = false;
-  req.on("close", () => {
-    if (!res.writableEnded) {
-      clientDisconnected = true;
-    }
-  });
-
-  // Commit a successful result: if the client already walked away, refund the
-  // attempt and skip writing to a dead socket; otherwise deliver and consume.
+  // Commit a successful result: deliver the image and mark the reserved attempt
+  // as consumed.
   const commitAndSend = (image: string, provider: string): void => {
-    if (clientDisconnected) {
-      console.warn(`[generate] Client disconnected before delivery, refunding attempt (provider=${provider})`);
-      restoreReservedAttempt();
-      return;
-    }
     sendGeneratedImage(req, res, image, provider);
     reservedAttempt = null;
   };
@@ -508,21 +509,37 @@ router.post("/generate", async (req: Request, res: Response) => {
         // 免费额度跳过此付费阶段（basicOnly），避免免费请求触发付费美颜。
         if (hasCosmeticPrompt && !basicOnly && config.bailianApiKey) {
           console.log("[pipeline] Hivision succeeded, starting cosmetic pass");
+          // 第二段：按顺序尝试多个百炼模型做外观编辑，互为备份（任一可用即返回）。
+          // 全程受 COSMETIC_DEADLINE_MS 总时限约束，并据剩余时间收紧每次调用超时，
+          // 确保 Hivision + 第二段不超过客户端 150s；时间不够/全部失败即降级为基础图。
+          const cosmeticChain = isPro
+            ? [
+                { name: "qwen-image-edit-plus", run: (t: number) => callQwenImageEdit("qwen-image-edit-plus", cosmeticPrompt!, hivisionResult.image, t) },
+                { name: "qwen-image-edit",      run: (t: number) => callQwenImageEdit("qwen-image-edit", cosmeticPrompt!, hivisionResult.image, t) },
+                { name: "wanx2.1-imageedit",    run: (t: number) => callBailian(cosmeticPrompt!, hivisionResult.image, t) },
+              ]
+            : [
+                { name: "wanx2.1-imageedit", run: (t: number) => callBailian(cosmeticPrompt!, hivisionResult.image, t) },
+                { name: "qwen-image-edit",   run: (t: number) => callQwenImageEdit("qwen-image-edit", cosmeticPrompt!, hivisionResult.image, t) },
+              ];
           let cosmeticResult: { image: string } | null = null;
-          if (isPro) {
-            cosmeticResult =
-              (await callQwenImageEdit("qwen-image-edit-plus", cosmeticPrompt!, hivisionResult.image)) ??
-              (await callQwenImageEdit("qwen-image-edit",       cosmeticPrompt!, hivisionResult.image));
-          }
-          if (!cosmeticResult) {
-            cosmeticResult = await callBailian(cosmeticPrompt!, hivisionResult.image);
+          const cosmeticStart = Date.now();
+          for (const provider of cosmeticChain) {
+            const remaining = COSMETIC_DEADLINE_MS - (Date.now() - cosmeticStart);
+            if (remaining < COSMETIC_MIN_ATTEMPT_MS) {
+              console.warn(`[cosmetic] 剩余时间不足 ${remaining}ms，停止重试，降级基础图`);
+              break;
+            }
+            cosmeticResult = await provider.run(Math.min(COSMETIC_CALL_TIMEOUT_MS, remaining));
+            if (cosmeticResult) break;
+            console.warn(`[cosmetic] ${provider.name} 失败/超时，尝试下一个备选模型`);
           }
           if (cosmeticResult) {
             commitAndSend(cosmeticResult.image, "hivision+cosmetic");
             return;
           }
-          // 第二阶段失败时，降级返回 Hivision 基础结果（保证质量底线）
-          console.warn("[pipeline] Cosmetic pass failed, returning Hivision base result");
+          // 第二阶段全部超时/失败时，降级返回 Hivision 基础结果（保证有图、不挂死）
+          console.warn("[pipeline] Cosmetic pass failed/timeout, returning Hivision base result");
         }
         commitAndSend(hivisionResult.image, "hivision");
         return;
