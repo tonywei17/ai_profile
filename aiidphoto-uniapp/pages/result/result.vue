@@ -7,78 +7,96 @@
     <view class="result-header">
       <view class="header-left">
         <view class="back-btn" @click="goBack">
-          <text>←</text>
+          <AppIcon name="back" :size="24" color="var(--color-branch-gray)" />
         </view>
         <text class="header-title">{{ t('result.title') }}</text>
       </view>
-      <view class="header-right" :style="{ paddingRight: headerRightPadding + 'px' }">
+      <view v-if="hasValidImages" class="header-right" :style="{ paddingRight: headerRightPadding + 'px' }">
         <view class="save-btn" @tap="saveToAlbum">
           <text class="save-text">{{ t('result.save') }}</text>
         </view>
       </view>
     </view>
 
-    <!-- 滚动内容 -->
-    <view class="comparison-panel">
-      <!-- 对比区域 -->
-      <view class="comparison-section">
-        <view class="section-heading">
-          <text class="section-title">{{ t('result.comparison') }}</text>
-          <text class="aigc-badge">AI生成/编辑</text>
-        </view>
-        <view class="comparison-container">
-          <ComparisonSlider 
-            :originalImage="originalImage"
-            :generatedImage="generatedImage"
-            @slider-change="onSliderChange"
-          />
-        </view>
+    <!-- 图片缺失/异常兜底态：防止坏图/白屏 -->
+    <view v-if="!hasValidImages" class="error-state">
+      <AppIcon name="album" :size="48" color="var(--color-branch-gray)" />
+      <text class="error-title">图片加载失败</text>
+      <text class="error-desc">未能获取有效的证件照图片，请返回重新拍摄或生成</text>
+      <view class="error-back-btn" @tap="goBack">
+        <text class="error-back-text">返回上一页</text>
       </view>
     </view>
 
-    <scroll-view scroll-y class="scroll-content">
-      <!-- 操作按钮 -->
-      <view class="action-section">
-        <view class="action-grid">
-          <view class="action-item" @tap="saveToAlbum">
-            <view class="action-icon">💾</view>
-            <text class="action-label">{{ t('result.save') }}</text>
+    <template v-else>
+      <!-- 滚动内容 -->
+      <view class="comparison-panel">
+        <!-- 对比区域 -->
+        <view class="comparison-section">
+          <view class="section-heading">
+            <text class="section-title">{{ t('result.comparison') }}</text>
+            <text class="aigc-badge">AI生成/编辑</text>
           </view>
-          <view class="action-item" @tap="openPrintLayout">
-            <view class="action-icon">🖨️</view>
-            <text class="action-label">{{ t('result.print') }}</text>
-          </view>
-          <view class="action-item" @tap="retakePhoto">
-            <view class="action-icon">🔄</view>
-            <text class="action-label">{{ t('result.retake') }}</text>
+          <view class="comparison-container">
+            <ComparisonSlider
+              :originalImage="originalImage"
+              :generatedImage="generatedImage"
+              @slider-change="onSliderChange"
+            />
           </view>
         </view>
       </view>
 
-      <!-- 图片信息 -->
-      <view class="info-section">
-        <text class="section-title">{{ t('result.info') }}</text>
-        <view class="info-card">
-          <view class="info-row">
-            <text class="info-label">{{ t('result.spec') }}</text>
-            <text class="info-value">{{ specInfo.name }}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">{{ t('result.size') }}</text>
-            <text class="info-value">{{ specInfo.sizeLabel }}</text>
-          </view>
-          <view class="info-row">
-            <text class="info-label">{{ t('result.createdAt') }}</text>
-            <text class="info-value">{{ formatDate(createdAt) }}</text>
+      <scroll-view scroll-y class="scroll-content">
+        <!-- 操作按钮 -->
+        <view class="action-section">
+          <view class="action-grid">
+            <view class="action-item" @tap="saveToAlbum">
+              <view class="action-icon">
+                <AppIcon name="save" :size="28" color="var(--color-ink-black)" />
+              </view>
+              <text class="action-label">{{ t('result.save') }}</text>
+            </view>
+            <view class="action-item" @tap="openPrintLayout">
+              <view class="action-icon">
+                <AppIcon name="printer" :size="28" color="var(--color-ink-black)" />
+              </view>
+              <text class="action-label">{{ t('result.print') }}</text>
+            </view>
+            <view class="action-item" @tap="retakePhoto">
+              <view class="action-icon">
+                <AppIcon name="refresh" :size="28" color="var(--color-ink-black)" />
+              </view>
+              <text class="action-label">{{ t('result.retake') }}</text>
+            </view>
           </view>
         </view>
-      </view>
-    </scroll-view>
 
-    <canvas
-      canvas-id="printCanvas"
-      style="position: fixed; top: -9999px; left: -9999px; width: 1500px; height: 2102px;"
-    ></canvas>
+        <!-- 图片信息 -->
+        <view class="info-section">
+          <text class="section-title">{{ t('result.info') }}</text>
+          <view class="info-card">
+            <view class="info-row">
+              <text class="info-label">{{ t('result.spec') }}</text>
+              <text class="info-value">{{ specInfo.name }}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">{{ t('result.size') }}</text>
+              <text class="info-value">{{ specInfo.sizeLabel }}</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">{{ t('result.createdAt') }}</text>
+              <text class="info-value">{{ formatDate(createdAt) }}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <canvas
+        canvas-id="printCanvas"
+        style="position: fixed; top: -9999px; left: -9999px; width: 1500px; height: 2102px;"
+      ></canvas>
+    </template>
   </view>
 </template>
 
@@ -86,6 +104,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from '@/utils/i18n.js'
 import ComparisonSlider from '@/components/ComparisonSlider.vue'
+import AppIcon from '@/components/AppIcon.vue'
 import historyAPI from '@/api/history.js'
 import printLayoutAPI from '@/api/printLayout.js'
 import geminiAPI from '@/api/gemini.js'
@@ -113,6 +132,12 @@ const generatedImage = ref('')
 const produceId = ref('')
 const specInfo = ref({})
 const createdAt = ref(Date.now())
+
+// 原图与生成图是否均有效：任一缺失都不渲染对比图/操作区，避免坏图/白屏
+const hasValidImages = computed(() => {
+  return typeof originalImage.value === 'string' && originalImage.value.length > 0 &&
+    typeof generatedImage.value === 'string' && generatedImage.value.length > 0
+})
 
 // 获取页面参数
 onMounted(() => {
@@ -145,7 +170,11 @@ onMounted(() => {
     
     console.log('解析后的原图路径:', originalImage.value)
     console.log('解析后的生成图路径:', generatedImage.value)
-    
+
+    if (!originalImage.value || !generatedImage.value) {
+      console.error('结果页面参数缺失，原图或生成图路径为空，展示兜底错误态')
+    }
+
     // 解析规格信息
     if (options.specInfo) {
       try {
@@ -155,6 +184,8 @@ onMounted(() => {
         specInfo.value = { name: '证件照', sizeLabel: '1寸' }
       }
     }
+  } else {
+    console.error('结果页面参数缺失，未获取到 options，展示兜底错误态')
   }
 })
 
@@ -181,6 +212,30 @@ const onSliderChange = (value) => {
   console.log('滑块位置:', value)
 }
 
+// 相册保存失败统一处理：权限被拒时引导用户去设置开启，其余情况提示保存失败
+const handleSaveAlbumFail = (err, failTitle) => {
+  const errMsg = (err && err.errMsg) || ''
+  if (errMsg.indexOf('auth deny') !== -1 || errMsg.indexOf('auth denied') !== -1 || errMsg.indexOf('authorize') !== -1) {
+    uni.showModal({
+      title: '需要相册权限',
+      content: '保存图片需要相册权限，请在设置中开启「添加到相册」权限后重试',
+      confirmText: '去设置',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          uni.openSetting()
+        }
+      }
+    })
+  } else {
+    console.error('保存到相册失败:', err)
+    uni.showToast({
+      title: failTitle || t('result.saveFailed'),
+      icon: 'none'
+    })
+  }
+}
+
 // 保存到相册
 const saveToAlbum = async () => {
   try {
@@ -202,84 +257,13 @@ const saveToAlbum = async () => {
         addToHistory()
       },
       fail: (error) => {
-        console.error('保存失败:', error)
-        uni.showToast({
-          title: t('result.saveFailed'),
-          icon: 'none'
-        })
+        handleSaveAlbumFail(error)
       }
     })
   } catch (error) {
     console.error('保存异常:', error)
     uni.showToast({
       title: t('result.saveFailed'),
-      icon: 'none'
-    })
-  }
-}
-
-// 分享图片
-const shareImage = async () => {
-  try {
-    // #ifdef MP-WEIXIN
-    // 微信小程序分享
-    uni.showShareMenu({
-      withShareTicket: true
-    })
-    // #endif
-    
-    // #ifdef H5
-    // H5分享：复制图片链接或下载
-    if (navigator.share) {
-      // 使用Web Share API
-      const response = await fetch(generatedImage.value)
-      const blob = await response.blob()
-      const file = new File([blob], 'id-photo.jpg', { type: 'image/jpeg' })
-      
-      navigator.share({
-        title: 'AI证件照',
-        text: '看看我的AI证件照！',
-        files: [file]
-      }).catch(() => {
-        // 如果分享失败，显示下载提示
-        uni.showToast({
-          title: '请长按图片保存分享',
-          icon: 'none'
-        })
-      })
-    } else {
-      uni.showToast({
-        title: '请长按图片保存分享',
-        icon: 'none'
-      })
-    }
-    // #endif
-    
-    // #ifdef APP-PLUS
-    // APP分享：使用原生分享
-    uni.share({
-      provider: 'weixin',
-      type: 2, // 图片分享
-      imageUrl: generatedImage.value,
-      success: () => {
-        uni.showToast({
-          title: '分享成功',
-          icon: 'success'
-        })
-      },
-      fail: () => {
-        uni.showToast({
-          title: '分享失败',
-          icon: 'none'
-        })
-      }
-    })
-    // #endif
-    
-  } catch (error) {
-    console.error('分享失败:', error)
-    uni.showToast({
-      title: t('result.shareFailed'),
       icon: 'none'
     })
   }
@@ -344,9 +328,9 @@ const openPrintLayout = () => {
               duration: 2000
             })
           },
-          fail: () => {
+          fail: (err) => {
             uni.hideLoading()
-            uni.showToast({ title: t('result.printFailed'), icon: 'none' })
+            handleSaveAlbumFail(err, t('result.printFailed'))
           }
         })
       } catch (error) {
@@ -423,8 +407,13 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: var(--color-branch-gray);
+  border-radius: 22px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.back-btn:active {
+  background-color: var(--color-bg-secondary);
+  opacity: 0.7;
 }
 
 .header-title {
@@ -440,8 +429,13 @@ const goBack = () => {
 
 .save-btn {
   padding: 8px 12px;
-  background-color: var(--color-primary);
+  background-color: var(--color-sky-blue);
   border-radius: 8px;
+  transition: opacity 0.15s ease;
+}
+
+.save-btn:active {
+  opacity: 0.75;
 }
 
 .save-text {
@@ -495,7 +489,7 @@ const goBack = () => {
   border: 1px solid rgba(36, 100, 200, 0.28);
   border-radius: 999px;
   background: rgba(36, 100, 200, 0.08);
-  color: #2464c8;
+  color: var(--color-sky-blue);
   font-size: 11px;
   font-weight: 600;
 }
@@ -515,7 +509,7 @@ const goBack = () => {
 
 .action-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
@@ -531,10 +525,13 @@ const goBack = () => {
 
 .action-item:active {
   background-color: var(--color-bg-tertiary);
+  opacity: 0.85;
 }
 
 .action-icon {
-  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 8px;
 }
 
@@ -575,5 +572,47 @@ const goBack = () => {
   font-size: 14px;
   color: var(--color-ink-black);
   font-weight: 500;
+}
+
+/* 图片缺失兜底态 */
+.error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  gap: 12px;
+}
+
+.error-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-ink-black);
+}
+
+.error-desc {
+  font-size: 14px;
+  color: var(--color-branch-gray);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.error-back-btn {
+  margin-top: 12px;
+  padding: 10px 24px;
+  background-color: var(--color-sky-blue);
+  border-radius: 8px;
+  transition: opacity 0.15s ease;
+}
+
+.error-back-btn:active {
+  opacity: 0.75;
+}
+
+.error-back-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
 }
 </style>

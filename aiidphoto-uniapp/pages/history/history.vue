@@ -20,10 +20,16 @@
 
     <!-- 滚动内容 -->
     <scroll-view scroll-y class="scroll-content">
+      <!-- 加载态 -->
+      <view v-if="isLoading" class="loading-state">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">{{ t('common.loading') }}</text>
+      </view>
+
       <!-- 空状态 -->
-      <view v-if="historyList.length === 0" class="empty-state">
+      <view v-else-if="historyList.length === 0" class="empty-state">
         <view class="empty-icon">
-          <text>📋</text>
+          <AppIcon name="history" :size="40" color="var(--color-branch-gray)" />
         </view>
         <text class="empty-text">{{ t('history.empty') }}</text>
       </view>
@@ -46,7 +52,7 @@
           </view>
           <view class="item-actions">
             <view class="action-btn delete" @tap.stop="deleteHistoryItem(item.id)">
-              <text>🗑️</text>
+              <AppIcon name="trash" :size="18" color="var(--color-branch-gray)" />
             </view>
           </view>
         </view>
@@ -59,6 +65,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from '@/utils/i18n.js'
 import historyAPI from '@/api/history.js'
+import AppIcon from '@/components/AppIcon.vue'
 
 // 获取i18n实例
 const { t } = useI18n()
@@ -80,11 +87,14 @@ const headerRightPadding = computed(() => {
 // 历史记录列表
 const historyList = ref([])
 
+// 加载态(仅用于首次进入页面,避免先闪"暂无历史记录"空态再出列表)
+const isLoading = ref(true)
+
 // 获取系统信息
 onMounted(async () => {
   const systemInfo = uni.getSystemInfoSync()
   statusBarHeight.value = systemInfo.statusBarHeight || 0
-  
+
   // 获取微信胶囊按钮位置
   // #ifdef MP-WEIXIN
   try {
@@ -94,9 +104,13 @@ onMounted(async () => {
     console.error('获取胶囊按钮位置失败:', e)
   }
   // #endif
-  
+
   // 加载历史记录
-  await loadHistory()
+  try {
+    await loadHistory()
+  } finally {
+    isLoading.value = false
+  }
 })
 
 // 加载历史记录
@@ -246,6 +260,12 @@ const goBack = () => {
   justify-content: center;
   font-size: 24px;
   color: var(--color-branch-gray);
+  border-radius: 50%;
+  transition: background-color 0.15s ease;
+}
+
+.back-btn:active {
+  background-color: var(--color-bg-secondary);
 }
 
 .header-title {
@@ -263,6 +283,11 @@ const goBack = () => {
   padding: 8px 12px;
   background-color: var(--color-bg-secondary);
   border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.clear-btn:active {
+  background-color: var(--color-bg-tertiary);
 }
 
 .clear-text {
@@ -276,6 +301,36 @@ const goBack = () => {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
+}
+
+/* 加载态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 16px;
+  border: 3px solid var(--color-bg-tertiary);
+  border-top-color: var(--color-sky-blue);
+  border-radius: 50%;
+  animation: history-spin 0.8s linear infinite;
+}
+
+@keyframes history-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: var(--color-branch-gray);
 }
 
 /* 空状态 */
@@ -293,9 +348,8 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
   margin-bottom: 16px;
-  opacity: 0.3;
+  opacity: 0.5;
 }
 
 .empty-text {
@@ -371,7 +425,6 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   border-radius: 8px;
   background-color: var(--color-bg-primary);
   transition: background-color 0.15s ease;

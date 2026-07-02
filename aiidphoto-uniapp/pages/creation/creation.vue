@@ -7,13 +7,13 @@
     <view class="generation-header" :style="{ height: navigationBarHeight + 'px' }">
       <view class="header-left">
         <view class="back-btn" @tap="goBack">
-          <text>←</text>
+          <AppIcon name="back" :size="22" color="var(--color-ink-black)" />
         </view>
         <text class="header-title">{{ t('app.name') }}</text>
       </view>
       <view class="header-right" :style="{ paddingRight: headerRightPadding + 'px' }">
         <view class="icon-btn" @tap="navigateToHistory">
-          <text>📋</text>
+          <AppIcon name="history" :size="20" color="var(--color-ink-black)" />
         </view>
         <view v-if="paymentEnabled" class="subscription-btn" @tap="navigateToSubscription">
           <text class="subscription-text">{{ t('common.pro') }}</text>
@@ -33,7 +33,7 @@
             :class="{ active: index + 1 <= currentStep, completed: index + 1 < currentStep }"
           >
             <view class="step-circle">
-              <text v-if="index + 1 < currentStep" class="step-check">✓</text>
+              <AppIcon v-if="index + 1 < currentStep" name="check" :size="14" color="#FFFFFF" />
               <text v-else class="step-number">{{ index + 1 }}</text>
             </view>
             <text class="step-title">{{ step }}</text>
@@ -45,19 +45,19 @@
       <view class="hero-section">
         <view v-if="!inputImage" class="upload-placeholder" @tap="showPhotoSourceDialog">
           <view class="upload-icon">
-            <text>↗</text>
+            <AppIcon name="arrow-up-right" :size="32" color="var(--color-sky-blue)" />
           </view>
           <text class="upload-title">{{ t('creation.upload.title') }}</text>
           <text class="upload-subtitle">{{ t('creation.upload.subtitle') }}</text>
           <view class="upload-tips">
-            <text class="tips-icon">✓</text>
+            <AppIcon name="check" :size="12" color="var(--color-sky-blue-mid)" />
             <text class="tips-text">{{ t('creation.upload.tips') }}</text>
           </view>
         </view>
         <view v-else class="image-preview">
           <image class="preview-image" :src="inputImage" mode="aspectFit" />
           <view class="change-photo-btn" @tap="showPhotoChangeDialog">
-            <text class="change-photo-icon">↺</text>
+            <AppIcon name="refresh" :size="12" color="#FFFFFF" />
             <text class="change-photo-text">{{ t('creation.upload.changePhoto') }}</text>
           </view>
         </view>
@@ -79,12 +79,16 @@
                 <text class="spec-name">{{ spec.displayName }}</text>
                 <text class="spec-size">{{ spec.sizeLabel }}</text>
               </view>
-              <text v-if="spec.isPro && !isSubscribed" class="lock-icon">🔒</text>
+              <view v-if="spec.isPro && !isSubscribed" class="lock-icon">
+                <AppIcon name="lock" :size="13" color="var(--color-branch-gray)" />
+              </view>
             </view>
           </view>
           <view v-if="specs.length > 4" class="expand-btn" @tap="toggleShowAll">
             <text class="expand-text">{{ showAll ? t('creation.showLess') : t('creation.showMore') }}</text>
-            <text class="icon-down" :class="{ rotate: showAll }">▼</text>
+            <view class="icon-down" :class="{ rotate: showAll }">
+              <AppIcon name="chevron-down" :size="14" color="var(--color-branch-gray)" />
+            </view>
           </view>
           <view
             class="custom-size-row"
@@ -100,9 +104,14 @@
               </view>
               <text class="pro-tag">{{ t('common.pro') }}</text>
             </view>
-            <text v-if="isCustomSize" class="custom-selected-mark">✓ 已选</text>
-            <text v-else-if="!isSubscribed" class="lock-icon">🔒</text>
-            <text v-else class="custom-size-arrow">›</text>
+            <view v-if="isCustomSize" class="custom-selected-mark">
+              <AppIcon name="check" :size="12" color="var(--color-sky-blue)" />
+              <text class="custom-selected-text">已选</text>
+            </view>
+            <view v-else-if="!isSubscribed" class="lock-icon">
+              <AppIcon name="lock" :size="13" color="var(--color-branch-gray)" />
+            </view>
+            <AppIcon v-else name="chevron-right" :size="18" color="var(--color-branch-gray)" />
           </view>
           <view v-if="showCustomSizePanel && isSubscribed" class="custom-size-panel">
             <view class="dimension-fields">
@@ -148,7 +157,9 @@
           <view class="pro-header" @tap="toggleProOptions">
             <text class="pro-title">{{ t('creation.aiCustomize') }}</text>
             <text v-if="!isSubscribed" class="pro-badge">{{ t('common.pro') }}</text>
-            <text class="icon-down" :class="{ rotate: isProOptionsExpanded }">▼</text>
+            <view class="icon-down" :class="{ rotate: isProOptionsExpanded }">
+              <AppIcon name="chevron-down" :size="14" color="var(--color-branch-gray)" />
+            </view>
           </view>
           <view v-if="isProOptionsExpanded" class="pro-content">
             <!-- 美颜 -->
@@ -166,10 +177,11 @@
                     :class="{ active: photoOptions.beauty === level.id, locked: level.isPro && !isSubscribed }"
                     @tap="selectBeauty(level)"
                   >
-                    <text class="chip-icon">{{ level.icon }}</text>
                     <text class="chip-label">{{ level.displayName }}</text>
-                    <text v-if="photoOptions.beauty === level.id" class="selection-check">✓</text>
-                    <text v-if="level.isPro && !isSubscribed" class="lock-icon">🔒</text>
+                    <view v-if="photoOptions.beauty === level.id" class="selection-check">
+                      <AppIcon name="check" :size="11" color="var(--color-sky-blue)" />
+                    </view>
+                    <AppIcon v-if="level.isPro && !isSubscribed" name="lock" :size="12" color="var(--color-branch-gray)" />
                   </view>
                 </view>
               </scroll-view>
@@ -189,10 +201,11 @@
                     :class="{ active: photoOptions.attire === attire.id, locked: attire.isPro && !isSubscribed }"
                     @tap="selectAttire(attire)"
                   >
-                    <text class="chip-icon">{{ attire.icon }}</text>
                     <text class="chip-label">{{ attire.displayName }}</text>
-                    <text v-if="photoOptions.attire === attire.id" class="selection-check">✓</text>
-                    <text v-if="attire.isPro && !isSubscribed" class="lock-icon">🔒</text>
+                    <view v-if="photoOptions.attire === attire.id" class="selection-check">
+                      <AppIcon name="check" :size="11" color="var(--color-sky-blue)" />
+                    </view>
+                    <AppIcon v-if="attire.isPro && !isSubscribed" name="lock" :size="12" color="var(--color-branch-gray)" />
                   </view>
                 </view>
               </scroll-view>
@@ -212,10 +225,11 @@
                     :class="{ active: photoOptions.hair === hair.id, locked: hair.isPro && !isSubscribed }"
                     @tap="selectHair(hair)"
                   >
-                    <text class="chip-icon">{{ hair.icon }}</text>
                     <text class="chip-label">{{ hair.displayName }}</text>
-                    <text v-if="photoOptions.hair === hair.id" class="selection-check">✓</text>
-                    <text v-if="hair.isPro && !isSubscribed" class="lock-icon">🔒</text>
+                    <view v-if="photoOptions.hair === hair.id" class="selection-check">
+                      <AppIcon name="check" :size="11" color="var(--color-sky-blue)" />
+                    </view>
+                    <AppIcon v-if="hair.isPro && !isSubscribed" name="lock" :size="12" color="var(--color-branch-gray)" />
                   </view>
                 </view>
               </scroll-view>
@@ -236,10 +250,11 @@
                     @tap="selectBackground(bg)"
                   >
                     <view v-if="bg.swatchColor" class="color-swatch" :style="{ backgroundColor: bg.swatchColor }"></view>
-                    <text v-else class="chip-icon">⬜</text>
                     <text class="chip-label">{{ bg.displayName }}</text>
-                    <text v-if="photoOptions.background === bg.id" class="selection-check">✓</text>
-                    <text v-if="bg.isPro && !isSubscribed" class="lock-icon">🔒</text>
+                    <view v-if="photoOptions.background === bg.id" class="selection-check">
+                      <AppIcon name="check" :size="11" color="var(--color-sky-blue)" />
+                    </view>
+                    <AppIcon v-if="bg.isPro && !isSubscribed" name="lock" :size="12" color="var(--color-branch-gray)" />
                   </view>
                 </view>
               </scroll-view>
@@ -259,10 +274,11 @@
                     :class="{ active: photoOptions.accessories === acc.id, locked: acc.isPro && !isSubscribed }"
                     @tap="selectAccessories(acc)"
                   >
-                    <text class="chip-icon">{{ acc.icon }}</text>
                     <text class="chip-label">{{ acc.displayName }}</text>
-                    <text v-if="photoOptions.accessories === acc.id" class="selection-check">✓</text>
-                    <text v-if="acc.isPro && !isSubscribed" class="lock-icon">🔒</text>
+                    <view v-if="photoOptions.accessories === acc.id" class="selection-check">
+                      <AppIcon name="check" :size="11" color="var(--color-sky-blue)" />
+                    </view>
+                    <AppIcon v-if="acc.isPro && !isSubscribed" name="lock" :size="12" color="var(--color-branch-gray)" />
                   </view>
                 </view>
               </scroll-view>
@@ -284,11 +300,11 @@
           <!-- 主操作行：重新生成 + 保存到相册 -->
           <view class="result-main-actions">
             <view class="regenerate-result-btn" @tap="regeneratePhoto">
-              <text class="regenerate-result-icon">↺</text>
+              <AppIcon name="refresh" :size="14" color="var(--color-sky-blue)" />
               <text class="regenerate-result-text">重新生成</text>
             </view>
             <view class="save-result-btn" @tap="saveImage">
-              <text class="save-result-icon">⬇</text>
+              <AppIcon name="save" :size="14" color="#FFFFFF" />
               <text class="save-result-text">保存到相册</text>
             </view>
           </view>
@@ -313,34 +329,32 @@
       <text class="generate-footnote">{{ t('creation.footnote') }}</text>
     </view>
 
-    <view v-if="showPrivacyDialog" class="privacy-mask">
-      <view class="privacy-dialog">
-        <text class="privacy-title">个人信息保护提示</text>
-        <text class="privacy-content">
-          制作证件照需要处理你主动选择或拍摄的人像照片及面部特征，并通过 HTTPS 发送至阿里云后端、阿里云百炼及我们部署在中国大陆以外云区域的 HivisionIDPhotos 服务完成本次处理。照片不用于模型训练或公开展示，处理完成后不在我们的服务器持久化保存。
-        </text>
-        <view class="privacy-link" @tap="openPrivacyContract">
-          <text>查看《小程序用户隐私保护指引》</text>
-        </view>
-        <button
-          id="agree-privacy-btn"
-          class="privacy-button primary"
-          open-type="agreePrivacyAuthorization"
-          @agreeprivacyauthorization="handleAgreePrivacyAuthorization"
-        >
-          同意并继续
-        </button>
-        <button class="privacy-button secondary" @tap="handleRejectPrivacyAuthorization">
-          暂不同意
-        </button>
+    <!-- AI 生成中全屏遮罩：锁定页面其余交互 -->
+    <view v-if="isGenerating" class="generating-mask" @tap.stop @touchmove.stop.prevent>
+      <view class="generating-box">
+        <view class="generating-spinner"></view>
+        <text class="generating-title">{{ t('creation.generatingOverlay.title') }}</text>
+        <text class="generating-desc">{{ t('creation.generatingOverlay.desc') }}</text>
       </view>
     </view>
+
+    <!-- 隐私同意弹窗（统一组件，授权状态机仍由本页持有） -->
+    <PrivacyConsentDialog
+      :visible="showPrivacyDialog"
+      content="制作证件照需要处理你主动选择或拍摄的人像照片及面部特征，并通过 HTTPS 发送至阿里云后端、阿里云百炼及我们部署在中国大陆以外云区域的 HivisionIDPhotos 服务完成本次处理。照片不用于模型训练或公开展示，处理完成后不在我们的服务器持久化保存。"
+      agree-text="同意并继续"
+      @agree="handleAgreePrivacyAuthorization"
+      @reject="handleRejectPrivacyAuthorization"
+      @view-privacy="openPrivacyContract"
+    />
   </view>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import AppIcon from '@/components/AppIcon.vue'
+import PrivacyConsentDialog from '@/components/PrivacyConsentDialog.vue'
 import geminiAPI from '@/api/gemini.js'
 import printLayoutAPI from '@/api/printLayout.js'
 import historyAPI from '@/api/history.js'
@@ -353,6 +367,13 @@ const { t } = useI18n()
 // 进度步骤
 const steps = ['上传照片', '选择场景', 'AI优化', '下载保存']
 const currentStep = ref(1)
+
+// 步骤条状态推进：只前进不后退（生成失败的回退由 generatePhoto 显式处理）
+const markStepReached = (step) => {
+  if (currentStep.value < step) {
+    currentStep.value = step
+  }
+}
 
 // 系统信息
 const statusBarHeight = ref(0)
@@ -504,7 +525,7 @@ const handleAgreePrivacyAuthorization = () => {
   uni.setStorageSync(PRIVACY_NOTICE_KEY, true)
   if (resolvePrivacyAuthorization) {
     resolvePrivacyAuthorization({
-      buttonId: 'agree-privacy-btn',
+      buttonId: 'privacy-agree-btn',
       event: 'agree'
     })
     resolvePrivacyAuthorization = null
@@ -520,7 +541,7 @@ const handleRejectPrivacyAuthorization = () => {
     resolvePrivacyAuthorization = null
   }
   uni.showToast({
-    title: '同意隐私指引后方可使用',
+    title: t('creation.toast.privacyRequired'),
     icon: 'none'
   })
 }
@@ -702,28 +723,46 @@ const specs = computed(() => [
 // 初始化默认选择第一个规格
 selectedSpec.value = specs.value[0]
 
+// 首页分类卡跳转联动：onLoad 读取 specId 预选对应规格
+// 仅预选免费规格；Pro 规格需订阅状态加载后由用户自行点选（避免未订阅时静默选中付费项）
+onLoad((options) => {
+  const specId = options && options.specId
+  if (!specId) return
+  const matched = specs.value.find((spec) => spec.id === specId)
+  if (matched && !matched.isPro) {
+    selectedSpec.value = matched
+    isCustomSize.value = false
+    showCustomSizePanel.value = false
+    // 预选规格位于折叠区(前4个之外)时展开列表,保证选中态可见
+    if (specs.value.indexOf(matched) >= 4) {
+      showAll.value = true
+    }
+  }
+})
+
 const displayedSpecs = computed(() => {
   return showAll.value ? specs.value : specs.value.slice(0, 4)
 })
 
 // Pro选项数据（使用i18n）
+// 选项 chips 统一为纯文字标签 + 选中态样式（不再使用 emoji 图标）
 const beautyLevels = computed(() => [
-  { id: 'natural', displayName: t('creation.natural'), icon: '😊', isPro: false },
-  { id: 'lightEnhance', displayName: t('creation.lightEnhance'), icon: '✨', isPro: true },
-  { id: 'professional', displayName: t('creation.proRetouch'), icon: '🎨', isPro: true }
+  { id: 'natural', displayName: t('creation.natural'), isPro: false },
+  { id: 'lightEnhance', displayName: t('creation.lightEnhance'), isPro: true },
+  { id: 'professional', displayName: t('creation.proRetouch'), isPro: true }
 ])
 
 const attires = computed(() => [
-  { id: 'keepOriginal', displayName: t('creation.keepOriginal'), icon: '👕', isPro: false },
-  { id: 'darkSuit', displayName: t('creation.darkSuit'), icon: '🤵', isPro: true },
-  { id: 'navySuit', displayName: t('creation.navySuit'), icon: '🤵', isPro: true },
-  { id: 'whiteShirt', displayName: t('creation.whiteShirt'), icon: '👔', isPro: true },
-  { id: 'professionalBlouse', displayName: t('creation.professionalBlouse'), icon: '👚', isPro: true }
+  { id: 'keepOriginal', displayName: t('creation.keepOriginal'), isPro: false },
+  { id: 'darkSuit', displayName: t('creation.darkSuit'), isPro: true },
+  { id: 'navySuit', displayName: t('creation.navySuit'), isPro: true },
+  { id: 'whiteShirt', displayName: t('creation.whiteShirt'), isPro: true },
+  { id: 'professionalBlouse', displayName: t('creation.professionalBlouse'), isPro: true }
 ])
 
 const hairs = computed(() => [
-  { id: 'keepOriginal', displayName: t('creation.keepOriginal'), icon: '💇', isPro: false },
-  { id: 'tidyUp', displayName: t('creation.tidyUp'), icon: '✂️', isPro: true }
+  { id: 'keepOriginal', displayName: t('creation.keepOriginal'), isPro: false },
+  { id: 'tidyUp', displayName: t('creation.tidyUp'), isPro: true }
 ])
 
 const backgrounds = computed(() => [
@@ -735,8 +774,8 @@ const backgrounds = computed(() => [
 ])
 
 const accessories = computed(() => [
-  { id: 'keepAsIs', displayName: t('creation.keepAsIs'), icon: '🤚', isPro: false },
-  { id: 'removeGlasses', displayName: t('creation.removeGlasses'), icon: '👓', isPro: true }
+  { id: 'keepAsIs', displayName: t('creation.keepAsIs'), isPro: false },
+  { id: 'removeGlasses', displayName: t('creation.removeGlasses'), isPro: true }
 ])
 
 const photoOptions = ref({
@@ -765,13 +804,37 @@ const navigateToHistory = () => {
 const navigateToSubscription = () => {
   if (!paymentEnabled) {
     uni.showToast({
-      title: '当前设备暂不支持购买',
+      title: t('creation.toast.purchaseUnavailable'),
       icon: 'none'
     })
     return
   }
   uni.navigateTo({
     url: '/pages/subscription/subscription'
+  })
+}
+
+// Pro 锁定项点击：先简述会员权益，确认后再跳订阅页
+const promptProUpgrade = () => {
+  if (!paymentEnabled) {
+    uni.showToast({
+      title: t('creation.toast.purchaseUnavailable'),
+      icon: 'none'
+    })
+    return
+  }
+  uni.showModal({
+    title: t('creation.proLock.title'),
+    content: t('creation.proLock.content'),
+    confirmText: t('creation.proLock.confirm'),
+    cancelText: t('creation.proLock.cancel'),
+    success: (res) => {
+      if (res.confirm) {
+        uni.navigateTo({
+          url: '/pages/subscription/subscription'
+        })
+      }
+    }
   })
 }
 
@@ -790,20 +853,23 @@ const chooseFromAlbum = () => {
           inputImage.value = compressRes.tempFilePath
           outputImage.value = null
           outputProduceId.value = ''
-          selectedSpec.value = specs.value[0] // 默认选择第一个规格
+          // 保留用户已选规格（含 specId 预选），无选择时兜底第一个规格
+          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
+          markStepReached(2) // 照片就绪，进入"选择场景"
         },
         fail: () => {
           // 压缩失败则使用原图
           inputImage.value = tempFilePath
           outputImage.value = null
           outputProduceId.value = ''
-          selectedSpec.value = specs.value[0]
+          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
+          markStepReached(2)
         }
       })
     },
     fail: (err) => {
       uni.showToast({
-        title: '选择图片失败',
+        title: t('creation.toast.chooseImageFailed'),
         icon: 'none'
       })
     }
@@ -826,19 +892,21 @@ const takePhoto = () => {
           inputImage.value = compressRes.tempFilePath
           outputImage.value = null
           outputProduceId.value = ''
-          selectedSpec.value = specs.value[0]
+          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
+          markStepReached(2)
         },
         fail: () => {
           inputImage.value = tempFilePath
           outputImage.value = null
           outputProduceId.value = ''
-          selectedSpec.value = specs.value[0]
+          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
+          markStepReached(2)
         }
       })
     },
     fail: (err) => {
       uni.showToast({
-        title: '拍照失败',
+        title: t('creation.toast.takePhotoFailed'),
         icon: 'none'
       })
     }
@@ -847,7 +915,7 @@ const takePhoto = () => {
 
 const showPhotoSourceDialog = () => {
   uni.showActionSheet({
-    itemList: ['从相册选择', '拍照'],
+    itemList: [t('creation.photoSource.album'), t('creation.photoSource.camera')],
     success: (res) => {
       if (res.tapIndex === 0) {
         chooseFromAlbum()
@@ -860,7 +928,7 @@ const showPhotoSourceDialog = () => {
 
 const showPhotoChangeDialog = () => {
   uni.showActionSheet({
-    itemList: ['从相册选择', '拍照', '清除照片'],
+    itemList: [t('creation.photoSource.album'), t('creation.photoSource.camera'), t('creation.photoSource.clear')],
     success: (res) => {
       if (res.tapIndex === 0) {
         chooseFromAlbum()
@@ -877,6 +945,7 @@ const clearPhoto = () => {
   inputImage.value = null
   outputImage.value = null
   outputProduceId.value = ''
+  currentStep.value = 1 // 清除照片后回到"上传照片"步骤
 }
 
 const regeneratePhoto = () => {
@@ -887,17 +956,19 @@ const regeneratePhoto = () => {
 
 const selectSpec = (spec) => {
   if (spec.isPro && !isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   selectedSpec.value = spec
   isCustomSize.value = false
   showCustomSizePanel.value = false
+  // 已上传照片时，选择规格即激活"选择场景"步骤
+  if (inputImage.value) markStepReached(2)
 }
 
 const selectCustomSize = () => {
   if (!isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   showCustomSizePanel.value = !showCustomSizePanel.value
@@ -915,7 +986,7 @@ const applyCustomSize = () => {
     heightMM > 300
   ) {
     uni.showToast({
-      title: '请输入 10–300 mm 的有效尺寸',
+      title: t('creation.toast.invalidCustomSize'),
       icon: 'none'
     })
     return
@@ -937,8 +1008,9 @@ const applyCustomSize = () => {
   }
   isCustomSize.value = true
   showCustomSizePanel.value = false
+  if (inputImage.value) markStepReached(2)
   uni.showToast({
-    title: `已应用 ${normalizedWidth}×${normalizedHeight} mm`,
+    title: t('creation.toast.customSizeApplied', { size: `${normalizedWidth}×${normalizedHeight}` }),
     icon: 'success'
   })
 }
@@ -953,7 +1025,7 @@ const toggleProOptions = () => {
 
 const selectBeauty = (level) => {
   if (level.isPro && !isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   photoOptions.value.beauty = level.id
@@ -961,7 +1033,7 @@ const selectBeauty = (level) => {
 
 const selectAttire = (attire) => {
   if (attire.isPro && !isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   photoOptions.value.attire = attire.id
@@ -969,7 +1041,7 @@ const selectAttire = (attire) => {
 
 const selectHair = (hair) => {
   if (hair.isPro && !isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   photoOptions.value.hair = hair.id
@@ -977,7 +1049,7 @@ const selectHair = (hair) => {
 
 const selectBackground = (bg) => {
   if (bg.isPro && !isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   photoOptions.value.background = bg.id
@@ -985,7 +1057,7 @@ const selectBackground = (bg) => {
 
 const selectAccessories = (acc) => {
   if (acc.isPro && !isSubscribed.value) {
-    navigateToSubscription()
+    promptProUpgrade()
     return
   }
   photoOptions.value.accessories = acc.id
@@ -996,7 +1068,7 @@ const generatePhoto = async () => {
   
   if (!selectedSpec.value) {
     uni.showToast({
-      title: '请选择证件照规格',
+      title: t('creation.toast.selectSpecFirst'),
       icon: 'none'
     })
     return
@@ -1005,10 +1077,27 @@ const generatePhoto = async () => {
   // 检查是否有足够的生成次数
   const status = await paymentAPI.getRemainingAttempts()
   if (status.totalAttempts <= 0) {
-    uni.showToast({
-      title: paymentEnabled ? '生成次数不足，请购买生成套餐' : '当前设备暂不支持购买，请使用已有生成次数',
-      icon: 'none'
-    })
+    // 次数耗尽：弹窗说明并引导去购买（取消则留在当前页）
+    if (paymentEnabled) {
+      uni.showModal({
+        title: t('creation.noAttempts.title'),
+        content: t('creation.noAttempts.content'),
+        confirmText: t('creation.noAttempts.confirm'),
+        cancelText: t('creation.noAttempts.cancel'),
+        success: (res) => {
+          if (res.confirm) {
+            uni.navigateTo({
+              url: '/pages/subscription/subscription'
+            })
+          }
+        }
+      })
+    } else {
+      uni.showToast({
+        title: t('creation.toast.purchaseUnavailable'),
+        icon: 'none'
+      })
+    }
     return
   }
 
@@ -1030,17 +1119,17 @@ const generatePhoto = async () => {
     // 有Pro选项但没有Pro次数，询问是否使用免费次数
     const useFree = await new Promise((resolve) => {
       uni.showModal({
-        title: '提示',
-        content: '您选择了Pro功能但没有Pro次数，是否使用免费次数生成（不应用Pro效果）？',
+        title: t('creation.proAttemptFallback.title'),
+        content: t('creation.proAttemptFallback.content'),
         success: (res) => resolve(res.confirm)
       })
     })
-    
+
     if (!useFree) return
     useProAttempts = false
   } else {
     uni.showToast({
-      title: '生成次数不足',
+      title: t('creation.toast.noAttempts'),
       icon: 'none'
     })
     return
@@ -1058,7 +1147,7 @@ const generatePhoto = async () => {
     // 扣除对应的次数
     const success = await paymentAPI.useAttempt(useProAttempts ? 'pro' : 'free')
     if (!success) {
-      throw new Error('扣除次数失败')
+      throw new Error(t('creation.toast.deductFailed'))
     }
 
     // 1. 将图片转换为base64
@@ -1142,24 +1231,7 @@ const generatePhoto = async () => {
     currentStep.value = 4 // 生成成功时进入下载保存步骤
     await loadUserStatus()
 
-    // 7. 跳转到结果页面
-    setTimeout(() => {
-      const specInfo = {
-        id: selectedSpec.value.id,
-        name: selectedSpec.value.displayName,
-        sizeLabel: selectedSpec.value.sizeLabel,
-        widthPx: selectedSpec.value.widthPx,
-        heightPx: selectedSpec.value.heightPx,
-        isCustomSize: isCustomSize.value
-      }
-      
-      // 直接传递图片路径，不进行编码
-      uni.navigateTo({
-        url: `/pages/result/result?originalImage=${inputImage.value}&generatedImage=${tempFilePath}&produceId=${generatedResult.produceId}&specInfo=${encodeURIComponent(JSON.stringify(specInfo))}&createdAt=${Date.now()}`
-      })
-    }, 1000) // 延迟1秒让用户看到生成成功的提示
-
-    // 8. 保存到历史记录
+    // 7. 保存到历史记录
     try {
       await historyAPI.addRecord({
         imagePath: tempFilePath,
@@ -1174,19 +1246,59 @@ const generatePhoto = async () => {
     }
 
     uni.showToast({
-      title: '生成成功',
+      title: t('creation.toast.generateSuccess'),
       icon: 'success'
+    })
+
+    // 8. 跳转到结果页面（redirectTo 用 result 替换当前 creation，页面栈深度恒定，返回即回首页）
+    const specInfo = {
+      id: selectedSpec.value.id,
+      name: selectedSpec.value.displayName,
+      sizeLabel: selectedSpec.value.sizeLabel,
+      widthPx: selectedSpec.value.widthPx,
+      heightPx: selectedSpec.value.heightPx,
+      isCustomSize: isCustomSize.value
+    }
+
+    // 直接传递图片路径，不进行编码
+    uni.redirectTo({
+      url: `/pages/result/result?originalImage=${inputImage.value}&generatedImage=${tempFilePath}&produceId=${generatedResult.produceId}&specInfo=${encodeURIComponent(JSON.stringify(specInfo))}&createdAt=${Date.now()}`
     })
   } catch (error) {
     console.error('生成失败:', error)
     currentStep.value = 2 // 生成失败时回到选择场景步骤
     uni.showToast({
-      title: error.message || '生成失败，请重试',
+      title: error.message || t('creation.toast.generateFailed'),
       icon: 'none',
       duration: 3000
     })
   } finally {
+    // 成功路径已先发起 redirectTo 再走到这里复位，不存在可重复点击的窗口
     isGenerating.value = false
+  }
+}
+
+// 相册保存失败统一处理：权限被拒时引导用户去设置开启，其余情况提示保存失败
+const handleSaveAlbumFail = (err) => {
+  const errMsg = (err && err.errMsg) || ''
+  if (errMsg.indexOf('auth deny') !== -1 || errMsg.indexOf('auth denied') !== -1 || errMsg.indexOf('authorize') !== -1) {
+    uni.showModal({
+      title: t('creation.albumAuth.title'),
+      content: t('creation.albumAuth.content'),
+      confirmText: t('creation.albumAuth.confirm'),
+      cancelText: t('creation.albumAuth.cancel'),
+      success: (res) => {
+        if (res.confirm) {
+          uni.openSetting()
+        }
+      }
+    })
+  } else {
+    console.error('保存到相册失败:', err)
+    uni.showToast({
+      title: t('result.saveFailed'),
+      icon: 'none'
+    })
   }
 }
 
@@ -1198,16 +1310,19 @@ const saveImage = async () => {
     )
     if (!confirmed) return
   } catch (error) {
-    uni.showToast({ title: error.message || '暂时无法导出', icon: 'none' })
+    uni.showToast({ title: error.message || t('creation.toast.exportUnavailable'), icon: 'none' })
     return
   }
   uni.saveImageToPhotosAlbum({
     filePath: outputImage.value,
     success: () => {
       uni.showToast({
-        title: '已保存',
+        title: t('result.saved'),
         icon: 'success'
       })
+    },
+    fail: (err) => {
+      handleSaveAlbumFail(err)
     }
   })
 }
@@ -1215,7 +1330,7 @@ const saveImage = async () => {
 const showPrintLayout = async () => {
   if (!outputImage.value) {
     uni.showToast({
-      title: '请先生成证件照',
+      title: t('creation.toast.generateFirst'),
       icon: 'none'
     })
     return
@@ -1223,14 +1338,14 @@ const showPrintLayout = async () => {
 
   if (!selectedSpec.value) {
     uni.showToast({
-      title: '请选择证件照规格',
+      title: t('creation.toast.selectSpecFirst'),
       icon: 'none'
     })
     return
   }
 
   uni.showActionSheet({
-    itemList: ['5寸 (89×127)', '6寸 (102×152)', '7寸 (127×178)'],
+    itemList: [t('creation.paperSizes.fiveInch'), t('creation.paperSizes.sixInch'), t('creation.paperSizes.sevenInch')],
     success: async (res) => {
       const paperSizes = [
         printLayoutAPI.PrintPaperSize.FIVE_INCH,
@@ -1245,12 +1360,12 @@ const showPrintLayout = async () => {
         )
         if (!confirmed) return
       } catch (error) {
-        uni.showToast({ title: error.message || '暂时无法导出', icon: 'none' })
+        uni.showToast({ title: error.message || t('creation.toast.exportUnavailable'), icon: 'none' })
         return
       }
 
       uni.showLoading({
-        title: '生成排版中...'
+        title: t('creation.toast.printRendering')
       })
 
       try {
@@ -1275,24 +1390,21 @@ const showPrintLayout = async () => {
           success: () => {
             uni.hideLoading()
             uni.showToast({
-              title: `已保存${layout.totalCount}张排版照片`,
+              title: t('creation.toast.printSavedCount', { count: layout.totalCount }),
               icon: 'success',
               duration: 2000
             })
           },
           fail: (err) => {
             uni.hideLoading()
-            uni.showToast({
-              title: '保存失败',
-              icon: 'none'
-            })
+            handleSaveAlbumFail(err)
           }
         })
       } catch (error) {
         uni.hideLoading()
         console.error('生成排版失败:', error)
         uni.showToast({
-          title: '生成排版失败',
+          title: t('result.printFailed'),
           icon: 'none'
         })
       }
@@ -1445,7 +1557,7 @@ const showPrintLayout = async () => {
 }
 
 .step-item.active:not(:last-child)::after {
-  background-color: #2464c8;
+  background-color: var(--color-sky-blue);
 }
 
 .step-circle {
@@ -1461,11 +1573,11 @@ const showPrintLayout = async () => {
 }
 
 .step-item.active .step-circle {
-  background-color: #2464c8;
+  background-color: var(--color-sky-blue);
 }
 
 .step-item.completed .step-circle {
-  background-color: #2464c8;
+  background-color: var(--color-sky-blue);
 }
 
 .step-number {
@@ -1478,12 +1590,6 @@ const showPrintLayout = async () => {
   color: #ffffff;
 }
 
-.step-check {
-  font-size: 11px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
 .step-title {
   font-size: 10px;
   color: #999999;
@@ -1491,7 +1597,7 @@ const showPrintLayout = async () => {
 }
 
 .step-item.active .step-title {
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 /* Hero区域 */
@@ -1522,7 +1628,7 @@ const showPrintLayout = async () => {
   background: rgba(36, 100, 200, 0.10);
   border-radius: 50%;
   font-size: 44px;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .upload-title {
@@ -1544,11 +1650,6 @@ const showPrintLayout = async () => {
   gap: 4px;
 }
 
-.tips-icon {
-  font-size: 11px;
-  color: #4189e6;
-}
-
 .tips-text {
   font-size: 11px;
   color: #8c8c8c;
@@ -1567,13 +1668,13 @@ const showPrintLayout = async () => {
 }
 
 .upload-btn.primary {
-  background-color: #2464c8;
+  background-color: var(--color-sky-blue);
   border: none;
 }
 
 .upload-btn.secondary {
   background-color: transparent;
-  border: 1px solid #2464c8;
+  border: 1px solid var(--color-sky-blue);
 }
 
 .btn-text {
@@ -1586,7 +1687,7 @@ const showPrintLayout = async () => {
 }
 
 .upload-btn.secondary .btn-text {
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .upload-btn:active {
@@ -1635,12 +1736,6 @@ const showPrintLayout = async () => {
   backdrop-filter: blur(10px);
 }
 
-.change-photo-icon {
-  font-size: 11px;
-  color: #ffffff;
-  font-weight: 500;
-}
-
 .change-photo-text {
   font-size: 11px;
   color: #ffffff;
@@ -1663,10 +1758,10 @@ const showPrintLayout = async () => {
   gap: 6px;
   padding: 14px 0;
   background: transparent !important;
-  border: 1.5px solid #2464c8;
+  border: 1.5px solid var(--color-sky-blue);
   border-radius: 10px;
   transition: all 0.2s ease;
-  color: #2464c8 !important;
+  color: var(--color-sky-blue) !important;
 }
 
 .regenerate-btn:active {
@@ -1675,13 +1770,13 @@ const showPrintLayout = async () => {
 
 .regenerate-icon {
   font-size: 13px;
-  color: #2464c8 !important;
+  color: var(--color-sky-blue) !important;
 }
 
 .regenerate-text {
   font-size: 14px;
   font-weight: 500;
-  color: #2464c8 !important;
+  color: var(--color-sky-blue) !important;
 }
 
 .save-btn {
@@ -1691,7 +1786,7 @@ const showPrintLayout = async () => {
   justify-content: center;
   gap: 6px;
   padding: 14px 0;
-  background: linear-gradient(90deg, #2464c8, #4189e6) !important;
+  background: linear-gradient(90deg, var(--color-sky-blue), var(--color-sky-blue-mid)) !important;
   border: none;
   border-radius: 10px;
   transition: all 0.2s ease;
@@ -1742,7 +1837,7 @@ const showPrintLayout = async () => {
 }
 
 .spec-item.active {
-  border-color: #2464c8;
+  border-color: var(--color-sky-blue);
   background-color: rgba(36, 100, 200, 0.05);
 }
 
@@ -1975,7 +2070,7 @@ const showPrintLayout = async () => {
 
 .custom-size-row.active {
   background: rgba(36, 100, 200, 0.08);
-  box-shadow: inset 4px 0 0 #2464c8;
+  box-shadow: inset 4px 0 0 var(--color-sky-blue);
 }
 
 .custom-size-row.locked {
@@ -2007,15 +2102,15 @@ const showPrintLayout = async () => {
 }
 
 .custom-selected-mark {
-  font-size: 12px;
-  font-weight: 700;
-  color: #2464c8;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
-.custom-size-arrow {
-  font-size: 24px;
-  line-height: 1;
-  color: var(--color-branch-gray);
+.custom-selected-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-sky-blue);
 }
 
 .custom-size-panel {
@@ -2086,7 +2181,7 @@ const showPrintLayout = async () => {
   height: 44px;
   margin-top: 14px;
   border-radius: 8px;
-  background: #2464c8;
+  background: var(--color-sky-blue);
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
@@ -2189,7 +2284,7 @@ const showPrintLayout = async () => {
   white-space: nowrap;
   font-size: 11px;
   font-weight: 600;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .option-scroll {
@@ -2219,7 +2314,7 @@ const showPrintLayout = async () => {
 }
 
 .option-chip.active {
-  background: #2464c8;
+  background: var(--color-sky-blue);
   border-color: #174b9d;
   border-width: 2px;
   box-shadow: 0 3px 9px rgba(36, 100, 200, 0.32);
@@ -2228,10 +2323,6 @@ const showPrintLayout = async () => {
 
 .option-chip.locked {
   opacity: 0.5;
-}
-
-.chip-icon {
-  font-size: 16px;
 }
 
 .chip-label {
@@ -2246,10 +2337,6 @@ const showPrintLayout = async () => {
   font-weight: 700;
 }
 
-.option-chip.active .chip-icon {
-  filter: saturate(1.15);
-}
-
 .selection-check {
   display: flex;
   align-items: center;
@@ -2258,7 +2345,7 @@ const showPrintLayout = async () => {
   height: 18px;
   border-radius: 50%;
   background: #ffffff;
-  color: #2464c8;
+  color: var(--color-sky-blue);
   font-size: 11px;
   font-weight: 900;
 }
@@ -2286,7 +2373,7 @@ const showPrintLayout = async () => {
   gap: 6px;
   padding: 14px 0;
   background: transparent;
-  border: 1.5px solid #2464c8;
+  border: 1.5px solid var(--color-sky-blue);
   border-radius: 10px;
   transition: all 0.2s ease;
 }
@@ -2295,15 +2382,10 @@ const showPrintLayout = async () => {
   background: rgba(36, 100, 200, 0.05);
 }
 
-.regenerate-result-icon {
-  font-size: 13px;
-  color: #2464c8;
-}
-
 .regenerate-result-text {
   font-size: 14px;
   font-weight: 500;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .save-result-btn {
@@ -2313,7 +2395,7 @@ const showPrintLayout = async () => {
   justify-content: center;
   gap: 6px;
   padding: 14px 0;
-  background: linear-gradient(90deg, #2464c8, #4189e6);
+  background: linear-gradient(90deg, var(--color-sky-blue), var(--color-sky-blue-mid));
   border: none;
   border-radius: 10px;
   transition: all 0.2s ease;
@@ -2321,11 +2403,6 @@ const showPrintLayout = async () => {
 
 .save-result-btn:active {
   transform: scale(0.98);
-}
-
-.save-result-icon {
-  font-size: 13px;
-  color: #ffffff;
 }
 
 .save-result-text {
@@ -2358,7 +2435,7 @@ const showPrintLayout = async () => {
   border: 1px solid rgba(36, 100, 200, 0.28);
   border-radius: 999px;
   background: rgba(36, 100, 200, 0.08);
-  color: #2464c8;
+  color: var(--color-sky-blue);
   font-size: 11px;
   font-weight: 600;
 }
@@ -2431,7 +2508,7 @@ const showPrintLayout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, #2464c8, #4189e6);
+  background: linear-gradient(90deg, var(--color-sky-blue), var(--color-sky-blue-mid));
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(36, 100, 200, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -2461,70 +2538,56 @@ const showPrintLayout = async () => {
   margin-top: 6px;
 }
 
-.privacy-mask {
+/* 生成中全屏遮罩 */
+.generating-mask {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 9000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(15, 23, 42, 0.6);
 }
 
-.privacy-dialog {
-  width: 100%;
-  padding: 24px 20px 18px;
+.generating-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+  padding: 28px 32px;
   border-radius: 16px;
-  background: #ffffff;
-  box-sizing: border-box;
+  background: var(--color-bg-primary);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
 }
 
-.privacy-title {
-  display: block;
-  margin-bottom: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a1a;
-  text-align: center;
+.generating-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(36, 100, 200, 0.15);
+  border-top-color: var(--color-sky-blue);
+  border-radius: 50%;
+  animation: generating-spin 0.9s linear infinite;
 }
 
-.privacy-content {
-  display: block;
-  font-size: 14px;
-  line-height: 1.7;
-  color: #555555;
+@keyframes generating-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.privacy-link {
-  padding: 14px 0 18px;
-  font-size: 13px;
-  color: #2464c8;
-  text-align: center;
-}
-
-.privacy-button {
-  width: 100%;
-  height: 46px;
-  margin: 0 0 10px;
-  border-radius: 10px;
+.generating-title {
   font-size: 15px;
-  line-height: 46px;
+  font-weight: 600;
+  color: var(--color-ink-black);
 }
 
-.privacy-button::after {
-  border: none;
-}
-
-.privacy-button.primary {
-  color: #ffffff;
-  background: #2464c8;
-}
-
-.privacy-button.secondary {
-  margin-bottom: 0;
-  color: #666666;
-  background: #f5f5f5;
+.generating-desc {
+  font-size: 12px;
+  color: var(--color-branch-gray);
 }
 
 /* 照片来源对话框 */

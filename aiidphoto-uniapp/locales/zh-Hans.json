@@ -166,7 +166,60 @@
     "generating": "生成中...",
     "retake": "重新拍摄",
     "changePhoto": "更换照片",
-    "footnote": "3.80元购买3次生成机会，包含排版下载，不自动续费"
+    "footnote": "3.80元购买3次生成机会，包含排版下载，不自动续费",
+    "generatingOverlay": {
+      "title": "AI 生成中",
+      "desc": "约需 30 秒，请勿离开页面"
+    },
+    "photoSource": {
+      "album": "从相册选择",
+      "camera": "拍照",
+      "clear": "清除照片"
+    },
+    "paperSizes": {
+      "fiveInch": "5寸 (89×127)",
+      "sixInch": "6寸 (102×152)",
+      "sevenInch": "7寸 (127×178)"
+    },
+    "noAttempts": {
+      "title": "生成次数已用完",
+      "content": "本套餐的生成次数已全部用完，购买新的生成套餐后即可继续制作证件照。",
+      "confirm": "去购买",
+      "cancel": "取消"
+    },
+    "proLock": {
+      "title": "PRO 专属功能",
+      "content": "购买生成套餐即可解锁全部证件规格、美颜修图、换装换底色与自定义尺寸等 PRO 功能。",
+      "confirm": "去购买",
+      "cancel": "取消"
+    },
+    "proAttemptFallback": {
+      "title": "提示",
+      "content": "您选择了Pro功能但没有Pro次数，是否使用免费次数生成（不应用Pro效果）？"
+    },
+    "albumAuth": {
+      "title": "需要相册权限",
+      "content": "保存图片需要相册权限，请在设置中开启「添加到相册」权限后重试",
+      "confirm": "去设置",
+      "cancel": "取消"
+    },
+    "toast": {
+      "privacyRequired": "同意隐私指引后方可使用",
+      "purchaseUnavailable": "当前设备暂不支持购买",
+      "chooseImageFailed": "选择图片失败",
+      "takePhotoFailed": "拍照失败",
+      "invalidCustomSize": "请输入 10–300 mm 的有效尺寸",
+      "customSizeApplied": "已应用 {size} mm",
+      "selectSpecFirst": "请选择证件照规格",
+      "noAttempts": "生成次数不足",
+      "deductFailed": "扣除次数失败",
+      "generateSuccess": "生成成功",
+      "generateFailed": "生成失败，请重试",
+      "exportUnavailable": "暂时无法导出",
+      "generateFirst": "请先生成证件照",
+      "printRendering": "生成排版中...",
+      "printSavedCount": "已保存{count}张排版照片"
+    }
   },
   "result": {
     "title": "生成结果",

@@ -16,10 +16,10 @@
       </view>
       <view class="header-right" :style="{ paddingRight: headerRightPadding + 'px' }">
         <view class="icon-btn" @tap="navigateToHistory">
-          <text>📋</text>
+          <AppIcon name="history" :size="20" color="var(--color-ink-black)" />
         </view>
         <view class="icon-btn" @tap="navigateToSettings">
-          <text>⚙️</text>
+          <AppIcon name="settings" :size="20" color="var(--color-ink-black)" />
         </view>
       </view>
     </view>
@@ -52,9 +52,9 @@
       <!-- 服务分类 -->
       <view class="service-categories">
         <view class="category-grid">
-          <view class="category-item" v-for="(item, index) in categories" :key="index" @tap="navigateToCreation">
+          <view class="category-item" v-for="(item, index) in categories" :key="index" @tap="navigateToCreation(item.specId)">
             <view class="category-icon">
-              <text>{{ item.emoji }}</text>
+              <AppIcon :name="item.icon" :size="26" color="var(--color-sky-blue)" />
             </view>
             <text class="category-title">{{ item.title }}</text>
             <text class="category-subtitle">{{ item.subtitle }}</text>
@@ -132,35 +132,21 @@
           </view>
           <text v-else class="price-number">剩余 {{ remainingAttempts }} 次</text>
         </view>
-        <view class="primary-btn" @tap="navigateToCreation">
+        <view class="primary-btn" @tap="navigateToCreation()">
           <text class="btn-text">{{ t('home.start') }}</text>
           <text class="btn-arrow">→</text>
         </view>
       </view>
     </view>
 
-    <view v-if="showPrivacyDialog" class="privacy-mask">
-      <view class="privacy-dialog">
-        <text class="privacy-title">个人信息保护提示</text>
-        <text class="privacy-content">
-          首次使用前，请了解：制作证件照需要处理你主动选择或拍摄的人像照片及面部特征，并通过 HTTPS 发送至已声明的云服务完成本次处理。新用户将获赠 3 次基础生成机会。
-        </text>
-        <view class="privacy-link" @tap="openPrivacyContract">
-          <text>查看《小程序用户隐私保护指引》</text>
-        </view>
-        <button
-          id="home-agree-privacy-btn"
-          class="privacy-button primary"
-          open-type="agreePrivacyAuthorization"
-          @agreeprivacyauthorization="handleAgreePrivacyAuthorization"
-        >
-          同意并开始使用
-        </button>
-        <button class="privacy-button secondary" @tap="handleRejectPrivacyAuthorization">
-          暂不同意
-        </button>
-      </view>
-    </view>
+    <PrivacyConsentDialog
+      :visible="showPrivacyDialog"
+      agree-text="同意并开始使用"
+      content="首次使用前，请了解：制作证件照需要处理你主动选择或拍摄的人像照片及面部特征，并通过 HTTPS 发送至已声明的云服务完成本次处理。新用户将获赠 3 次基础生成机会。"
+      @agree="handleAgreePrivacyAuthorization"
+      @reject="handleRejectPrivacyAuthorization"
+      @view-privacy="openPrivacyContract"
+    />
   </view>
 </template>
 
@@ -169,6 +155,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useI18n } from '@/utils/i18n.js'
 import paymentAPI from '@/api/payment.js'
+import AppIcon from '@/components/AppIcon.vue'
+import PrivacyConsentDialog from '@/components/PrivacyConsentDialog.vue'
 
 // 获取i18n实例
 const { t, locale: currentLocale } = useI18n()
@@ -331,7 +319,7 @@ const handleAgreePrivacyAuthorization = () => {
   uni.setStorageSync(PRIVACY_NOTICE_KEY, true)
   if (resolvePrivacyAuthorization) {
     resolvePrivacyAuthorization({
-      buttonId: 'home-agree-privacy-btn',
+      buttonId: 'privacy-agree-btn',
       event: 'agree'
     })
     resolvePrivacyAuthorization = null
@@ -401,44 +389,52 @@ const getCurrentLanguage = () => {
 }
 
 // 服务分类数据（使用i18n）
+// specId 对应 pages/creation/creation.vue 中 specs 数组的真实规格 id
 const categories = computed(() => [
   {
-    emoji: '🪪',
+    icon: 'id-card',
+    specId: 'chinaID',
     title: t('home.categories.idCard'),
     subtitle: t('home.categories.idCardDesc')
   },
   {
-    emoji: '🛂',
+    icon: 'passport',
+    specId: 'chinaPassport',
     title: t('home.categories.passport'),
     subtitle: t('home.categories.passportDesc')
   },
   {
-    emoji: '🚗',
+    icon: 'car',
+    specId: 'driverLicense',
     title: t('home.categories.driverLicense'),
     subtitle: t('home.categories.driverLicenseDesc')
   },
   {
-    emoji: '💼',
+    icon: 'briefcase',
+    specId: 'resume',
     title: t('home.categories.resume'),
     subtitle: t('home.categories.resumeDesc')
   },
   {
-    emoji: '🎓',
+    icon: 'graduation',
+    specId: 'studentID',
     title: t('home.categories.student'),
     subtitle: t('home.categories.studentDesc')
   },
   {
-    emoji: '👤',
+    icon: 'user',
+    specId: 'standardPortrait',
     title: t('home.categories.avatar'),
     subtitle: t('home.categories.avatarDesc')
   }
 ])
 
-// 导航到制作页面
-const navigateToCreation = () => {
-  uni.navigateTo({
-    url: '/pages/creation/creation'
-  })
+// 导航到制作页面（specId 为可选的预选规格，creation 页面若接入 onLoad options.specId 即可读取）
+const navigateToCreation = (specId) => {
+  const url = typeof specId === 'string' && specId
+    ? `/pages/creation/creation?specId=${specId}`
+    : '/pages/creation/creation'
+  uni.navigateTo({ url })
 }
 
 // 导航到历史记录
@@ -496,7 +492,7 @@ const navigateToSettings = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2464C8, #4189E6);
+  background: linear-gradient(135deg, var(--color-sky-blue), var(--color-sky-blue-mid));
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(36, 100, 200, 0.2);
 }
@@ -553,11 +549,11 @@ const navigateToSettings = () => {
   font-size: 20px;
   border-radius: 10px;
   background: var(--color-bg-secondary);
-  transition: background-color 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .icon-btn:active {
-  background-color: var(--color-bg-secondary);
+  opacity: 0.85;
 }
 
 /* 滚动内容 */
@@ -649,7 +645,7 @@ const navigateToSettings = () => {
 .price-value {
   font-size: 13px;
   font-weight: 700;
-  color: #ff6b35;
+  color: var(--color-promo-orange);
 }
 
 .price-original {
@@ -676,7 +672,7 @@ const navigateToSettings = () => {
 .ai-badge-text {
   font-size: 10px;
   font-weight: 600;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .badge-text {
@@ -703,7 +699,7 @@ const navigateToSettings = () => {
 .ai-badge-text {
   font-size: 10px;
   font-weight: 600;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 /* 服务分类 */
@@ -797,7 +793,7 @@ const navigateToSettings = () => {
 .stat-number {
   font-size: 14px;
   font-weight: 700;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .stat-label {
@@ -842,7 +838,7 @@ const navigateToSettings = () => {
 .showcase-card {
   flex: 1;
   height: 120px;
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-secondary);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
@@ -1011,8 +1007,8 @@ const navigateToSettings = () => {
   left: 0;
   right: 0;
   padding: 12px 32px 16px;
-  background-color: #ffffff;
-  border-top: 0.5px solid #e5e5e5;
+  background-color: var(--color-bg-primary);
+  border-top: 0.5px solid var(--color-bg-secondary);
   z-index: 100;
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
@@ -1041,7 +1037,7 @@ const navigateToSettings = () => {
 .price-number {
   font-size: 24px;
   font-weight: 700;
-  color: #2464c8;
+  color: var(--color-sky-blue);
 }
 
 .price-unit {
@@ -1063,10 +1059,16 @@ const navigateToSettings = () => {
   justify-content: center;
   gap: 6px;
   padding: 14px 20px;
-  background: linear-gradient(90deg, #2464c8, #4189e6);
+  background: linear-gradient(90deg, var(--color-sky-blue), var(--color-sky-blue-mid));
   border-radius: 26px;
   min-width: 120px;
   flex-shrink: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.primary-btn:active {
+  opacity: 0.85;
+  transform: scale(0.97);
 }
 
 .btn-text {
@@ -1109,7 +1111,7 @@ const navigateToSettings = () => {
   background: var(--color-bg-secondary);
   
   &.premium {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-premium);
   }
 }
 
@@ -1154,79 +1156,18 @@ const navigateToSettings = () => {
 
 .purchase-btn {
   padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-premium);
   border-radius: 20px;
+  transition: opacity 0.15s ease;
+}
+
+.purchase-btn:active {
+  opacity: 0.85;
 }
 
 .purchase-text {
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
-}
-
-.privacy-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.58);
-}
-
-.privacy-dialog {
-  width: 100%;
-  max-width: 360px;
-  padding: 24px;
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
-}
-
-.privacy-title {
-  display: block;
-  margin-bottom: 14px;
-  color: #111827;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.privacy-content {
-  display: block;
-  color: #4b5563;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.privacy-link {
-  padding: 14px 0 18px;
-  color: #2464c8;
-  font-size: 13px;
-  text-align: center;
-}
-
-.privacy-button {
-  height: 44px;
-  margin: 0;
-  border-radius: 22px;
-  font-size: 15px;
-  line-height: 44px;
-}
-
-.privacy-button::after {
-  border: none;
-}
-
-.privacy-button.primary {
-  color: #ffffff;
-  background: linear-gradient(90deg, #2464c8, #4189e6);
-}
-
-.privacy-button.secondary {
-  margin-top: 10px;
-  color: #6b7280;
-  background: #f3f4f6;
 }
 </style>

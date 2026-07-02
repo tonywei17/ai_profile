@@ -32,7 +32,13 @@ onHide(() => {
   --color-sky-blue-soft: #5BA4F0;
   --color-promo-orange: #FF7C21;
   --color-promo-red: #EA3737;
-  
+
+  /* 会员/付费色(裁决:废弃模板紫 #667eea→#764ba2,统一到品牌蓝体系) */
+  --color-premium-start: #2464C8;
+  --color-premium-end: #4A90E2;
+  --gradient-premium: linear-gradient(135deg, #2464C8, #4A90E2);
+  --color-premium-gold: #F5A623; /* 会员徽章点缀可选 */
+
   /* 编辑设计色 - 亮色模式 */
   --color-paper-tan: #D6C9B5;
   --color-ink-black: #1A1A1A;

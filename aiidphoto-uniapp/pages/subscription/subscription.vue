@@ -13,7 +13,7 @@
       </view>
       <view class="header-right" :style="{ paddingRight: headerRightPadding + 'px' }">
         <view class="close-btn" @click="goBack">
-          <text>✕</text>
+          <AppIcon name="close" :size="18" color="var(--color-branch-gray)" />
         </view>
       </view>
     </view>
@@ -44,23 +44,33 @@
         
         <view class="features-list">
           <view class="feature-item">
-            <text class="feature-icon">✓</text>
+            <view class="feature-icon">
+              <AppIcon name="check" :size="12" color="var(--color-premium-start)" />
+            </view>
             <text class="feature-text">包含3次AI证件照生成机会</text>
           </view>
           <view class="feature-item">
-            <text class="feature-icon">✓</text>
+            <view class="feature-icon">
+              <AppIcon name="check" :size="12" color="var(--color-premium-start)" />
+            </view>
             <text class="feature-text">{{ t('subscription.allSpecs') }}</text>
           </view>
           <view class="feature-item">
-            <text class="feature-icon">✓</text>
+            <view class="feature-icon">
+              <AppIcon name="check" :size="12" color="var(--color-premium-start)" />
+            </view>
             <text class="feature-text">{{ t('subscription.proOptions') }}</text>
           </view>
           <view class="feature-item">
-            <text class="feature-icon">✓</text>
+            <view class="feature-icon">
+              <AppIcon name="check" :size="12" color="var(--color-premium-start)" />
+            </view>
             <text class="feature-text">{{ t('subscription.customSize') }}</text>
           </view>
           <view class="feature-item">
-            <text class="feature-icon">✓</text>
+            <view class="feature-icon">
+              <AppIcon name="check" :size="12" color="var(--color-premium-start)" />
+            </view>
             <text class="feature-text">{{ t('subscription.printLayout') }}</text>
           </view>
         </view>
@@ -98,6 +108,7 @@ import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useI18n } from '@/utils/i18n.js'
 import paymentAPI from '@/api/payment.js'
+import AppIcon from '@/components/AppIcon.vue'
 
 // 获取i18n实例
 const { t } = useI18n()
@@ -290,8 +301,6 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
-  color: var(--color-branch-gray);
   border-radius: 10px;
   background: var(--color-bg-secondary);
 }
@@ -321,7 +330,7 @@ const goBack = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-premium);
 }
 
 .hero-content {
@@ -388,7 +397,7 @@ const goBack = () => {
 .product-price {
   font-size: 28px;
   font-weight: 700;
-  color: #667eea;
+  color: var(--color-premium-start);
 }
 
 .product-desc {
@@ -416,11 +425,10 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(102, 126, 234, 0.1);
+  /* 取 --color-premium-start (#2464C8) 的 10% 透明度，token 体系暂无半透明变体 */
+  background: rgba(36, 100, 200, 0.1);
   border-radius: 50%;
-  font-size: 12px;
-  color: #667eea;
-  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .feature-text {
@@ -431,18 +439,30 @@ const goBack = () => {
 .purchase-btn {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-premium);
   border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s ease;
   box-sizing: border-box;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.24);
+  /* 取 --color-premium-start (#2464C8) 的 24% 透明度，token 体系暂无半透明变体 */
+  box-shadow: 0 8px 20px rgba(36, 100, 200, 0.24);
+
+  &:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
 
   &.disabled {
     opacity: 0.5;
+    pointer-events: none;
+
+    &:active {
+      opacity: 0.5;
+      transform: none;
+    }
   }
 }
 

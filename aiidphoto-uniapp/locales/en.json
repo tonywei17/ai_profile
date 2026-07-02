@@ -139,7 +139,60 @@
     "generating": "Generating...",
     "retake": "Retake",
     "changePhoto": "Change Photo",
-    "footnote": "¥3.80 includes 3 generations and layout downloads with no auto-renewal"
+    "footnote": "¥3.80 includes 3 generations and layout downloads with no auto-renewal",
+    "generatingOverlay": {
+      "title": "AI Generating",
+      "desc": "Takes about 30 seconds, please stay on this page"
+    },
+    "photoSource": {
+      "album": "Choose from Album",
+      "camera": "Take Photo",
+      "clear": "Remove Photo"
+    },
+    "paperSizes": {
+      "fiveInch": "5-inch (89×127)",
+      "sixInch": "6-inch (102×152)",
+      "sevenInch": "7-inch (127×178)"
+    },
+    "noAttempts": {
+      "title": "No Attempts Left",
+      "content": "All generation attempts in this pack have been used. Purchase a new pack to continue creating ID photos.",
+      "confirm": "Buy",
+      "cancel": "Back"
+    },
+    "proLock": {
+      "title": "PRO Feature",
+      "content": "Purchase a generation pack to unlock all specs, retouching, attire and background options, plus custom sizes.",
+      "confirm": "Buy",
+      "cancel": "Back"
+    },
+    "proAttemptFallback": {
+      "title": "Notice",
+      "content": "You selected Pro options but have no Pro attempts. Use a free attempt instead (Pro effects will not apply)?"
+    },
+    "albumAuth": {
+      "title": "Album Permission Needed",
+      "content": "Saving photos requires album permission. Please enable \"Add to Album\" in Settings and try again.",
+      "confirm": "Open",
+      "cancel": "Back"
+    },
+    "toast": {
+      "privacyRequired": "Please agree to the privacy guideline first",
+      "purchaseUnavailable": "Purchase is not supported on this device",
+      "chooseImageFailed": "Failed to choose image",
+      "takePhotoFailed": "Failed to take photo",
+      "invalidCustomSize": "Enter a valid size within 10–300 mm",
+      "customSizeApplied": "Applied {size} mm",
+      "selectSpecFirst": "Please select a photo spec",
+      "noAttempts": "No generation attempts left",
+      "deductFailed": "Failed to deduct attempt",
+      "generateSuccess": "Generated",
+      "generateFailed": "Generation failed, please retry",
+      "exportUnavailable": "Export is temporarily unavailable",
+      "generateFirst": "Please generate a photo first",
+      "printRendering": "Rendering layout...",
+      "printSavedCount": "Saved layout with {count} photos"
+    }
   },
   "result": {
     "title": "Result",
