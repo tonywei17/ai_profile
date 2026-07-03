@@ -1,7 +1,7 @@
 {
   "name": "aiidphoto-backend",
   "version": "1.0.0",
-  "description": "Backend proxy for AIIDPhoto — forwards requests to Gemini API",
+  "description": "Backend proxy for AIIDPhoto CN — HivisionIDPhotos and Alibaba Cloud Bailian gateway",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -9,7 +9,9 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "axios": "^1.6.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.21.0",
     "helmet": "^8.1.0"
   },

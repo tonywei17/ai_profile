@@ -1,0 +1,317 @@
+{
+  "app": {
+    "name": "光影形象馆",
+    "slogan": "AI职业形象照与证件照助手"
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "back": "返回",
+    "error": "错误",
+    "loading": "加载中...",
+    "retry": "重试",
+    "pro": "PRO",
+    "locked": "已锁定",
+    "albumAuth": {
+      "title": "需要相册权限",
+      "content": "保存图片需要相册权限，请在设置中开启「添加到相册」权限后重试",
+      "confirm": "去设置",
+      "cancel": "取消",
+      "saveFailed": "保存失败"
+    }
+  },
+  "home": {
+    "title": "AI职业形象照",
+    "subtitle": "简历照 · 证件照",
+    "tagline": "更专业 · 更自然 · 更出色",
+    "limitedOffer": "生成次数套餐",
+    "price": "3.80元/3次",
+    "priceNumber": "3.80",
+    "priceUnit": "元/3次",
+    "originalPrice": "一次性购买",
+    "start": "开始制作",
+    "categories": {
+      "idCard": "身份证件照",
+      "idCardDesc": "1寸·白底·通用",
+      "passport": "护照签证照",
+      "passportDesc": "33×48mm·白底",
+      "driverLicense": "驾驶证照",
+      "driverLicenseDesc": "22×32mm·白底",
+      "resume": "简历形象照",
+      "resumeDesc": "25×35mm·蓝/白底",
+      "student": "学籍报名照",
+      "studentDesc": "35×45mm·蓝底",
+      "avatar": "社交头像",
+      "avatarDesc": "方形·自定义"
+    },
+    "trust": {
+      "users": "3次",
+      "usersLabel": "生成机会",
+      "usersDesc": "每份套餐",
+      "retry": "3次",
+      "retryLabel": "可重修",
+      "retryDesc": "选最满意结果",
+      "privacy": "隐私",
+      "privacyLabel": "安全保护",
+      "privacyDesc": "照片仅自己可见"
+    },
+    "showcase": {
+      "title": "效果示例",
+      "idCard": "证件照优化",
+      "portrait": "职业形象照",
+      "badge": "AI生成示例",
+      "disclaimer": "示例用于展示可实现的处理类型，实际效果会因原始照片、所选规格和编辑选项而有所不同。"
+    },
+    "userStatus": "用户状态",
+    "basicUser": "基础用户",
+    "premiumUser": "付费用户",
+    "remainingAttempts": "剩余次数",
+    "purchaseMore": "购买更多",
+    "aiGenerated": "AI生成"
+  },
+  "settings": {
+    "title": "设置",
+    "app": {
+      "name": "光影形象馆"
+    },
+    "subscription": {
+      "freeUser": "基础用户",
+      "freeDesc": "购买后获得 3 次 AI 生成机会",
+      "features": "3次生成 · 高清下载 · 打印排版",
+      "title": "生成次数管理",
+      "currentStatus": "当前状态",
+      "upgradeDesc": "购买后获得3次生成机会",
+      "upgrade": "购买生成次数",
+      "restore": "刷新购买状态"
+    },
+    "referral": {
+      "title": "邀请好友",
+      "inviteCode": "邀请码",
+      "bonusCount": "奖励次数",
+      "shareCode": "分享邀请码",
+      "redeemPlaceholder": "输入兑换码",
+      "redeem": "兑换"
+    },
+    "language": "语言",
+    "legal": "服务条款",
+    "privacy": "隐私政策",
+    "terms": "用户协议",
+    "support": {
+      "title": "售后与购买问题",
+      "email": "liuchengcheng@foyli-ai.com",
+      "copied": "联系邮箱已复制"
+    }
+  },
+  "creation": {
+    "format": "01. 格式",
+    "upload": {
+      "title": "点击上传照片",
+      "subtitle": "支持 JPG/PNG 格式，大小不超过 20MB",
+      "tips": "建议正面、光线充足、无遮挡",
+      "changePhoto": "更换照片"
+    },
+    "specs": {
+      "chinaID": "居民身份证",
+      "oneInch": "一寸照",
+      "twoInch": "二寸照",
+      "chinaPassport": "中国护照",
+      "usVisa": "美国签证",
+      "smallPassport": "小护照",
+      "resume": "简历照",
+      "studentCard": "学生证",
+      "driverLicense": "驾驶证",
+      "socialSecurity": "社保卡",
+      "socialAvatar": "社交头像"
+    },
+    "showMore": "显示更多",
+    "showLess": "收起",
+    "customSize": "自定义尺寸",
+    "aiCustomize": "AI 自定义",
+    "beauty": "美颜",
+    "attire": "服装",
+    "hair": "发型",
+    "background": "背景色",
+    "accessories": "配饰",
+    "natural": "自然",
+    "lightEnhance": "轻度美颜",
+    "proRetouch": "专业修图",
+    "keepOriginal": "保持原样",
+    "darkSuit": "深色西装",
+    "navySuit": "藏青西装",
+    "whiteShirt": "白衬衫",
+    "professionalBlouse": "职业衬衫",
+    "tidyUp": "整理发型",
+    "default": "默认",
+    "pureWhite": "纯白",
+    "lightBlue": "浅蓝",
+    "lightGray": "浅灰",
+    "red": "红色",
+    "keepAsIs": "保持原样",
+    "removeGlasses": "移除眼镜",
+    "beautyOptions": {
+      "natural": "自然",
+      "lightEnhance": "轻度美颜",
+      "professional": "专业修图"
+    },
+    "attireOptions": {
+      "keepOriginal": "保持原样",
+      "darkSuit": "深色西装",
+      "navySuit": "藏青西装",
+      "whiteShirt": "白衬衫",
+      "professionalBlouse": "职业衬衫"
+    },
+    "hairOptions": {
+      "keepOriginal": "保持原样",
+      "tidyUp": "整理发型"
+    },
+    "backgroundOptions": {
+      "default": "默认",
+      "pureWhite": "纯白",
+      "lightBlue": "浅蓝",
+      "lightGray": "浅灰",
+      "red": "红色"
+    },
+    "accessoriesOptions": {
+      "keepAsIs": "保持原样",
+      "removeGlasses": "移除眼镜"
+    },
+    "neutral": "不笑",
+    "subtleSmile": "微笑",
+    "naturalSmile": "自然笑",
+    "generate": "生成证件照",
+    "generating": "生成中...",
+    "retake": "重新拍摄",
+    "changePhoto": "更换照片",
+    "footnote": "3.80元购买3次生成机会，包含排版下载，不自动续费",
+    "generatingOverlay": {
+      "title": "AI 生成中",
+      "desc": "约需 30 秒，请勿离开页面"
+    },
+    "photoSource": {
+      "album": "从相册选择",
+      "camera": "拍照",
+      "clear": "清除照片"
+    },
+    "paperSizes": {
+      "fiveInch": "5寸 (89×127)",
+      "sixInch": "6寸 (102×152)",
+      "sevenInch": "7寸 (127×178)"
+    },
+    "noAttempts": {
+      "title": "生成次数已用完",
+      "content": "本套餐的生成次数已全部用完，购买新的生成套餐后即可继续制作证件照。",
+      "confirm": "去购买",
+      "cancel": "取消"
+    },
+    "proLock": {
+      "title": "PRO 专属功能",
+      "content": "购买生成套餐即可解锁全部证件规格、美颜修图、换装换底色与自定义尺寸等 PRO 功能。",
+      "confirm": "去购买",
+      "cancel": "取消"
+    },
+    "proAttemptFallback": {
+      "title": "提示",
+      "content": "您选择了Pro功能但没有Pro次数，是否使用免费次数生成（不应用Pro效果）？",
+      "confirm": "免费生成",
+      "cancel": "取消"
+    },
+    "toast": {
+      "privacyRequired": "同意隐私指引后方可使用",
+      "purchaseUnavailable": "当前设备暂不支持购买",
+      "chooseImageFailed": "选择图片失败",
+      "takePhotoFailed": "拍照失败",
+      "invalidCustomSize": "请输入 10–300 mm 的有效尺寸",
+      "customSizeApplied": "已应用 {size} mm",
+      "selectSpecFirst": "请选择证件照规格",
+      "noAttempts": "生成次数不足",
+      "deductFailed": "扣除次数失败",
+      "generateSuccess": "生成成功",
+      "generateFailed": "生成失败，请重试",
+      "exportUnavailable": "暂时无法导出",
+      "generateFirst": "请先生成证件照",
+      "printRendering": "生成排版中...",
+      "printSavedCount": "已保存{count}张排版照片"
+    }
+  },
+  "result": {
+    "title": "生成结果",
+    "comparison": "效果对比",
+    "info": "图片信息",
+    "spec": "规格",
+    "size": "尺寸",
+    "createdAt": "生成时间",
+    "save": "保存",
+    "share": "分享",
+    "print": "打印排版",
+    "retake": "重新拍摄",
+    "saved": "已保存",
+    "saveFailed": "保存失败",
+    "shareUnsupported": "暂不支持分享",
+    "shareFailed": "分享失败",
+    "printSaved": "打印图片已保存",
+    "printFailed": "打印失败",
+    "original": "原图",
+    "aiGenerated": "AI 生成",
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "分钟前",
+      "hoursAgo": "小时前"
+    },
+    "errorState": {
+      "title": "图片加载失败",
+      "desc": "未能获取有效的证件照图片，请返回重新拍摄或生成",
+      "back": "返回上一页"
+    },
+    "aigcBadge": "AI生成/编辑"
+  },
+  "history": {
+    "title": "历史记录",
+    "empty": "暂无历史记录",
+    "clearAll": "清空",
+    "viewDetail": "查看详情",
+    "imageUnavailable": "图片已失效或无法打开",
+    "confirmDelete": "确认删除",
+    "deleteConfirm": "确定要删除这条记录吗？",
+    "deleted": "已删除",
+    "deleteFailed": "删除失败",
+    "confirmClear": "确认清空",
+    "clearConfirm": "确定要清空所有历史记录吗？",
+    "cleared": "已清空",
+    "clearFailed": "清空失败",
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "分钟前",
+      "hoursAgo": "小时前",
+      "daysAgo": "天前"
+    }
+  },
+  "printLayout": {
+    "title": "打印排版",
+    "paperSize": "纸张尺寸",
+    "preview": "预览",
+    "info": "打印信息",
+    "photosPerSheet": "每张照片数",
+    "photoSize": "照片尺寸",
+    "resolution": "分辨率",
+    "generate": "生成打印图",
+    "generateFailed": "生成失败"
+  },
+  "subscription": {
+    "title": "购买生成次数",
+    "discount": "一次性购买",
+    "heroTitle": "购买3次生成机会",
+    "heroSubtitle": "一次购买可获得3次AI证件照生成，并支持排版下载",
+    "perPhoto": "/张",
+    "noSubscription": "3次生成套餐",
+    "priceExplain": "一次性购买，不自动续费",
+    "included": "包含内容",
+    "unlimitedGenerations": "3次AI证件照生成",
+    "allSpecs": "所有证件照规格",
+    "proOptions": "所有Pro选项",
+    "customSize": "自定义尺寸",
+    "printLayout": "打印排版",
+    "purchase": "立即购买",
+    "restore": "刷新购买状态",
+    "close": "关闭"
+  }
+}

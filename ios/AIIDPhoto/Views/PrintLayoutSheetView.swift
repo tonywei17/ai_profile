@@ -12,7 +12,7 @@ struct PrintLayoutSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var selectedPaper: PrintPaperSize = .lSize
+    @State private var selectedPaper: PrintPaperSize = .sixInch
     @State private var showGuides = true
     @State private var renderedImage: UIImage?
     @State private var showSavedToast = false
@@ -51,6 +51,8 @@ struct PrintLayoutSheetView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 .padding(.bottom, 32)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity)
             }
             .background(Color(.systemBackground))
             .toolbar {
@@ -67,8 +69,8 @@ struct PrintLayoutSheetView: View {
             if showSavedToast { savedToast }
         }
         .task { updateLayout(); renderPreview() }
-        .onChange(of: selectedPaper) { _ in updateLayout(); renderPreview() }
-        .onChange(of: showGuides) { _ in renderPreview() }
+        .onChange(of: selectedPaper) { _, _ in updateLayout(); renderPreview() }
+        .onChange(of: showGuides) { _, _ in renderPreview() }
     }
 
     // MARK: - Header
@@ -206,7 +208,7 @@ struct PrintLayoutSheetView: View {
                 Text(compatLabel)
                     .font(.callout)
                 Spacer()
-                Text("7-11 · Lawson · FamilyMart")
+                Text("照相馆 · 快印店 · 美团打印")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -219,82 +221,17 @@ struct PrintLayoutSheetView: View {
     // MARK: - Save
 
     private var saveButton: some View {
-        Group {
-            if isSubscribed {
-                Button {
-                    savePrintLayout()
-                } label: {
-                    Label(saveLayoutLabel, systemImage: "square.and.arrow.down")
-                        .font(.system(size: 15, weight: .medium))
-                        .tracking(0.5)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .foregroundStyle(.white)
-                }
-                .background(Color.inkBlack)
-            } else if subscription.printLayoutCredits > 0 {
-                Button {
-                    subscription.consumePrintLayoutCredit()
-                    savePrintLayout()
-                } label: {
-                    Label(saveWithCreditLabel, systemImage: "square.and.arrow.down")
-                        .font(.system(size: 15, weight: .medium))
-                        .tracking(0.5)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .foregroundStyle(.white)
-                }
-                .background(Color.inkBlack)
-            } else {
-                VStack(spacing: 12) {
-                    Button {
-                        Task { await subscription.purchasePrintLayout() }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "cart.fill")
-                                .font(.body)
-                            Text(singlePurchaseLabel)
-                                .font(.system(size: 15, weight: .medium))
-                            Spacer()
-                            Text(subscription.printLayoutSingleDisplayPrice ?? "---")
-                                .font(.system(size: 14, weight: .bold))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .foregroundStyle(.white)
-                    }
-                    .disabled(subscription.isPurchasing)
-                    .background(Color.inkBlack)
-
-                    Button { onLockedTap() } label: {
-                        HStack(spacing: 10) {
-                            Text("PRO")
-                                .font(.system(size: 10, weight: .bold))
-                                .tracking(1)
-                                .foregroundStyle(Color.inkBlack)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(subscribeHintLabel)
-                                    .font(.system(size: 14, weight: .medium))
-                                Text(subscribeHintDesc)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Color.branchGray)
-                                    .multilineTextAlignment(.leading)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 11))
-                                .foregroundStyle(Color.branchGray)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .foregroundStyle(Color.inkBlack)
-                    }
-                    .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
-                }
-            }
+        Button {
+            savePrintLayout()
+        } label: {
+            Label(saveLayoutLabel, systemImage: "square.and.arrow.down")
+                .font(.system(size: 15, weight: .medium))
+                .tracking(0.5)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .foregroundStyle(.white)
         }
+        .background(Color.inkBlack)
         .alert(errorAlertTitle, isPresented: Binding(
             get: { subscription.purchaseError != nil },
             set: { if !$0 { subscription.purchaseError = nil } }
@@ -379,17 +316,13 @@ struct PrintLayoutSheetView: View {
     // MARK: - Localized Strings
 
     private var sheetTitle: String {
-        l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃",
-          vi: "In ảnh tại cửa hàng", id: "Cetak di Konbini", pt: "Layout p/ Impressão")
+        l("打印店排版", "Print Shop Layout", "プリントレイアウト", "인쇄 레이아웃")
     }
     private var sheetSubtitle: String {
-        l("一键生成排版照片，直接到便利店打印",
-          "Export a print-ready layout for convenience store printing",
-          "コンビニで印刷できるレイアウト写真を一発生成",
-          "편의점에서 바로 인쇄할 수 있는 레이아웃 생성",
-          vi: "Tạo bố cục in ảnh, in tại cửa hàng tiện lợi",
-          id: "Ekspor layout siap cetak untuk toko serba ada",
-          pt: "Exporte um layout pronto para impressão em lojas")
+        l("一键生成排版照片，可直接到打印店打印",
+          "Export a print-ready layout for any photo print shop",
+          "プリント用レイアウトを一発生成",
+          "인쇄용 레이아웃을 한 번에 생성")
     }
     private var paperSizeLabel: String {
         l("用纸尺寸", "Paper Size", "用紙サイズ", "용지 크기",
@@ -404,34 +337,32 @@ struct PrintLayoutSheetView: View {
           vi: "Đường cắt", id: "Panduan Potong", pt: "Guias de Corte")
     }
     private var compatLabel: String {
-        l("便利店兼容", "Konbini Compatible", "コンビニ対応", "편의점 호환",
-          vi: "Tương thích cửa hàng", id: "Kompatibel Konbini", pt: "Compatível com Lojas")
+        l("打印店兼容", "Print Shop Compatible", "プリント対応", "인쇄 호환")
     }
     private var saveLayoutLabel: String {
         l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장",
           vi: "Lưu ảnh bố cục", id: "Simpan Layout Cetak", pt: "Salvar Layout")
     }
     private var saveWithCreditLabel: String {
-        let c = subscription.printLayoutCredits
-        return l("使用额度保存（剩余\(c)次）", "Save with Credit (\(c) left)", "クレジットで保存（残り\(c)回）", "크레딧으로 저장 (\(c)회 남음)",
-                 vi: "Lưu bằng credit (\(c) còn lại)", id: "Simpan dengan kredit (\(c) sisa)", pt: "Salvar com crédito (\(c) restante)")
+        l("保存排版照片", "Save Print Layout", "レイアウト写真を保存", "레이아웃 사진 저장",
+          vi: "Lưu ảnh bố cục", id: "Simpan Layout Cetak", pt: "Salvar Layout")
     }
     private var singlePurchaseLabel: String {
-        l("单次购买排版", "Buy Single Print", "1回分を購入", "1회 인쇄 구매",
-          vi: "Mua 1 lần in", id: "Beli 1x Cetak", pt: "Comprar 1 Impressão")
+        l("购买制作包", "Buy Photo Task", "制作分を購入", "제작권 구매",
+          vi: "Mua gói ảnh", id: "Beli paket foto", pt: "Comprar pacote")
     }
     private var subscribeHintLabel: String {
-        l("订阅更划算", "Subscribe & Save", "定額でもっとお得", "구독하면 더 저렴",
-          vi: "Đăng ký tiết kiệm hơn", id: "Langganan Lebih Hemat", pt: "Assine e Economize")
+        l("排版已包含", "Layout Included", "レイアウト込み", "레이아웃 포함",
+          vi: "Đã gồm bố cục", id: "Layout termasuk", pt: "Layout incluído")
     }
     private var subscribeHintDesc: String {
-        l("同样价格享受一整月无限次排版 + 无限生成 + 无广告",
-          "Same price for a full month: unlimited prints + generations + no ads",
-          "同じ金額で1ヶ月間：無制限プリント＋生成＋広告なし",
-          "같은 가격으로 한 달간: 무제한 인쇄 + 생성 + 광고 없음",
-          vi: "Cùng giá cho 1 tháng: in không giới hạn + tạo ảnh + không QC",
-          id: "Harga sama untuk sebulan: cetak + buat tanpa batas + tanpa iklan",
-          pt: "Mesmo preço por 1 mês: impressão + geração ilimitada + sem anúncios")
+        l("购买成片后可直接保存高清图和排版图",
+          "After purchase, HD export and print layout are both included.",
+          "購入後、HD画像と印刷レイアウトを保存できます。",
+          "구매 후 HD 이미지와 인쇄 레이아웃을 저장할 수 있습니다.",
+          vi: "Sau khi mua, có thể lưu ảnh HD và bố cục in.",
+          id: "Setelah membeli, HD dan layout cetak termasuk.",
+          pt: "Depois da compra, HD e layout estão incluídos.")
     }
     private var errorAlertTitle: String {
         l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패",
@@ -447,34 +378,22 @@ struct PrintLayoutSheetView: View {
     }
     private var howToSteps: [String] {
         [
-            l("保存排版照片到相册",
-              "Save the layout image to Photos",
+            l("点击下方按钮，将排版图保存到相册",
+              "Save the layout image to your Photos app",
               "レイアウト写真をカメラロールに保存",
-              "레이아웃 사진을 사진 앱에 저장",
-              vi: "Lưu ảnh bố cục vào album",
-              id: "Simpan foto layout ke Galeri",
-              pt: "Salve a imagem de layout em Fotos"),
-            l("将照片传输到便利店多功能复合机（USB、Wi-Fi或LINE等）",
-              "Transfer the image to the konbini multi-function printer (USB, Wi-Fi, or LINE)",
-              "USBやWi-Fi、LINEなどでコンビニのマルチコピー機に転送",
-              "USB, Wi-Fi 또는 LINE으로 편의점 복합기에 전송",
-              vi: "Chuyển ảnh sang máy in cửa hàng (USB, Wi-Fi hoặc LINE)",
-              id: "Transfer gambar ke printer konbini (USB, Wi-Fi, atau LINE)",
-              pt: "Transfira a imagem para a impressora (USB, Wi-Fi ou LINE)"),
-            l("选择\"照片打印\" → L判或2L判",
-              "Select \"Photo Print\" → L or 2L size",
-              "「写真プリント」→ L判または2L判を選択",
-              "\"사진 인쇄\" → L 또는 2L 사이즈 선택",
-              vi: "Chọn \"In ảnh\" → L hoặc 2L",
-              id: "Pilih \"Cetak Foto\" → ukuran L atau 2L",
-              pt: "Selecione \"Imprimir Foto\" → tamanho L ou 2L"),
-            l("打印后沿参考线裁剪即可使用",
+              "레이아웃 사진을 사진 앱에 저장"),
+            l("通过微信发给附近照相馆或快印店，或用美团/大众点评搜索\"证件照打印\"",
+              "Send via WeChat to a local photo shop, or search for \"photo print\" on a delivery app",
+              "プリント店に画像を送信（WeChat 等）",
+              "인쇄소에 이미지 전송"),
+            l("告知打印\"6寸相纸，原图输出\"（不要拉伸或缩放）",
+              "Tell them: \"6R photo paper, print as-is (no stretch)\"",
+              "「6Rサイズ、原寸で印刷」を指定",
+              "\"6R 용지, 원본 크기로 인쇄\" 요청"),
+            l("打印后沿参考线裁剪即可，标准裁纸刀或剪刀均可",
               "Cut along the guide lines after printing",
               "印刷後、ガイドラインに沿って切り取り",
-              "인쇄 후 가이드라인을 따라 자르기",
-              vi: "Cắt theo đường hướng dẫn sau khi in",
-              id: "Potong sesuai garis panduan setelah dicetak",
-              pt: "Corte ao longo das linhas guia após imprimir"),
+              "인쇄 후 가이드라인을 따라 자르기"),
         ]
     }
 }

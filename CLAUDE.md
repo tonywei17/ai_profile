@@ -2,28 +2,29 @@
 
 ## Project Overview
 
-SwiftUI iOS app for AI-powered ID photo generation using Gemini API.
-- **Platform**: iOS 16+, iPhone + iPad (single-column layout)
+SwiftUI iOS app for China-market AI ID photos and professional profile images.
+- **Platform**: iOS 26+, iPhone + iPad (single-column layout)
 - **Language**: Swift 5.9
 - **UI Framework**: SwiftUI with glass (frosted) UI style
 - **Project Generator**: XcodeGen (`project.yml`)
-- **Monetization**: StoreKit 2 subscription + AdMob rewarded ads
+- **Backend**: Alibaba Cloud ECS + Nginx + PM2, HivisionIDPhotos + Alibaba Cloud Bailian/Qwen
+- **Monetization**: StoreKit 2 consumable photo task, 3 AI generation attempts per purchase
 
 ## Project Structure
 
 ```
 ios/AIIDPhoto/
 ├── AIIDPhotoApp.swift          # @main entry point
-├── AppDelegate.swift           # AdMob initialization
+├── AppDelegate.swift           # App lifecycle hooks
 ├── Config.swift                # Info.plist config reader
 ├── ContentView.swift           # Main UI (spec selection, generate, compare, print)
 ├── Configuration/
+│   ├── App.xcconfig            # Shared build settings, optional local secrets include
+│   ├── Secrets.xcconfig.example
 │   └── Products.storekit       # StoreKit testing configuration
 ├── Managers/
-│   ├── SubscriptionManager.swift   # StoreKit 2
-│   ├── AdManager.swift             # Google AdMob
+│   ├── SubscriptionManager.swift   # StoreKit 2 consumable purchase + attempts
 │   ├── LanguageManager.swift       # 7-language switcher (zh/en/ja/ko/vi/id/pt)
-│   ├── UsageManager.swift          # Free/premium usage limits
 │   ├── AnalyticsManager.swift      # Lightweight event tracking (local JSON)
 │   ├── HistoryManager.swift        # Generation history (Documents dir)
 │   └── ReferralManager.swift       # Referral invite system
@@ -34,9 +35,9 @@ ios/AIIDPhoto/
 │   └── GenerationRecord.swift  # History record model
 ├── Resources/
 │   ├── Fonts/                  # Plus Jakarta Sans (Bold, SemiBold)
-│   └── {en,ja,ko,zh-Hans}.lproj/Localizable.strings
+│   └── {en,ja,ko,zh-Hans,vi,id,pt-BR}.lproj/Localizable.strings
 ├── Services/
-│   ├── GeminiService.swift     # Gemini API client
+│   ├── GeminiService.swift     # Historical name; backend generation API client
 │   └── PrintLayoutService.swift # 300 DPI tiled print renderer
 └── Views/
     ├── SubscriptionSheetView.swift
@@ -69,7 +70,7 @@ xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -
 ## Swift / iOS Conventions
 
 ### Architecture
-- **Pattern**: MVVM — Views should be thin, logic lives in ViewModels (`ObservableObject`)
+- **Pattern**: SwiftUI views with focused managers/services. Follow existing local structure before adding new abstractions.
 - **DI**: Use `@EnvironmentObject` for app-wide managers, `@StateObject` for view-owned state
 - **Singletons**: Avoid where possible; prefer dependency injection
 
@@ -77,9 +78,8 @@ xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -
 - Use `Codable` for JSON models — avoid raw `JSONSerialization`
 - Prefer `async/await` over completion handlers
 - Mark all UI-bound classes with `@MainActor`
-- Use `enum` namespaces for constants (e.g., `Config`, `AdUnits`)
+- Use `enum` namespaces for constants (e.g., `Config`)
 - Error types must conform to `LocalizedError` with user-readable `errorDescription`
-- Use `#if canImport(GoogleMobileAds)` guards for optional SDK dependencies
 
 ### SwiftUI
 - Extract reusable view modifiers into `ViewModifier` structs
@@ -88,9 +88,9 @@ xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -
 - Prefer `@Binding` for child views, `@State` for local state
 
 ### Naming
-- Types: `PascalCase` (e.g., `GeminiService`, `UsageManager`)
+- Types: `PascalCase` (e.g., `GeminiService`, `SubscriptionManager`)
 - Functions/properties: `camelCase` (e.g., `generateIDPhoto`, `isSubscribed`)
-- Constants: `camelCase` in `enum` namespace (e.g., `Config.geminiAPIKey`)
+- Constants: `camelCase` in `enum` namespace (e.g., `Config.backendBaseURL`)
 - Files: Match primary type name (e.g., `GeminiService.swift`)
 
 ### Error Handling
@@ -107,11 +107,11 @@ xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -sdk iphonesimulator -
 
 | Dependency | Purpose | Integration |
 |-----------|---------|-------------|
-| StoreKit 2 | Subscriptions | Built-in framework |
-| GoogleMobileAds | Banner + Rewarded ads | Optional via SPM, `#if canImport` guarded |
-| Gemini API | Image generation | HTTP REST via URLSession |
+| StoreKit 2 | Consumable photo task purchase | Built-in framework |
+| HivisionIDPhotos | ID photo crop, matting, background | Server-side via backend |
+| Alibaba Cloud Bailian/Qwen | Cosmetic/fallback generation | Server-side via backend |
 
-## Backend (GCP Cloud Run)
+## Backend (Alibaba Cloud ECS)
 
 ```
 backend/
@@ -124,46 +124,47 @@ backend/
 └── Dockerfile
 ```
 
-- **GCP Project**: `ai-id-photo-prod`
-- **Region**: `asia-northeast1` (Tokyo)
-- **Service URL**: `https://aiidphoto-backend-616059029156.asia-northeast1.run.app`
-- **API Keys**: Stored in Secret Manager, never in code
-  - `GEMINI_API_KEY` — Gemini direct API (primary)
-  - `OPENROUTER_API_KEY` — OpenRouter fallback (secondary)
-  - `OPENROUTER_API_KEY` — OpenRouter fallback (secondary, Pro only)
-- **Env-based keys** (optional):
-  - `OPENROUTER_API_KEY_ENV` — OpenRouter separate account (tertiary, Pro only)
-- **Fallback chain**: Gemini → OpenRouter(SM) → OpenRouter(ENV)
-  - Free 用户仅走 Gemini，不触发高成本 fallback
+- **Production domain**: `https://aiphoto-cn.foyli.cloud`
+- **ECS region**: Alibaba Cloud Guangzhou
+- **Process manager**: PM2 process `aiidphoto-backend`, local port `127.0.0.1:9528`
+- **Reverse proxy**: Nginx + HTTPS certificate on `aiphoto-cn.foyli.cloud`
+- **Provider keys**: Server-side only. Production target is Alibaba Cloud KMS Secrets Manager + ECS RAM Role. PM2 plaintext env vars are transitional only.
+- **Required secrets**:
+  - `APP_API_KEY` — lightweight iOS `X-App-Key` gate
+  - `REFERRAL_HMAC_SECRET` — referral code HMAC signing, separate from `APP_API_KEY`
+  - `BAILIAN_API_KEY` — Alibaba Cloud Bailian/Qwen provider key
+  - `HIVISION_URL` — HivisionIDPhotos endpoint
 
-### Backend Deploy Workflow (Cloud Run — no local Docker needed)
+### Backend Deploy Workflow
 
 ```bash
-# Deploy backend changes directly via Cloud Build
-gcloud run deploy aiidphoto-backend \
-  --source ./backend \
-  --project=ai-id-photo-prod \
-  --region=asia-northeast1 \
-  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest,OPENROUTER_API_KEY=OPENROUTER_API_KEY:latest" \
-  --quiet
+cd backend
+npm install
+npm run build
 
-# Or use the skill:
-# /deploy-backend
+# Upload to ECS according to docs/07-deployment/cloud-run-deploy.md,
+# then rebuild and restart PM2 on the server.
 ```
 
 ### Backend Development
 
 - Edit files in `backend/src/`
 - Run locally: `cd backend && npm run dev`
-- Deploy to Cloud Run: `/deploy-backend`
+- Deploy to Alibaba Cloud ECS: follow `docs/07-deployment/cloud-run-deploy.md`
 
 ## iOS Configuration
 
 Config values are read from Info.plist via `Config.swift`:
-- `BACKEND_BASE_URL` — Cloud Run backend URL (primary, API key stored server-side)
-- `GEMINI_ENDPOINT` — Direct Gemini API URL (dev/fallback only)
-- `GEMINI_API_KEY` — Direct API key (dev/fallback only, leave empty in production)
-- `GADApplicationIdentifier` — AdMob app ID (when using ads)
+- `BACKEND_BASE_URL` — Alibaba Cloud backend URL
+- `APP_API_KEY` — client calling key supplied by `$(AIIDPHOTO_APP_API_KEY)`, not committed directly
+
+Local build secret flow:
+
+```bash
+cp ios/AIIDPhoto/Configuration/Secrets.xcconfig.example ios/AIIDPhoto/Configuration/Secrets.xcconfig
+# Fill AIIDPHOTO_APP_API_KEY locally. Do not commit Secrets.xcconfig.
+xcodegen generate
+```
 
 ## Git Commit Convention
 

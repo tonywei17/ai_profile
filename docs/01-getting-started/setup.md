@@ -6,16 +6,17 @@
 |------|------|------|
 | Xcode | 15+ | iOS 开发 |
 | Swift | 5.9+ | 编程语言 |
-| Node.js | 22+ | 后端开发 |
-| gcloud CLI | 任意 | GCP 部署 |
-| Firebase CLI | 任意 | Firebase 管理 |
+| Node.js | 20+ | 后端开发 |
+| npm | 随 Node 安装 | 后端依赖与构建 |
+| 阿里云 ECS 访问权限 | 生产部署时需要 | 查看/部署 CN 后端 |
+| XcodeBuildMCP | 可选 | 本地构建、运行、截图和发布 QA |
 
 ## iOS 项目启动
 
 ```bash
 # 克隆仓库
 git clone https://github.com/tonywei17/ai_profile.git
-cd ai_profile
+cd ai_profile_cn
 
 # 打开 Xcode 项目
 open AIIDPhoto.xcodeproj
@@ -37,7 +38,7 @@ xcodebuild \
 ```bash
 cd backend
 cp .env.example .env
-# 编辑 .env，填入 GEMINI_API_KEY
+# 编辑 .env，填入 HIVISION_URL / BAILIAN_API_KEY / APP_API_KEY / REFERRAL_HMAC_SECRET
 npm install
 npm run dev
 ```
@@ -48,9 +49,10 @@ npm run dev
 
 | 键 | 值 | 说明 |
 |----|-----|------|
-| `BACKEND_BASE_URL` | Cloud Run URL | 生产环境后端地址 |
-| `GEMINI_ENDPOINT` | Gemini API URL | 开发直连（留空使用后端） |
-| `GEMINI_API_KEY` | API Key | 开发直连（生产留空） |
+| `BACKEND_BASE_URL` | `https://aiphoto-cn.foyli.cloud` | CN 生产环境阿里云后端地址 |
+| `APP_API_KEY` | App 侧调用密钥 | 由 iOS 通过 `X-App-Key` 发送给后端；生产包通过 `AIIDPHOTO_APP_API_KEY` build setting 注入 |
+
+CN 线上后端当前运行在阿里云 ECS，通过 Nginx 反向代理到本机 PM2 进程。`aiphoto-cn.foyli.cloud` 已完成 DNS 和 HTTPS；上线前仍需真机端到端生成和 ATS 回归。
 
 ## 模拟器运行
 
@@ -61,15 +63,17 @@ xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto \
   -sdk iphonesimulator -destination "id=$SIMULATOR_ID" build
 xcrun simctl install $SIMULATOR_ID \
   build/DerivedData/Build/Products/Debug-iphonesimulator/AIIDPhoto.app
-xcrun simctl launch $SIMULATOR_ID com.nexus.aiidphoto
+xcrun simctl launch $SIMULATOR_ID com.yufeicn.aiidphoto
 ```
 
-## Claude Code Skills（项目专属）
+## 常用验证
 
-| Skill | 调用方式 | 用途 |
-|-------|---------|------|
-| swift-conventions | 自动 | Swift/iOS 编码规范 |
-| `/build` | 手动 | 构建 Xcode 项目 |
-| `/swift-review` | 手动 | 代码审查 |
-| `/xcode-fix` | 手动 | 修复编译错误 |
-| `/deploy-backend` | 手动 | 部署后端到 Cloud Run |
+```bash
+# iOS 构建
+xcodebuild -project AIIDPhoto.xcodeproj -scheme AIIDPhoto -configuration Release build
+
+# 后端类型检查/构建
+cd backend && npm run build
+```
+
+更多发布前检查见 `docs/07-deployment/cloud-run-deploy.md` 和 `docs/dev-logs/2026-05-24.md`。

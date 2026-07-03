@@ -8,11 +8,6 @@ options:
 settings:
   BASE_SDK: iphoneos
 
-packages:
-  GoogleMobileAds:
-    url: https://github.com/googleads/swift-package-manager-google-mobile-ads
-    from: "12.0.0"
-
 schemes:
   AIIDPhoto:
     build:
@@ -31,6 +26,9 @@ targets:
     platform: iOS
     productName: AIIDPhoto
     deploymentTarget: "26.0"
+    configFiles:
+      Debug: ios/AIIDPhoto/Configuration/App.xcconfig
+      Release: ios/AIIDPhoto/Configuration/App.xcconfig
     sources:
       - path: ios/AIIDPhoto
         excludes:
@@ -39,16 +37,14 @@ targets:
         type: folder
         buildPhase: resources
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.nexus.aiidphoto
+      PRODUCT_BUNDLE_IDENTIFIER: com.yufeicn.aiidphoto
       SWIFT_VERSION: 5.9
       IPHONEOS_DEPLOYMENT_TARGET: 26.0
       TARGETED_DEVICE_FAMILY: "1,2"  # iPhone + iPad
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
       CODE_SIGN_STYLE: Automatic
-      DEVELOPMENT_TEAM: K2ZG73WM9X
-    dependencies:
-      - package: GoogleMobileAds
+      DEVELOPMENT_TEAM: 4MYXBV84DV
     resources:
       - path: ios/AIIDPhoto/Resources/Fonts
       - path: ios/AIIDPhoto/Resources/en.lproj
@@ -75,9 +71,9 @@ targets:
           - vi
           - id
           - pt-BR
-        CFBundleDisplayName: AIIDPhoto
-        CFBundleIdentifier: com.nexus.aiidphoto
-        CFBundleName: AIIDPhoto
+        CFBundleDisplayName: 光影形象馆
+        CFBundleIdentifier: com.yufeicn.aiidphoto
+        CFBundleName: 光影形象馆
         CFBundleVersion: "22"
         CFBundleShortVersionString: "1.1.1"
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -87,12 +83,10 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         UILaunchScreen: {}
-        NSCameraUsageDescription: "We need camera access for selfies."
-        NSPhotoLibraryUsageDescription: "Allow access to pick photos."
-        NSPhotoLibraryAddUsageDescription: "Allow saving generated photos."
-        NSUserTrackingUsageDescription: "We use your advertising identifier to show relevant ads and measure ad performance. You can change this in Settings at any time."
-        # 后端代理地址（GCP Cloud Run，API Key 存储在服务端 Secret Manager）
-        BACKEND_BASE_URL: "https://aiidphoto-backend-616059029156.asia-northeast1.run.app"
-        APP_API_KEY: "1cce8f8bb9e33377925ae7798457c36fdf3e46945fe32db3cea04db3bd8175f2"
+        NSCameraUsageDescription: "用于拍摄用于生成证件照或职业形象照的照片。"
+        NSPhotoLibraryUsageDescription: "用于从相册选择用于生成证件照或职业形象照的照片。"
+        NSPhotoLibraryAddUsageDescription: "用于将生成后的证件照和打印排版保存到相册。"
+        # CN production backend on Alibaba Cloud ECS.
+        BACKEND_BASE_URL: "https://aiphoto-cn.foyli.cloud"
+        APP_API_KEY: "$(AIIDPHOTO_APP_API_KEY)"
         CFBundleIconName: AppIcon
-        GADApplicationIdentifier: "ca-app-pub-4720104330290543~3080111676"

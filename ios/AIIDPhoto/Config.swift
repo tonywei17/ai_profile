@@ -12,7 +12,11 @@ enum Config {
 
     /// App API key for backend authentication (X-App-Key header)
     static var appApiKey: String {
-        Bundle.main.object(forInfoDictionaryKey: "APP_API_KEY") as? String ?? ""
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "APP_API_KEY") as? String else {
+            return ""
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.hasPrefix("$(") ? "" : trimmed
     }
 
     /// Create a URLRequest with common headers (Content-Type + X-App-Key)

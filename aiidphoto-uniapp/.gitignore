@@ -1,0 +1,10 @@
+node_modules/
+dist/
+unpackage/
+.env
+.env.*
+!.env.example
+
+# 微信小程序代码上传私钥（绝不入库，泄露需在公众平台重置）
+private.*.key
+*.private.key

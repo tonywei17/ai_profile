@@ -5,6 +5,8 @@
 build/
 !.claude/skills/build/
 DerivedData/
+ios/AIIDPhoto/Configuration/Secrets.xcconfig
+ios/AIIDPhoto/Configuration/*.local.xcconfig
 *.xcodeproj/
 *.pbxuser
 !default.pbxuser
@@ -59,3 +61,26 @@ playground.xcworkspace
 # Local logs
 *.log
 *.xcactivitylog
+
+# Node (Playwright screenshot tooling)
+node_modules/
+package-lock.json
+
+# uni-app generated output and local environment
+aiidphoto-uniapp/unpackage/
+aiidphoto-uniapp/dist/
+aiidphoto-uniapp/.env
+aiidphoto-uniapp/.env.local
+aiidphoto-uniapp/project.private.config.json
+!aiidphoto-uniapp/package-lock.json
+!backend/package-lock.json
+
+# Backend runtime secrets and state
+backend/.env
+backend/.env.local
+backend/certs/
+backend/data/
+
+# 微信小程序代码上传私钥(任何位置都不入库)
+private.*.key
+*.private.key

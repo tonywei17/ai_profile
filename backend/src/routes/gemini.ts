@@ -1,6 +1,11 @@
 import { Router, Request, Response } from "express";
 import { config } from "../config";
 import { extractClientIp } from "../middleware/rateLimit";
+import { AttemptType, paymentStore } from "../services/paymentStore";
+import {
+  labelGeneratedImage,
+  recordUnmarkedExport,
+} from "../services/aigcLabelService";
 
 const router = Router();
 
@@ -20,308 +25,391 @@ setInterval(() => {
 // Daily budget circuit breaker
 let dailyBudget = { count: 0, date: "" };
 
-function checkDailyBudget(): boolean {
+function rollDailyBudget(): void {
   const today = new Date().toISOString().slice(0, 10);
   if (dailyBudget.date !== today) {
     dailyBudget = { count: 0, date: today };
   }
-  if (dailyBudget.count >= config.dailyBudget) {
-    return false;
-  }
+}
+
+// Read-only: is the daily budget already exhausted? Does NOT increment, so
+// invalid/unauthenticated/failed requests cannot burn the quota.
+function isDailyBudgetExhausted(): boolean {
+  rollDailyBudget();
+  return dailyBudget.count >= config.dailyBudget;
+}
+
+// Increment the daily counter. Call this only once a request is actually
+// committed to invoking a paid provider (after validation + auth + reserve).
+function consumeDailyBudget(): void {
+  rollDailyBudget();
+  dailyBudget.count++;
   if (dailyBudget.count >= config.dailyBudget * 0.8) {
     console.warn(`[budget] Daily generation count at ${dailyBudget.count}/${config.dailyBudget} (80%+ threshold)`);
   }
-  dailyBudget.count++;
-  return true;
 }
 
 interface GenerateRequest {
-  image: string; // base64
+  image: string;          // base64
   prompt: string;
+  cosmeticPrompt?: string; // 第二阶段：Hivision 输出后叠加的外观编辑指令（美颜/服装/表情等）
   tier?: string;
+  specWidth?: number;     // target pixel width at 300dpi (from IDPhotoSpec)
+  specHeight?: number;    // target pixel height at 300dpi
+  specBgColor?: string;   // hex color without #, e.g. "ffffff"
 }
 
-interface GeminiAPIResponse {
-  candidates?: Array<{
-    content: {
-      parts: Array<{
-        text?: string;
-        inline_data?: { mime_type: string; data: string };
-        inlineData?: { mimeType: string; data: string };
-      }>;
-    };
-  }>;
-  error?: { code: number; message: string };
-}
-
-interface OpenRouterResponse {
-  choices?: Array<{
-    message: {
-      content: Array<{
-        type: string;
-        text?: string;
-        image_url?: { url: string };
-      }> | string;
-    };
-  }>;
-  error?: { message: string; code?: number };
+interface QwenImageEditResponse {
+  output?: {
+    choices?: Array<{
+      finish_reason: string;
+      message: {
+        role: string;
+        content: Array<{ image?: string; text?: string }>;
+      };
+    }>;
+  };
+  code?: string;
+  message?: string;
 }
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
-const GEMINI_TIMEOUT_MS = 90_000;
-const OPENROUTER_TIMEOUT_MS = 120_000;
+// Timeouts bounded so that 第一段(Hivision) + 单次第二段(Qwen/Bailian) 在客户端
+// 150s 超时内完成；任一段超时即优雅降级，避免请求挂死触发 504 / 客户端白等。
+const HIVISION_TIMEOUT_MS = 70_000;
+const QWEN_TIMEOUT_MS = 70_000;
+const BAILIAN_TIMEOUT_MS = 70_000;
+const BAILIAN_POLL_INTERVAL_MS = 3_000;
+// 第二段（美颜/换装）多模型备份的时间预算：总时限 + 单次调用上限 + 最小重试余量。
+// 设计目标：Hivision(典型 20-30s) + 第二段(≤110s) 落在客户端 150s 内，
+// 同时给至少 2 个百炼模型互为备份的机会；时间不够即降级为 Hivision 基础图。
+const COSMETIC_DEADLINE_MS = 110_000;
+const COSMETIC_CALL_TIMEOUT_MS = 55_000;
+const COSMETIC_MIN_ATTEMPT_MS = 25_000;
+// 下载 provider 返回的结果图(OSS URL)的超时。此前无超时，OSS 偶发慢/不可达时
+// 会无限挂起，既不受调用超时约束，又会耗尽 undici 连接池拖垮后续请求 → 504。
+const IMG_DOWNLOAD_TIMEOUT_MS = 25_000;
 const MAX_PROMPT_LENGTH = 2000;
 
-// ============================================================
-// Provider 1: Gemini direct API
-// ============================================================
-async function callGemini(
-  prompt: string,
-  imageBase64: string,
-  tier: string | undefined
-): Promise<{ image: string } | null> {
-  const endpoint = tier === "free"
-    ? config.geminiEndpointFree
-    : config.geminiEndpointPro;
-
-  const body = {
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          { inline_data: { mime_type: "image/jpeg", data: imageBase64 } },
-        ],
-      },
-    ],
-    generationConfig: {
-      responseModalities: ["TEXT", "IMAGE"],
-    },
-  };
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": config.geminiApiKey,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-
-    const data = (await res.json()) as GeminiAPIResponse;
-
-    if (!res.ok) {
-      console.error(`[gemini] API error ${res.status}:`, data.error?.message);
-      return null;
-    }
-
-    const candidates = data.candidates;
-    if (!candidates || candidates.length === 0) {
-      console.error("[gemini] No candidates in response");
-      return null;
-    }
-
-    for (const part of candidates[0].content.parts) {
-      const inlineData = part.inline_data || part.inlineData;
-      if (inlineData?.data) {
-        return { image: inlineData.data };
-      }
-    }
-
-    console.error("[gemini] No image in response parts");
-    return null;
-  } catch (err: unknown) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      console.error("[gemini] Timeout after", GEMINI_TIMEOUT_MS, "ms");
-    } else {
-      console.error("[gemini] Request failed:", err);
-    }
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-// ============================================================
-// Provider 2 & 3: OpenRouter (shared logic, different API keys)
-// Pro tier only — free users do not trigger this fallback
-//
-// Key difference from Gemini direct:
-//   Gemini native API uses responseModalities: ["TEXT", "IMAGE"]
-//   OpenRouter uses OpenAI-compatible format, so we must:
-//   1. Set "modalities": ["text", "image"] for image output
-//   2. Wrap the prompt to make image editing intent explicit
-// ============================================================
-
-const OPENROUTER_SYSTEM_PROMPT =
-  "You are a professional ID photo editor. " +
-  "You MUST edit the provided photo and return the edited image. " +
-  "Do NOT describe the image. Do NOT return text. " +
-  "Your output MUST be the edited photo image.";
-
-function buildOpenRouterImagePrompt(originalPrompt: string): string {
-  return (
-    "TASK: Edit the attached photo into a professional ID/passport photo. " +
-    "Return ONLY the edited image, no text description.\n\n" +
-    "EDITING REQUIREMENTS:\n" +
-    originalPrompt + "\n\n" +
-    "CRITICAL: You must OUTPUT the edited photo as an image. " +
-    "Preserve the person's exact facial identity and features. " +
-    "Apply proper background, lighting, framing, and cropping as specified above."
+function sendGeneratedImage(
+  req: Request,
+  res: Response,
+  image: string,
+  provider: string
+): void {
+  const authenticatedUser = (req as any).user as
+    | { userId: string; openid: string }
+    | undefined;
+  const labeled = labelGeneratedImage(
+    image,
+    provider,
+    authenticatedUser?.userId
   );
+  res.json({ ...labeled, provider });
 }
 
-async function callOpenRouter(
-  prompt: string,
-  imageBase64: string,
-  apiKey: string,
-  label: string
-): Promise<{ image: string } | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
+// ============================================================
+// Provider 0: HivisionIDPhotos — 专业证件照，精确尺寸 + 人脸自动居中
+// Two-step: /idphoto (RGBA transparent) → /add_background (final JPEG)
+// ============================================================
 
-  const body = {
-    model: config.openrouterModel,
-    messages: [
-      {
-        role: "system",
-        content: OPENROUTER_SYSTEM_PROMPT,
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: buildOpenRouterImagePrompt(prompt) },
-          {
-            type: "image_url",
-            image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-          },
-        ],
-      },
-    ],
-    // Request image output (OpenAI-compatible multimodal output)
-    modalities: ["text", "image"],
-    provider: {
-      order: ["Google"],
-      allow_fallbacks: true,
-    },
-  };
+async function callHivision(
+  imageBase64: string,
+  widthPx: number,
+  heightPx: number,
+  bgColorHex: string
+): Promise<{ image: string } | null> {
+  if (!config.hivisionUrl) return null;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HIVISION_TIMEOUT_MS);
 
   try {
-    const res = await fetch(`${config.openrouterBaseUrl}/chat/completions`, {
+    // Step 1: face detection + matting → RGBA PNG at target dimensions
+    const form1 = new FormData();
+    form1.append("input_image_base64", imageBase64);
+    form1.append("width", String(widthPx));
+    form1.append("height", String(heightPx));
+    form1.append("hd", "false");
+    form1.append("dpi", "300");
+    form1.append("human_matting_model", "modnet_photographic_portrait_matting");
+    form1.append("face_detect_model", "mtcnn");
+    // head occupies ~2/3 of photo height per Chinese ID photo standards (GA461-2004)
+    form1.append("head_measure_ratio", "0.35");
+
+    const res1 = await fetch(`${config.hivisionUrl}/idphoto`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://aiidphoto.app",
-        "X-Title": "AIIDPhoto",
-      },
-      body: JSON.stringify(body),
+      body: form1,
       signal: controller.signal,
     });
+    const data1 = await res1.json() as { status: boolean; image_base64_standard?: string };
+    console.log("[hivision] Step1 status:", data1.status, "http:", res1.status);
 
-    const data = (await res.json()) as OpenRouterResponse;
-
-    if (!res.ok) {
-      console.error(`[${label}] API error ${res.status}:`, data.error?.message);
+    if (!data1.status || !data1.image_base64_standard) {
+      console.error("[hivision] Face not detected or step1 failed");
       return null;
     }
 
-    return extractImageFromChatResponse(data, label);
+    // Step 2: fill background color → JPEG
+    const color = bgColorHex.replace("#", "");
+    const form2 = new FormData();
+    form2.append("input_image_base64", data1.image_base64_standard);
+    form2.append("color", color);
+    form2.append("render", "0");
+    form2.append("dpi", "300");
+
+    const res2 = await fetch(`${config.hivisionUrl}/add_background`, {
+      method: "POST",
+      body: form2,
+      signal: controller.signal,
+    });
+    const data2 = await res2.json() as { status: boolean; image_base64?: string };
+
+    if (!data2.status || !data2.image_base64) {
+      console.error("[hivision] add_background failed");
+      return null;
+    }
+
+    // Normalize: strip data URL prefix, whitespace, url-safe chars, fix padding
+    let b64 = data2.image_base64.replace(/^data:image\/[^;]+;base64,/, "");
+    b64 = b64.replace(/\s+/g, "");
+    b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+    const rem = b64.length % 4;
+    if (rem === 2) b64 += "==";
+    else if (rem === 3) b64 += "=";
+    console.log("[hivision] Done, bytes:", b64.length, "prefix:", b64.substring(0, 8));
+    return { image: b64 };
+
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === "AbortError") {
-      console.error(`[${label}] Timeout after ${OPENROUTER_TIMEOUT_MS}ms`);
+      console.error("[hivision] Timeout after", HIVISION_TIMEOUT_MS, "ms");
     } else {
-      console.error(`[${label}] Request failed:`, err);
+      console.error("[hivision] Error:", err);
     }
     return null;
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timer);
   }
 }
 
 // ============================================================
-// Shared: extract image from OpenAI-compatible chat response
+// Provider 1: 阿里云百炼 wanx2.1-imageedit (异步任务轮询)
 // ============================================================
-function extractImageFromChatResponse(
-  data: OpenRouterResponse,
-  label: string
-): { image: string } | null {
-  const choices = data.choices;
-  if (!choices || choices.length === 0) {
-    console.error(`[${label}] No choices in response`);
+
+const BAILIAN_ENDPOINT =
+  "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis";
+const BAILIAN_TASK_ENDPOINT =
+  "https://dashscope.aliyuncs.com/api/v1/tasks";
+
+interface BailianCreateResponse {
+  request_id?: string;
+  output?: { task_id: string; task_status: string };
+  code?: string;
+  message?: string;
+}
+
+interface BailianTaskResponse {
+  output?: {
+    task_id: string;
+    task_status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+    results?: Array<{ url: string; code?: string; message?: string }>;
+    code?: string;
+    message?: string;
+  };
+}
+
+async function callBailian(
+  prompt: string,
+  imageBase64: string,
+  timeoutMs: number = BAILIAN_TIMEOUT_MS
+): Promise<{ image: string } | null> {
+  if (!config.bailianApiKey) return null;
+
+  // Step 1: 创建异步任务
+  let taskId: string;
+  try {
+    const createRes = await fetch(BAILIAN_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.bailianApiKey}`,
+        "X-DashScope-Async": "enable",
+      },
+      body: JSON.stringify({
+        model: "wanx2.1-imageedit",
+        input: {
+          function: "description_edit",
+          prompt,
+          base_image_url: `data:image/jpeg;base64,${imageBase64}`,
+        },
+        // strength: 0.85 ensures background is fully replaced; default 0.5 is too conservative
+        parameters: { n: 1, watermark: false, strength: 0.85 },
+      }),
+    });
+
+    const createData = (await createRes.json()) as BailianCreateResponse;
+    console.log("[bailian] Create response status:", createRes.status, "code:", createData.code, "message:", createData.message);
+    if (!createRes.ok || createData.code || !createData.output?.task_id) {
+      console.error("[bailian] Task creation failed:", createData.code, createData.message);
+      return null;
+    }
+
+    taskId = createData.output.task_id;
+    console.log("[bailian] Task created:", taskId);
+  } catch (err) {
+    console.error("[bailian] Task creation request failed:", err);
     return null;
   }
 
-  const content = choices[0].message.content;
+  // Step 2: 轮询直到完成或超时
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, BAILIAN_POLL_INTERVAL_MS));
 
-  if (Array.isArray(content)) {
-    for (const block of content) {
-      if (block.type === "image_url" && block.image_url?.url) {
-        const base64Match = block.image_url.url.match(
-          /^data:image\/[^;]+;base64,(.+)$/
-        );
-        if (base64Match) {
-          return { image: base64Match[1] };
+    try {
+      const pollRes = await fetch(`${BAILIAN_TASK_ENDPOINT}/${taskId}`, {
+        headers: { Authorization: `Bearer ${config.bailianApiKey}` },
+      });
+
+      const pollData = (await pollRes.json()) as BailianTaskResponse;
+      const status = pollData.output?.task_status;
+
+      if (status === "SUCCEEDED") {
+        const imageUrl = pollData.output?.results?.[0]?.url;
+        if (!imageUrl) {
+          console.error("[bailian] No image URL in SUCCEEDED response");
+          return null;
         }
+        const imgRes = await fetch(imageUrl, {
+          signal: AbortSignal.timeout(IMG_DOWNLOAD_TIMEOUT_MS),
+        });
+        const imgBuffer = await imgRes.arrayBuffer();
+        const base64 = Buffer.from(imgBuffer).toString("base64");
+        console.log("[bailian] Task succeeded, image bytes:", base64.length);
+        return { image: base64 };
       }
+
+      if (status === "FAILED" || status === "CANCELED") {
+        console.error("[bailian] Task failed:", pollData.output?.code, pollData.output?.message);
+        return null;
+      }
+
+      console.log("[bailian] Task status:", status);
+    } catch (err) {
+      console.error("[bailian] Poll request failed:", err);
+      return null;
     }
   }
 
-  if (typeof content === "string") {
-    const dataUrlMatch = content.match(/^data:image\/[^;]+;base64,(.+)$/);
-    if (dataUrlMatch) {
-      return { image: dataUrlMatch[1] };
-    }
-    if (/^[A-Za-z0-9+/=]{100,}$/.test(content)) {
-      return { image: content };
-    }
-  }
-
-  console.error(`[${label}] No image found in response`);
+  console.error("[bailian] Task timed out after", BAILIAN_TIMEOUT_MS, "ms");
   return null;
 }
 
 // ============================================================
-// Fallback chain definition
+// Provider 1 & 2: 阿里云百炼 qwen-image-edit / qwen-image-edit-plus
+// Pro tier only — 同一 BAILIAN_API_KEY，不同模型
 // ============================================================
-interface ProviderEntry {
-  name: string;
-  proOnly: boolean;
-  available: () => boolean;
-  call: (prompt: string, image: string, tier?: string) => Promise<{ image: string } | null>;
-}
 
-const providers: ProviderEntry[] = [
-  {
-    name: "gemini",
-    proOnly: false,
-    available: () => !!config.geminiApiKey,
-    call: (prompt, image, tier) => callGemini(prompt, image, tier),
-  },
-  {
-    name: "openrouter",
-    proOnly: true,
-    available: () => !!config.openrouterApiKey,
-    call: (prompt, image) =>
-      callOpenRouter(prompt, image, config.openrouterApiKey, "openrouter"),
-  },
-  {
-    name: "openrouter-env",
-    proOnly: true,
-    available: () => !!config.openrouterApiKeyEnv,
-    call: (prompt, image) =>
-      callOpenRouter(prompt, image, config.openrouterApiKeyEnv, "openrouter-env"),
-  },
-];
+const QWEN_IMAGE_EDIT_ENDPOINT =
+  "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
+
+async function callQwenImageEdit(
+  model: string,
+  prompt: string,
+  imageBase64: string,
+  timeoutMs: number = QWEN_TIMEOUT_MS
+): Promise<{ image: string } | null> {
+  if (!config.bailianApiKey) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(QWEN_IMAGE_EDIT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.bailianApiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        input: {
+          messages: [
+            {
+              role: "user",
+              content: [
+                { image: `data:image/jpeg;base64,${imageBase64}` },
+                { text: prompt },
+              ],
+            },
+          ],
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    const data = (await res.json()) as QwenImageEditResponse;
+
+    console.log(`[${model}] Response status:`, res.status, "code:", data.code ?? "none");
+    if (!res.ok || data.code) {
+      console.error(`[${model}] API error:`, data.code, data.message);
+      return null;
+    }
+
+    const content = data.output?.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error(`[${model}] No content in response, output:`, JSON.stringify(data.output).slice(0, 200));
+      return null;
+    }
+
+    for (const block of content) {
+      if (!block.image) continue;
+      const dataUrlMatch = block.image.match(/^data:image\/[^;]+;base64,(.+)$/);
+      if (dataUrlMatch) return { image: dataUrlMatch[1] };
+      if (block.image.startsWith("http")) {
+        const imgRes = await fetch(block.image, {
+          signal: AbortSignal.timeout(IMG_DOWNLOAD_TIMEOUT_MS),
+        });
+        const base64 = Buffer.from(await imgRes.arrayBuffer()).toString("base64");
+        return { image: base64 };
+      }
+      return { image: block.image };
+    }
+
+    console.error(`[${model}] No image in response content`);
+    return null;
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      console.error(`[${model}] Timeout after ${QWEN_TIMEOUT_MS}ms`);
+    } else {
+      console.error(`[${model}] Request failed:`, err);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 // ============================================================
 // POST /generate
 // ============================================================
 router.post("/generate", async (req: Request, res: Response) => {
+  let reservedAttempt: AttemptType | null = null;
+  let reservedUserId: string | null = null;
+  const restoreReservedAttempt = () => {
+    if (reservedAttempt && reservedUserId) {
+      paymentStore.restoreAttempt(reservedUserId, reservedAttempt);
+      reservedAttempt = null;
+    }
+  };
+
+  // Commit a successful result: deliver the image and mark the reserved attempt
+  // as consumed.
+  const commitAndSend = (image: string, provider: string): void => {
+    sendGeneratedImage(req, res, image, provider);
+    reservedAttempt = null;
+  };
+
   // Per-IP rate limit
   const clientIp = extractClientIp(req);
   const now = Date.now();
@@ -340,73 +428,194 @@ router.post("/generate", async (req: Request, res: Response) => {
     generateLimiter.set(clientIp, { count: 1, resetAt: now + GENERATE_WINDOW_MS });
   }
 
-  // Daily budget check
-  if (!checkDailyBudget()) {
+  // Daily budget check (read-only here — the counter is consumed later, right
+  // before we actually invoke a provider, so invalid/rejected requests don't
+  // drain the daily quota).
+  if (isDailyBudgetExhausted()) {
     console.error(`[budget] Daily budget exceeded: ${config.dailyBudget}`);
     res.status(503).json({ error: "Service temporarily unavailable, please try again later" });
     return;
   }
 
   try {
-    const { image, prompt, tier } = req.body as GenerateRequest;
+    const { image, prompt, cosmeticPrompt, tier, specWidth, specHeight, specBgColor } = req.body as GenerateRequest;
 
     if (!image || !prompt) {
       res.status(400).json({ error: "Missing required fields: image, prompt" });
       return;
     }
-
     if (typeof image !== "string" || image.length > MAX_IMAGE_SIZE) {
       res.status(413).json({ error: "Image too large" });
       return;
     }
-
     if (!/^[A-Za-z0-9+/=]+$/.test(image.slice(0, 100))) {
       res.status(400).json({ error: "Invalid image format" });
       return;
     }
-
     if (typeof prompt !== "string" || prompt.length > MAX_PROMPT_LENGTH) {
       res.status(413).json({ error: "Prompt too long" });
       return;
     }
-
     if (prompt.trim().length < 3) {
       res.status(400).json({ error: "Prompt too short" });
       return;
     }
 
-    // Free users: Gemini only (no expensive fallbacks)
-    // Pro users: full fallback chain
     const isPro = tier === "pro";
-    const availableProviders = providers.filter(
-      (p) => p.available() && (!p.proOnly || isPro)
-    );
+    const hasSpec = typeof specWidth === "number" && typeof specHeight === "number" && typeof specBgColor === "string";
 
-    if (availableProviders.length === 0) {
-      res.status(500).json({ error: "Server API key not configured" });
-      return;
-    }
-
-    // Walk the fallback chain in priority order
-    for (let i = 0; i < availableProviders.length; i++) {
-      if (i > 0) {
-        console.warn(`[fallback] ${availableProviders[i - 1].name} failed, trying ${availableProviders[i].name}`);
+    if (hasSpec) {
+      if (!/^[0-9a-fA-F]{6}$/.test(specBgColor!.replace("#", ""))) {
+        res.status(400).json({ error: "Invalid background color format" });
+        return;
       }
-
-      const result = await availableProviders[i].call(prompt, image, tier);
-      if (result) {
-        res.json({ image: result.image, provider: availableProviders[i].name });
+      if (specWidth! < 100 || specWidth! > 2000 || specHeight! < 100 || specHeight! > 2000) {
+        res.status(400).json({ error: "Invalid spec dimensions" });
         return;
       }
     }
 
-    const tried = availableProviders.map((p) => p.name).join(" → ");
+    const hasCosmeticPrompt = typeof cosmeticPrompt === "string" && cosmeticPrompt.trim().length > 3;
+    const authenticatedUser = (req as any).user as
+      | { userId: string; openid: string }
+      | undefined;
+    if (authenticatedUser) {
+      paymentStore.ensureUser(authenticatedUser.userId, authenticatedUser.openid);
+      reservedAttempt = paymentStore.reserveAttempt(
+        authenticatedUser.userId,
+        isPro ? "pro" : "free"
+      );
+      reservedUserId = authenticatedUser.userId;
+      if (!reservedAttempt) {
+        res.status(402).json({ error: "No generation attempts remaining" });
+        return;
+      }
+    }
+
+    // Committed to invoking a provider now — count it against the daily budget.
+    consumeDailyBudget();
+
+    // 免费额度规则：终身免费 3 次只开放「基础功能」——即 Hivision 基础证件照
+    // （抠图/裁切/换纯色背景），不调用任何付费 AI（美颜/换装/付费兜底）。
+    // 付费次数（reservedAttempt === "paid"）或非小程序鉴权（iOS X-App-Key，
+    // reservedAttempt 为 null）不受此限制。
+    const basicOnly = reservedAttempt === "free";
+
+    // ── 阶段一：HivisionIDPhotos 精准抠图 + 裁切 + 背景填色 ──────────────
+    if (hasSpec && config.hivisionUrl) {
+      const hivisionResult = await callHivision(image, specWidth!, specHeight!, specBgColor!);
+      if (hivisionResult) {
+        // ── 阶段二（可选）：Qwen/Bailian 对 Hivision 输出叠加外观编辑 ──
+        // 免费额度跳过此付费阶段（basicOnly），避免免费请求触发付费美颜。
+        if (hasCosmeticPrompt && !basicOnly && config.bailianApiKey) {
+          console.log("[pipeline] Hivision succeeded, starting cosmetic pass");
+          // 第二段：按顺序尝试多个百炼模型做外观编辑，互为备份（任一可用即返回）。
+          // 全程受 COSMETIC_DEADLINE_MS 总时限约束，并据剩余时间收紧每次调用超时，
+          // 确保 Hivision + 第二段不超过客户端 150s；时间不够/全部失败即降级为基础图。
+          const cosmeticChain = isPro
+            ? [
+                { name: "qwen-image-edit-plus", run: (t: number) => callQwenImageEdit("qwen-image-edit-plus", cosmeticPrompt!, hivisionResult.image, t) },
+                { name: "qwen-image-edit",      run: (t: number) => callQwenImageEdit("qwen-image-edit", cosmeticPrompt!, hivisionResult.image, t) },
+                { name: "wanx2.1-imageedit",    run: (t: number) => callBailian(cosmeticPrompt!, hivisionResult.image, t) },
+              ]
+            : [
+                { name: "wanx2.1-imageedit", run: (t: number) => callBailian(cosmeticPrompt!, hivisionResult.image, t) },
+                { name: "qwen-image-edit",   run: (t: number) => callQwenImageEdit("qwen-image-edit", cosmeticPrompt!, hivisionResult.image, t) },
+              ];
+          let cosmeticResult: { image: string } | null = null;
+          const cosmeticStart = Date.now();
+          for (const provider of cosmeticChain) {
+            const remaining = COSMETIC_DEADLINE_MS - (Date.now() - cosmeticStart);
+            if (remaining < COSMETIC_MIN_ATTEMPT_MS) {
+              console.warn(`[cosmetic] 剩余时间不足 ${remaining}ms，停止重试，降级基础图`);
+              break;
+            }
+            cosmeticResult = await provider.run(Math.min(COSMETIC_CALL_TIMEOUT_MS, remaining));
+            if (cosmeticResult) break;
+            console.warn(`[cosmetic] ${provider.name} 失败/超时，尝试下一个备选模型`);
+          }
+          if (cosmeticResult) {
+            commitAndSend(cosmeticResult.image, "hivision+cosmetic");
+            return;
+          }
+          // 第二阶段全部超时/失败时，降级返回 Hivision 基础结果（保证有图、不挂死）
+          console.warn("[pipeline] Cosmetic pass failed/timeout, returning Hivision base result");
+        }
+        commitAndSend(hivisionResult.image, "hivision");
+        return;
+      }
+      console.warn("[fallback] Hivision failed, falling back to prompt-based providers");
+    }
+
+    // 免费额度不走付费兜底：基础引擎（Hivision）未能出图时，直接失败并退还本次
+    // 免费次数，而不是调用付费的 Qwen/Bailian。
+    if (basicOnly) {
+      console.warn("[free-tier] Basic engine unavailable/failed; free attempt does not fall back to paid providers");
+      restoreReservedAttempt();
+      res.status(502).json({ error: "Generation failed, please try again" });
+      return;
+    }
+
+    // ── Fallback：Hivision 不可用或失败时，走完整 prompt 链 ─────────────
+    const candidates: Array<{ name: string; call: () => Promise<{ image: string } | null> }> = [];
+
+    if (isPro && config.bailianApiKey) {
+      candidates.push({ name: "qwen-image-edit-plus", call: () => callQwenImageEdit("qwen-image-edit-plus", prompt, image) });
+      candidates.push({ name: "qwen-image-edit",      call: () => callQwenImageEdit("qwen-image-edit", prompt, image) });
+    }
+    if (config.bailianApiKey) {
+      candidates.push({ name: "bailian", call: () => callBailian(prompt, image) });
+    }
+
+    if (candidates.length === 0) {
+      restoreReservedAttempt();
+      res.status(500).json({ error: "Server API key not configured" });
+      return;
+    }
+
+    for (let i = 0; i < candidates.length; i++) {
+      if (i > 0) {
+        console.warn(`[fallback] ${candidates[i - 1].name} failed, trying ${candidates[i].name}`);
+      }
+      const result = await candidates[i].call();
+      if (result) {
+        commitAndSend(result.image, candidates[i].name);
+        return;
+      }
+    }
+
+    const tried = candidates.map((c) => c.name).join(" → ");
     console.error(`[generate] All providers failed: ${tried}`);
+    restoreReservedAttempt();
     res.status(502).json({ error: "Generation failed, please try again" });
   } catch (err: unknown) {
     console.error("Generate error:", err);
+    restoreReservedAttempt();
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+router.post("/export-log", (req: Request, res: Response) => {
+  const authenticatedUser = (req as any).user as
+    | { userId: string; openid: string }
+    | undefined;
+  if (!authenticatedUser) {
+    res.status(401).json({ success: false, error: "Authentication required" });
+    return;
+  }
+  const produceId = String(req.body?.produceId || "");
+  const exportType = String(req.body?.exportType || "photo");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      produceId
+    ) ||
+    !["photo", "print-layout"].includes(exportType)
+  ) {
+    res.status(400).json({ success: false, error: "Invalid export log data" });
+    return;
+  }
+  recordUnmarkedExport(produceId, authenticatedUser.userId, exportType);
+  res.json({ success: true });
 });
 
 export default router;

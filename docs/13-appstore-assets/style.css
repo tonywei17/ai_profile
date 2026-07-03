@@ -1,0 +1,300 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: #f7f4ee;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans", sans-serif;
+  color: #121212;
+}
+
+.stage {
+  position: relative;
+  width: 1290px;
+  height: 2796px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(79, 146, 193, 0.22), transparent 34%),
+    linear-gradient(180deg, #f8f5ef 0%, #eaf2f5 48%, #dbe8ee 100%);
+}
+
+.stage.ipad {
+  width: 2048px;
+  height: 2732px;
+}
+
+.copy {
+  position: absolute;
+  left: 92px;
+  right: 92px;
+  top: 170px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  height: 54px;
+  padding: 0 24px;
+  border: 2px solid #121212;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 36px 0 0;
+  max-width: 970px;
+  font-size: 116px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 30px 0 0;
+  max-width: 900px;
+  font-size: 48px;
+  line-height: 1.35;
+  color: #36505f;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-top: 44px;
+}
+
+.price strong {
+  font-size: 88px;
+}
+
+.price span {
+  font-size: 34px;
+  color: #36505f;
+}
+
+.phone {
+  position: absolute;
+  left: 166px;
+  bottom: 130px;
+  width: 958px;
+  height: 1700px;
+  border: 18px solid #121212;
+  border-radius: 92px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 46px 110px rgba(18, 18, 18, 0.26);
+}
+
+.phone::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  width: 250px;
+  height: 38px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #121212;
+  z-index: 3;
+}
+
+.app {
+  position: absolute;
+  inset: 0;
+  padding: 108px 48px 48px;
+  background: #ffffff;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 18px;
+  border: 2px solid #121212;
+  border-radius: 10px;
+  font-size: 22px;
+}
+
+.hero-card {
+  margin-top: 44px;
+  height: 330px;
+  padding: 36px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #4f92c1, #69abc9);
+  color: #fff;
+}
+
+.hero-card h2 {
+  margin: 0;
+  font-size: 54px;
+  line-height: 1.12;
+}
+
+.hero-card p {
+  margin: 18px 0 0;
+  font-size: 30px;
+  opacity: 0.86;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 34px;
+}
+
+.tile {
+  min-height: 174px;
+  padding: 26px;
+  border: 2px solid #d9e2e8;
+  border-radius: 20px;
+  background: #fbfcfd;
+}
+
+.tile b {
+  display: block;
+  font-size: 31px;
+}
+
+.tile span {
+  display: block;
+  margin-top: 12px;
+  font-size: 24px;
+  color: #65727a;
+}
+
+.result {
+  margin-top: 36px;
+  height: 456px;
+  border-radius: 28px;
+  background:
+    linear-gradient(90deg, #e8edf1 0 50%, #cfe3ef 50% 100%);
+  border: 2px solid #d5e1e7;
+  position: relative;
+}
+
+.result::before,
+.result::after {
+  content: "Before";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50%;
+  text-align: center;
+  font-size: 38px;
+  font-weight: 800;
+  color: #82909a;
+}
+
+.result::after {
+  content: "After";
+  left: 50%;
+  color: #4f92c1;
+}
+
+.cta {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  bottom: 48px;
+  height: 92px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #121212;
+  color: white;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.screen-02 .stage {
+  background:
+    radial-gradient(circle at 84% 20%, rgba(229, 116, 76, 0.22), transparent 35%),
+    linear-gradient(180deg, #fff7ef 0%, #f4ebdf 45%, #e5eef2 100%);
+}
+
+.screen-02 .hero-card {
+  background: linear-gradient(135deg, #e5744c, #f0a067);
+}
+
+.screen-03 .stage {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(86, 156, 122, 0.24), transparent 36%),
+    linear-gradient(180deg, #f4fbf6 0%, #e6f1ea 48%, #eef2e8 100%);
+}
+
+.screen-03 .hero-card {
+  background: linear-gradient(135deg, #569c7a, #82b99a);
+}
+
+.screen-04 .stage {
+  background:
+    radial-gradient(circle at 82% 16%, rgba(106, 97, 184, 0.20), transparent 35%),
+    linear-gradient(180deg, #f5f3ff 0%, #ecebfa 45%, #e8f0f5 100%);
+}
+
+.screen-04 .hero-card {
+  background: linear-gradient(135deg, #6a61b8, #8c82d2);
+}
+
+.ipad .copy {
+  top: 150px;
+  left: 136px;
+  right: 136px;
+}
+
+.ipad h1 {
+  max-width: 1280px;
+  font-size: 118px;
+}
+
+.ipad .subtitle {
+  max-width: 1260px;
+}
+
+.ipad .phone {
+  left: 524px;
+  bottom: 116px;
+  width: 1000px;
+  height: 1600px;
+}
+
+/* Real device mockup image — iPhone */
+.mockup-img {
+  position: absolute;
+  left: 200px;
+  bottom: 80px;
+  width: 890px;
+  height: auto;
+}
+
+/* iPad: two phones side by side */
+.ipad .mockup-left {
+  position: absolute;
+  left: 100px;
+  bottom: 80px;
+  width: 820px;
+  height: auto;
+}
+.ipad .mockup-right {
+  position: absolute;
+  right: 100px;
+  bottom: 80px;
+  width: 820px;
+  height: auto;
+}

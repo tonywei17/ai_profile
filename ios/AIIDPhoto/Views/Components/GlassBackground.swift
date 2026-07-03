@@ -149,4 +149,11 @@ extension Color {
             ? UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
             : UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1)
     })
+
+    // Brand blue palette
+    static let skyBlue     = Color(red: 0.141, green: 0.392, blue: 0.784)
+    static let skyBlueMid  = Color(red: 0.255, green: 0.537, blue: 0.902)
+    static let skyBlueSoft = Color(red: 0.357, green: 0.643, blue: 0.941)
+    static let promoOrange = Color(red: 1.0,   green: 0.486, blue: 0.129)
+    static let promoRed    = Color(red: 0.918, green: 0.216, blue: 0.216)
 }

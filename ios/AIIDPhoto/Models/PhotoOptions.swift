@@ -22,20 +22,12 @@ enum BeautyLevel: String, CaseIterable, Identifiable {
         switch self {
         case .natural:      nil
         case .lightEnhance:
-            "Perform a subtle natural skin retouch on the subject's face only. "
-            + "Gently even out skin tone and reduce minor redness. "
-            + "Strictly preserve pore texture, freckles, moles, and all natural skin features. "
-            + "Do not add any new marks, spots, or blemishes that are not in the original photo. "
-            + "Do not smooth the skin to a plastic finish. Keep the result photorealistic."
+            "仅对人物面部进行轻微自然修肤：轻柔均匀肤色、淡化轻微泛红。"
+            + "严格保留毛孔纹理、雀斑、痣等原有皮肤特征，不得新增任何斑点瑕疵，不得磨皮过度。保持结果真实自然。"
         case .professional:
-            "Perform professional portrait retouching on the subject's face only. "
-            + "Even out skin tone, remove only transient blemishes such as acne or temporary redness, "
-            + "and apply subtle brightening under the eyes. "
-            + "Preserve natural pore texture and skin micro-detail — do not smooth to a plastic finish. "
-            + "Do not add any new marks, spots, moles, or blemishes that are not in the original photo. "
-            + "Do not alter the subject's facial structure, identity, or expression. "
-            + "Respect the subject's original skin tone; do not wash out the complexion. "
-            + "The result must look photorealistic and suitable for official ID documents."
+            "仅对人物面部进行专业级精修：均匀肤色，去除痘痘、临时性泛红等暂时性瑕疵，轻微提亮眼下区域。"
+            + "保留自然毛孔纹理，不得磨皮过度。不得新增任何原照片中不存在的斑点、痣或瑕疵。"
+            + "不得改变人物面部结构、身份或原有肤色。结果需真实自然，适合正式证件照。"
         }
     }
 
@@ -77,11 +69,11 @@ enum Attire: String, CaseIterable, Identifiable {
 
     var promptSuffix: String? {
         switch self {
-        case .keepOriginal:       nil
-        case .darkSuit:           "The subject should be wearing a dark formal business suit with a white collared shirt and tie."
-        case .navySuit:           "The subject should be wearing a navy blue formal business suit with a light blue collared dress shirt."
-        case .whiteShirt:         "The subject should be wearing a clean white collared dress shirt."
-        case .professionalBlouse: "The subject should be wearing a professional solid-color blouse or blazer suitable for official documents."
+        case .keepOriginal:       "忽略任何换装指令，严格保留被摄者原有服装，不得替换或修改服装。"
+        case .darkSuit:           "将服装替换为深色正式西装，内搭白色领带衬衫并佩戴领带。"
+        case .navySuit:           "将服装替换为藏蓝色正式西装，内搭浅蓝色领口衬衫。"
+        case .whiteShirt:         "将服装替换为整洁的白色领口衬衫。"
+        case .professionalBlouse: "将服装替换为专业纯色上衣或西装外套，适合正式证件照。"
         }
     }
 
@@ -120,7 +112,7 @@ enum HairGrooming: String, CaseIterable, Identifiable {
     var promptSuffix: String? {
         switch self {
         case .keepOriginal: nil
-        case .tidyUp:       "Neatly groom the hair: remove stray hairs, smooth flyaways, and ensure a clean professional appearance."
+        case .tidyUp:       "整理发型：去除散发和碎发，使发型整洁利落，呈现专业干净的形象。"
         }
     }
 
@@ -156,6 +148,17 @@ enum BackgroundColorOption: String, CaseIterable, Identifiable {
         case .lightBlue:   "rectangle.fill"
         case .lightGray:   "rectangle.fill"
         case .red:         "rectangle.fill"
+        }
+    }
+
+    /// Hex string (no #) sent to backend for background processing. nil = use spec default.
+    var bgColorHex: String? {
+        switch self {
+        case .specDefault: nil
+        case .pureWhite:   "ffffff"
+        case .lightBlue:   "d4e9f7"
+        case .lightGray:   "e8e8e8"
+        case .red:         "d03030"
         }
     }
 
@@ -215,7 +218,7 @@ enum AccessoriesCleanup: String, CaseIterable, Identifiable {
     var promptSuffix: String? {
         switch self {
         case .keepAsIs:      nil
-        case .removeGlasses: "Remove eyeglasses from the subject's face while preserving the natural eye area."
+        case .removeGlasses: "去除被摄者面部的眼镜，同时保留眼睛区域的自然状态。"
         }
     }
 
@@ -223,6 +226,49 @@ enum AccessoriesCleanup: String, CaseIterable, Identifiable {
         switch self {
         case .keepAsIs:      return l(zh: "保持原样", en: "Original",         ja: "そのまま",   ko: "원본 유지", vi: "Giữ nguyên", id: "Asli", pt: "Original", lang: language)
         case .removeGlasses: return l(zh: "去眼镜",   en: "Remove Glasses",   ja: "メガネ除去", ko: "안경 제거", vi: "Bỏ kính", id: "Hapus Kacamata", pt: "Remover Óculos", lang: language)
+        }
+    }
+
+    private func l(zh: String, en: String, ja: String, ko: String,
+                   vi: String? = nil, id: String? = nil, pt: String? = nil, lang: String) -> String {
+        switch lang { case "zh": zh; case "ja": ja; case "ko": ko; case "vi": vi ?? en; case "id": id ?? en; case "pt": pt ?? en; default: en }
+    }
+}
+
+// MARK: - Expression Style
+
+enum ExpressionStyle: String, CaseIterable, Identifiable {
+    case neutral
+    case subtleSmile
+    case naturalSmile
+
+    var id: String { rawValue }
+    var isPro: Bool { false }
+
+    var icon: String {
+        switch self {
+        case .neutral:     "face.smiling.inverse"
+        case .subtleSmile: "face.smiling"
+        case .naturalSmile:"mouth.fill"
+        }
+    }
+
+    var promptSuffix: String? {
+        switch self {
+        case .neutral:
+            "面部表情保持自然沉稳，放松但不微笑，适合正式证件照要求。"
+        case .subtleSmile:
+            "面部表情呈现轻微微笑：嘴角轻微上扬，自然亲切，不夸张。"
+        case .naturalSmile:
+            "面部表情呈现自然开朗的微笑：真实友好，可适当露齿（若自然的话）。"
+        }
+    }
+
+    func displayName(language: String) -> String {
+        switch self {
+        case .neutral:     return l(zh: "不笑",   en: "Neutral",       ja: "無表情",     ko: "무표정",   vi: "Bình thường", id: "Netral",  pt: "Neutro",  lang: language)
+        case .subtleSmile: return l(zh: "微笑",   en: "Subtle Smile",  ja: "微笑み",     ko: "미소",     vi: "Cười nhẹ",    id: "Senyum",  pt: "Sorriso", lang: language)
+        case .naturalSmile:return l(zh: "自然笑", en: "Natural Smile", ja: "自然な笑顔", ko: "자연 미소", vi: "Cười tự nhiên",id: "Senyum Alami", pt: "Sorriso Natural", lang: language)
         }
     }
 
@@ -240,6 +286,7 @@ struct PhotoOptions {
     var hair: HairGrooming = .keepOriginal
     var background: BackgroundColorOption = .specDefault
     var accessories: AccessoriesCleanup = .keepAsIs
+    var expression: ExpressionStyle = .neutral
 
     static let defaults = PhotoOptions()
 
@@ -248,12 +295,37 @@ struct PhotoOptions {
             || background.isPro || accessories.isPro
     }
 
+    /// 是否有任何"外观编辑"选项处于非默认状态。
+    /// HivisionIDPhotos 不接受 prompt，只做抠图+尺寸+底色，
+    /// 当此属性为 true 时应跳过 Hivision，改走 Qwen/Bailian 以令选项生效。
+    var hasCosmeticEdits: Bool {
+        beauty != .natural
+            || attire != .keepOriginal
+            || hair != .keepOriginal
+            || accessories != .keepAsIs
+            || expression != .neutral
+    }
+
     private static let safetyConstraint =
-        "IMPORTANT: Preserve the subject's exact facial identity, structure, and natural expression throughout all edits. "
-        + "Do not add any new facial features, marks, or blemishes that are not present in the original photo."
+        "重要：全程保持被摄者的面部身份和五官结构完全不变。不得添加原照片中不存在的任何新面部特征、斑点或瑕疵。"
+
+    /// 仅包含外观编辑指令（表情/美颜/服装/发型/配饰），用于 Hivision 之后的第二阶段处理。
+    /// 背景色由 Hivision 直接处理，不需要出现在此 prompt 中。
+    func buildCosmeticPrompt() -> String? {
+        let suffixes = [
+            expression.promptSuffix,
+            beauty.promptSuffix,
+            attire.promptSuffix,
+            hair.promptSuffix,
+            accessories.promptSuffix,
+        ].compactMap { $0 }
+        guard !suffixes.isEmpty else { return nil }
+        return suffixes.joined(separator: " ") + " " + Self.safetyConstraint
+    }
 
     func buildPromptSuffix() -> String {
         let suffixes = [
+            expression.promptSuffix,
             beauty.promptSuffix,
             attire.promptSuffix,
             hair.promptSuffix,

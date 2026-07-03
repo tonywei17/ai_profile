@@ -1,0 +1,50 @@
+{
+  "name": "aiidphoto-uniapp",
+  "version": "1.0.2",
+  "description": "AI证件照生成应用 - uni-app跨端版本",
+  "main": "main.js",
+  "scripts": {
+    "dev:mp-weixin": "cross-env UNI_INPUT_DIR=. VITE_PAYMENT_MODE=virtual uni -p mp-weixin",
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. VITE_PAYMENT_MODE=virtual uni build -p mp-weixin && node scripts/sync-wechat-output.mjs",
+    "dev:app": "cross-env UNI_INPUT_DIR=. uni -p app",
+    "build:app": "cross-env UNI_INPUT_DIR=. uni build -p app",
+    "dev:h5": "cross-env UNI_INPUT_DIR=. uni -p h5",
+    "build:h5": "cross-env UNI_INPUT_DIR=. uni build -p h5",
+    "upload:mp-weixin": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first node scripts/upload-wechat.mjs",
+    "release:mp-weixin": "npm run build:mp-weixin && cross-env NODE_OPTIONS=--dns-result-order=ipv4first node scripts/upload-wechat.mjs"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-4020920240930001",
+    "@dcloudio/uni-app-plus": "3.0.0-4020920240930001",
+    "@dcloudio/uni-components": "3.0.0-4020920240930001",
+    "@dcloudio/uni-h5": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-alipay": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-baidu": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-kuaishou": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-lark": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-qq": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-toutiao": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-xhs": "3.0.0-4020920240930001",
+    "@dcloudio/uni-quickapp-webview": "3.0.0-4020920240930001",
+    "vue": "3.4.21"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-automator": "3.0.0-4020920240930001",
+    "@dcloudio/uni-cli-shared": "3.0.0-4020920240930001",
+    "@dcloudio/uni-stacktracey": "3.0.0-4020920240930001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-4020920240930001",
+    "@vue/runtime-core": "3.4.21",
+    "@vue/shared": "3.4.21",
+    "cross-env": "^7.0.3",
+    "miniprogram-ci": "^2.1.31",
+    "sass": "^1.77.0",
+    "sass-loader": "^14.1.1",
+    "vite": "5.2.8",
+    "vue-tsc": "^2.0.6"
+  },
+  "uni-app": {
+    "scripts": {}
+  }
+}

@@ -4,9 +4,6 @@ struct SubscriptionSheetView: View {
     @EnvironmentObject var subscription: SubscriptionManager
     @EnvironmentObject var langManager: LanguageManager
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-
-    @State private var crownPulse = false
 
     private var lang: String { langManager.effectiveCode }
 
@@ -19,42 +16,37 @@ struct SubscriptionSheetView: View {
         case "vi": return vi ?? en
         case "id": return id ?? en
         case "pt": return pt ?? en
-        default:   return en
+        default: return en
         }
     }
 
-    private var heroTitleFont: Font {
-        lang == "en"
-            ? .custom("PlusJakartaSans-Bold", size: 28)
-            : .system(size: 28, weight: .bold, design: .rounded)
-    }
-
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    heroSection
-                    comparisonBanner
-                    benefitsCard
-                    planSelector
-                    ctaButton
-                    socialProof
-                    footerSection
+                VStack(spacing: 18) {
+                    heroBannerSection
+                    offerSummarySection
+                    valueStatsSection
+                    includedSection
+                    usageStatusSection
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                .padding(.bottom, 32)
+                .padding(.bottom, 18)
             }
-            .background(Color(.systemBackground))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+            Divider()
+            purchaseFooter
+        }
+        .background(Color(.systemBackground))
+        .overlay(alignment: .topTrailing) {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white.opacity(0.92))
+                    .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
+                    .frame(width: 44, height: 44)
             }
+            .accessibilityLabel(Text(l("关闭", "Close", "閉じる", "닫기")))
+            .padding(.top, 12)
+            .padding(.trailing, 12)
         }
         .alert(errorAlertTitle, isPresented: Binding(
             get: { subscription.purchaseError != nil },
@@ -66,197 +58,220 @@ struct SubscriptionSheetView: View {
         }
     }
 
-    // MARK: - Hero
-
-    private var heroSection: some View {
-        VStack(spacing: 12) {
-            Text(heroTitle)
-                .font(.system(size: 26, weight: .medium))
-                .foregroundStyle(Color.inkBlack)
-
-            Text(heroSubtitle)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.branchGray)
-                .multilineTextAlignment(.center)
-        }
-    }
-
-    // MARK: - Price Comparison Banner (Loss Aversion)
-
-    private var comparisonBanner: some View {
-        VStack(spacing: 8) {
-            Text(comparisonTitle)
-                .font(.caption.bold())
-                .foregroundStyle(.orange)
+    private var heroBannerSection: some View {
+        ZStack(alignment: .trailing) {
+            LinearGradient(
+                colors: [Color.skyBlue, Color.skyBlueMid],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
 
             HStack(spacing: 0) {
-                // Photo studio price (crossed out)
-                VStack(spacing: 4) {
-                    Image(systemName: "building.2.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                    Text(studioLabel)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(studioPrice)
-                        .font(.callout.bold())
-                        .strikethrough(color: .red)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(discountBadge)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(.white.opacity(0.18))
+                        .clipShape(Capsule())
 
-                Image(systemName: "arrow.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(.orange)
+                    Text(heroTitle)
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.82)
 
-                // Our price
-                VStack(spacing: 4) {
-                    Image(systemName: "iphone")
-                        .font(.title3)
-                        .foregroundStyle(.blue)
-                    Text("AI ID Photo")
-                        .font(.caption2.bold())
-                        .foregroundStyle(.blue)
-                    Text(ourMonthlyPrice)
-                        .font(.callout.bold())
-                        .foregroundStyle(.blue)
+                    Text(heroSubtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.84))
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        Text(displayPriceText)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(Color.promoOrange)
+                        Text(perPhotoLabel)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.9))
+                        Text(originalPriceLabel)
+                            .font(.system(size: 11))
+                            .strikethrough(color: .white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.62))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(.white.opacity(0.18))
+                    .clipShape(Capsule())
                 }
-                .frame(maxWidth: .infinity)
+                .padding(.leading, 20)
+                .padding(.vertical, 22)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    Rectangle().fill(.white.opacity(0.10))
+                    Image(systemName: "person.crop.rectangle.badge.plus")
+                        .font(.system(size: 58, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.38))
+                }
+                .frame(width: 126)
+            }
+        }
+        .frame(height: 210)
+    }
+
+    private var offerSummarySection: some View {
+        VStack(spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(displayPriceText)
+                    .font(.system(size: 38, weight: .bold))
+                    .foregroundStyle(Color.skyBlue)
+                Text(perPhotoLabel)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.branchGray)
+                Spacer()
+                Text(noSubscriptionLabel)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.branchGray)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color(.systemBackground))
+                    .clipShape(Capsule())
+            }
+
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.treeGreen)
+                Text(priceExplainLabel)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.inkBlack)
+                Spacer()
             }
         }
         .padding(16)
-        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
+        .background(Color(.systemGray6).opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal, 16)
     }
 
-    // MARK: - Benefits
-
-    private var benefitsCard: some View {
-        VStack(spacing: 0) {
-            benefitRow(icon: "infinity",               color: .blue,
-                       title: benefitUnlimitedTitle,
-                       desc: benefitUnlimitedDesc)
-            Divider().padding(.leading, 56)
-            benefitRow(icon: "nosign",                 color: .red,
-                       title: benefitNoAdsTitle,
-                       desc: benefitNoAdsDesc)
-            Divider().padding(.leading, 56)
-            benefitRow(icon: "printer.fill",           color: .cyan,
-                       title: benefitPrintTitle,
-                       desc: benefitPrintDesc)
-            Divider().padding(.leading, 56)
-            benefitRow(icon: "doc.text.image.fill",    color: .indigo,
-                       title: benefitFormatsTitle,
-                       desc: benefitFormatsDesc)
-            Divider().padding(.leading, 56)
-            benefitRow(icon: "slider.horizontal.3",    color: .purple,
-                       title: benefitProTitle,
-                       desc: benefitProDesc)
-            Divider().padding(.leading, 56)
-            benefitRow(icon: "sparkles",               color: .orange,
-                       title: benefitUpdatesTitle,
-                       desc: benefitUpdatesDesc)
-        }
-        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
-    }
-
-    private func benefitRow(icon: String, color: Color, title: String, desc: String) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.inkBlack)
-                .frame(width: 36, height: 36)
-                .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.callout.bold())
-                Text(desc).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Image(systemName: "checkmark")
-                .font(.caption.bold())
-                .foregroundStyle(Color.treeGreen)
+    private var valueStatsSection: some View {
+        HStack(spacing: 0) {
+            valueStat(highlight: "3次", label: attemptsTitle, desc: attemptsShortDesc)
+            Rectangle().fill(Color(.systemGray4)).frame(width: 1, height: 44)
+            valueStat(highlight: "高清", label: downloadTitle, desc: downloadShortDesc)
+            Rectangle().fill(Color(.systemGray4)).frame(width: 1, height: 44)
+            valueStat(highlight: "排版", label: printTitle, desc: printShortDesc)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+        .background(Color(.systemGray6).opacity(0.6))
     }
 
-    // MARK: - Plan Selector
-
-    private var planSelector: some View {
-        VStack(spacing: 12) {
-            planCard(
-                plan: .annual,
-                title: annualPlanTitle,
-                price: subscription.annualDisplayPrice ?? "---",
-                period: perYearLabel,
-                badge: saveBadgeLabel,
-                footnote: annualFootnote
-            )
-            planCard(
-                plan: .monthly,
-                title: monthlyPlanTitle,
-                price: subscription.monthlyDisplayPrice ?? "---",
-                period: perMonthLabel,
-                badge: nil,
-                footnote: monthlyFootnote
-            )
+    private func valueStat(highlight: String, label: String, desc: String) -> some View {
+        VStack(spacing: 4) {
+            Text(highlight)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Color.skyBlue)
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.inkBlack)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(desc)
+                .font(.system(size: 10))
+                .foregroundStyle(Color.branchGray)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
         }
+        .frame(maxWidth: .infinity)
     }
 
-    private func planCard(plan: SubscriptionPlan, title: String, price: String,
-                          period: String, badge: String?, footnote: String) -> some View {
-        let isSelected = subscription.selectedPlan == plan
+    private var includedSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(includedSectionTitle)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.inkBlack)
 
-        return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                subscription.selectedPlan = plan
+            VStack(spacing: 10) {
+                featureRow(icon: "sparkles", title: attemptsTitle, desc: attemptsDesc)
+                featureRow(icon: "photo.fill", title: bestPickTitle, desc: bestPickDesc)
+                featureRow(icon: "square.and.arrow.down", title: downloadTitle, desc: downloadDesc)
+                featureRow(icon: "printer.fill", title: printTitle, desc: printDesc)
+                featureRow(icon: "shield.checkerboard", title: privacyTitle, desc: privacyDesc)
             }
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? .blue : .secondary)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title)
-                        .font(.callout.bold())
-                    Text(footnote)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    if let badge {
-                        Text(badge)
-                            .font(.caption2.bold())
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.inkBlack)
-                            .padding(.horizontal, 2)
-                    }
-                    Text(price)
-                        .font(.system(size: 20, weight: .bold))
-                    Text(period)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
         }
-        .background(isSelected ? Color.paperTan : Color(.systemBackground))
-        .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: isSelected ? 2 : 1))
+        .padding(.horizontal, 16)
     }
 
-    // MARK: - CTA
+    private func featureRow(icon: String, title: String, desc: String) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.skyBlue.opacity(0.10))
+                    .frame(width: 44, height: 44)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Color.skyBlue)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.inkBlack)
+                Text(desc)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.branchGray)
+                    .lineLimit(2)
+            }
+            Spacer()
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(Color.treeGreen)
+        }
+        .padding(14)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color(.systemGray5), lineWidth: 1)
+        )
+    }
+
+    private var usageStatusSection: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(subscription.generationAttemptsLeft > 0 ? Color.treeGreen.opacity(0.12) : Color.skyBlue.opacity(0.10))
+                    .frame(width: 46, height: 46)
+                Image(systemName: subscription.generationAttemptsLeft > 0 ? "bolt.fill" : "cart.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(subscription.generationAttemptsLeft > 0 ? Color.treeGreen : Color.skyBlue)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(remainingTitle)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.inkBlack)
+                Text(remainingDesc)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.branchGray)
+                    .lineLimit(2)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(Color(.systemGray6).opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal, 16)
+    }
 
     private var ctaButton: some View {
         Button {
-            Task { await subscription.purchase() }
+            Task { await subscription.purchasePhotoTask() }
         } label: {
             Group {
                 if subscription.isPurchasing {
@@ -267,9 +282,9 @@ struct SubscriptionSheetView: View {
                 } else {
                     VStack(spacing: 4) {
                         Text(ctaTitle)
-                            .font(.headline)
+                            .font(.system(size: 16, weight: .semibold))
                         Text(ctaSubtitle)
-                            .font(.caption)
+                            .font(.system(size: 11))
                             .opacity(0.85)
                     }
                 }
@@ -279,243 +294,119 @@ struct SubscriptionSheetView: View {
             .foregroundStyle(.white)
         }
         .disabled(subscription.isPurchasing)
-        .background(Color.inkBlack)
+        .background(
+            LinearGradient(
+                colors: [Color.skyBlue, Color.skyBlueMid],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 26))
     }
 
-    // MARK: - Social Proof
-
-    private var socialProof: some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 2) {
-                ForEach(0..<5, id: \.self) { _ in
-                    Image(systemName: "star.fill")
-                        .foregroundStyle(.yellow)
-                        .font(.caption2)
-                }
-            }
-            Text(socialProofLabel)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private var purchaseFooter: some View {
+        VStack(spacing: 9) {
+            ctaButton
+            footerSection
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 18)
+        .background(Color(.systemBackground))
     }
-
-    // MARK: - Footer
 
     private var footerSection: some View {
-        VStack(spacing: 12) {
-            Button { Task { await subscription.restore() } } label: {
-                Text(restoreLabel)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
+        VStack(spacing: 10) {
             Text(legalNote)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .lineLimit(2)
 
             LegalLinksView()
         }
     }
 
-    // MARK: - Localized Strings
-
-    // Hero — emotional, benefit-focused
     private var heroTitle: String {
-        l("告别排队，告别高价", "Pro ID Photos, Instantly", "もう写真館に行かなくていい", "사진관에 갈 필요 없어요",
-          vi: "Không cần tiệm ảnh nữa", id: "Tak Perlu Studio Foto Lagi", pt: "Adeus, Estúdios Caros")
+        l("一张成片，三次生成", "One Final Photo, 3 Attempts", "1枚完成、3回生成", "완성본 1장, 생성 3회")
     }
     private var heroSubtitle: String {
-        l("手机上3秒搞定，省时省钱", "Professional results in 3 seconds from your phone", "スマホで3秒、プロ品質の証明写真", "스마트폰에서 3초, 전문가 퀄리티",
-          vi: "3 giây trên điện thoại, chất lượng chuyên nghiệp", id: "3 detik dari HP, kualitas profesional", pt: "3 segundos no celular, qualidade profissional")
+        l("先买一个制作包，最多生成3次，选最满意的照片下载高清电子照和打印排版。",
+          "Buy one photo task, generate up to 3 times, then download the best HD result and print layout.",
+          "1回分を購入し、最大3回生成。ベストな写真をHD保存と印刷レイアウトで出力。",
+          "1회 제작권으로 최대 3회 생성하고 가장 좋은 결과를 저장합니다.")
+    }
+    private var discountBadge: String { l("限时优惠", "Launch Offer", "期間限定", "한정 할인") }
+    private var noSubscriptionLabel: String { l("非订阅 · 不自动续费", "No subscription", "サブスクなし", "구독 없음") }
+    private var perPhotoLabel: String { l("/ 张", "/ photo", "/ 枚", "/ 장") }
+    private var originalPriceLabel: String { l("原价 ¥9.90", "Was ¥9.90", "通常 ¥9.90", "정가 ¥9.90") }
+    private var displayPriceText: String {
+        if lang == "zh" { return "¥3.80" }
+        return subscription.photoTaskDisplayPrice ?? "¥3.80"
+    }
+    private var priceExplainLabel: String {
+        l("优惠价按张购买，包含3次生成机会。", "Includes 3 generation attempts for this photo.", "この写真に3回分の生成が含まれます。", "이 사진에 생성 3회가 포함됩니다.")
     }
 
-    // Price comparison banner
-    private var comparisonTitle: String {
-        l("比照相馆便宜 95%", "95% Cheaper Than Photo Studios", "写真館より95%お得", "사진관보다 95% 저렴",
-          vi: "Rẻ hơn 95% so với tiệm ảnh", id: "95% Lebih Murah dari Studio", pt: "95% Mais Barato que Estúdios")
+    private var includedSectionTitle: String { l("制作包包含", "Included", "含まれる内容", "포함 항목") }
+    private var attemptsTitle: String { l("3次AI生成机会", "3 AI Attempts", "AI生成3回", "AI 생성 3회") }
+    private var attemptsDesc: String { l("表情、底色、服装不满意可以再来", "Regenerate when expression, background, or attire is off.", "表情・背景・服装を調整して再生成できます。", "표정, 배경, 복장을 다시 조정할 수 있습니다.") }
+    private var attemptsShortDesc: String { l("选最满意", "Pick best", "選べる", "선택 가능") }
+    private var bestPickTitle: String { l("选择最适合的照片", "Pick the Best Result", "ベストを選択", "최고 결과 선택") }
+    private var bestPickDesc: String { l("生成记录会保留，可回看对比", "Previous results stay in history for comparison.", "履歴から比較できます。", "기록에서 비교할 수 있습니다.") }
+    private var downloadTitle: String { l("高清电子照下载", "HD Export", "HD保存", "HD 저장") }
+    private var downloadDesc: String { l("保存到相册，可用于线上报名上传", "Save to Photos for online applications.", "オンライン申請に使えます。", "온라인 신청에 사용할 수 있습니다.") }
+    private var downloadShortDesc: String { l("可直接上传", "Ready upload", "保存可能", "저장 가능") }
+    private var printTitle: String { l("打印店排版", "Print Layout", "印刷レイアウト", "인쇄 레이아웃") }
+    private var printDesc: String { l("6寸/5寸排版图一起包含，不再单独收费", "6R/5R print layouts are included.", "印刷用レイアウト込み。", "인쇄 레이아웃 포함.") }
+    private var printShortDesc: String { l("到店即打", "Print ready", "印刷用", "인쇄용") }
+    private var privacyTitle: String { l("隐私保护", "Privacy Protected", "プライバシー保護", "개인정보 보호") }
+    private var privacyDesc: String { l("照片处理仅用于本次制作", "Photos are processed only for this task.", "写真は今回の制作のみに使われます。", "사진은 이번 제작에만 사용됩니다.") }
+
+    private var remainingTitle: String {
+        subscription.generationAttemptsLeft > 0
+            ? l("当前剩余 \(subscription.generationAttemptsLeft) 次生成", "\(subscription.generationAttemptsLeft) attempts left", "残り\(subscription.generationAttemptsLeft)回", "\(subscription.generationAttemptsLeft)회 남음")
+            : l("购买后立即开始制作", "Start after purchase", "購入後すぐ開始", "구매 후 바로 시작")
     }
-    private var studioLabel: String {
-        l("照相馆", "Photo Studio", "写真館", "사진관",
-          vi: "Tiệm ảnh", id: "Studio Foto", pt: "Estúdio")
-    }
-    private var studioPrice: String {
-        switch lang {
-        case "ja": return "¥1,500〜3,000 JPY"
-        case "ko": return "₩15,000〜35,000 KRW"
-        case "zh": return "¥25〜80 CNY"
-        case "vi": return "50,000〜150,000 VND"
-        case "id": return "Rp25,000〜75,000 IDR"
-        case "pt": return "R$20〜60 BRL"
-        default:   return "$7〜17 USD"
-        }
-    }
-    private var ourMonthlyPrice: String {
-        subscription.monthlyDisplayPrice ?? "---"
+    private var remainingDesc: String {
+        subscription.generationAttemptsLeft > 0
+            ? l("继续生成不会再弹出购买页。", "You can continue without another purchase prompt.", "追加購入なしで続けられます。", "추가 구매 없이 계속할 수 있습니다.")
+            : l("建议先确定用途和底色，再开始3次生成。", "Pick the target format and background before using attempts.", "用途と背景を決めてから生成してください。", "용도와 배경을 정한 후 생성하세요.")
     }
 
-    // Benefits — action-oriented descriptions
-    private var benefitUnlimitedTitle: String {
-        l("无限次生成",  "Unlimited Generations",  "無制限生成",    "무제한 생성",
-          vi: "Tạo không giới hạn", id: "Tanpa Batas", pt: "Gerações Ilimitadas")
+    private var ctaTitle: String { l("购买制作包", "Buy Photo Task", "制作分を購入", "제작권 구매") }
+    private var ctaSubtitle: String { l("¥3.80 优惠价 · 原价 ¥9.90/张", "Launch offer ¥3.80 · Regular ¥9.90/photo", "特価 ¥3.80 · 通常 ¥9.90/枚", "할인가 ¥3.80 · 정가 ¥9.90/장") }
+    private var legalNote: String {
+        l("本商品为消耗型购买，不是订阅，不会自动续费；购买由 Apple 处理，退款按 App Store 规则执行。",
+          "This is a consumable purchase, not a subscription. It does not auto-renew.",
+          "これは消耗型購入で、サブスクリプションではありません。自動更新されません。",
+          "소모성 구매이며 구독이 아니므로 자동 갱신되지 않습니다.")
     }
-    private var benefitUnlimitedDesc: String {
-        l("不满意就重新生成，直到完美为止",
-          "Regenerate until it's perfect — no limits",
-          "納得いくまで何度でも再生成、制限なし",
-          "만족할 때까지 무제한 재생성",
-          vi: "Tạo lại đến khi hoàn hảo — không giới hạn",
-          id: "Ulangi sampai sempurna — tanpa batas",
-          pt: "Regenere até ficar perfeito — sem limites")
-    }
-    private var benefitNoAdsTitle: String {
-        l("无广告打扰",        "Zero Ads",               "広告完全なし",      "광고 제로",
-          vi: "Không quảng cáo", id: "Tanpa Iklan", pt: "Sem Anúncios")
-    }
-    private var benefitNoAdsDesc: String {
-        l("不用看30秒广告，一键生成",
-          "Skip the 30-second ads — generate instantly",
-          "30秒広告をスキップ、即座に生成",
-          "30초 광고 건너뛰기, 즉시 생성",
-          vi: "Bỏ qua QC 30 giây — tạo ảnh ngay",
-          id: "Lewati iklan 30 detik — langsung buat",
-          pt: "Pule anúncios de 30s — gere instantaneamente")
-    }
-    private var benefitPrintTitle: String {
-        l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃",
-          vi: "In ảnh tại cửa hàng", id: "Cetak di Konbini", pt: "Impressão em Loja")
-    }
-    private var benefitPrintDesc: String {
-        l("300DPI排版照片，便利店直接打印",
-          "300 DPI print-ready layout, print at any convenience store",
-          "300DPIレイアウト写真、コンビニで即印刷",
-          "300DPI 레이아웃, 편의점에서 바로 인쇄",
-          vi: "Layout 300DPI, in tại cửa hàng tiện lợi",
-          id: "Layout 300DPI, cetak di toko serba ada",
-          pt: "Layout 300DPI, imprima em qualquer loja")
-    }
-    private var benefitFormatsTitle: String {
-        l("10+国际规格", "10+ Global Formats", "10種類以上の国際規格", "10개 이상 국제 규격",
-          vi: "10+ quy cách quốc tế", id: "10+ Format Internasional", pt: "10+ Formatos Internacionais")
-    }
-    private var benefitFormatsDesc: String {
-        l("护照、签证、身份证等全部支持",
-          "Passport, visa, national ID — all covered",
-          "パスポート・ビザ・身分証すべて対応",
-          "여권・비자・신분증 모두 지원",
-          vi: "Hộ chiếu, visa, CCCD — tất cả đều có",
-          id: "Paspor, visa, KTP — semua tersedia",
-          pt: "Passaporte, visto, RG — tudo incluído")
-    }
-    private var benefitProTitle: String {
-        l("专业自定义",      "Pro Customization",    "プロカスタマイズ",   "프로 커스터마이징",
-          vi: "Tùy chỉnh Pro", id: "Kustomisasi Pro", pt: "Personalização Pro")
-    }
-    private var benefitProDesc: String {
-        l("美颜、换装、自定义尺寸等高级选项",
-          "Beauty, attire, custom size & more",
-          "美肌・服装・カスタムサイズなどのプロ機能",
-          "뷰티・복장・사용자 정의 크기 등 프로 기능",
-          vi: "Làm đẹp, trang phục, kích thước tùy chỉnh",
-          id: "Kecantikan, pakaian, ukuran kustom",
-          pt: "Beleza, traje, tamanho personalizado")
-    }
-    private var benefitUpdatesTitle: String {
-        l("新功能优先体验",  "Priority New Features", "新機能を優先体験",  "신기능 우선 체험",
-          vi: "Ưu tiên tính năng mới", id: "Fitur Baru Prioritas", pt: "Novidades Primeiro")
-    }
-    private var benefitUpdatesDesc: String {
-        l("抢先享受每次重大更新",
-          "First access to every major update",
-          "毎回の大型アップデートを先取り",
-          "모든 주요 업데이트를 먼저 체험",
-          vi: "Trải nghiệm sớm mỗi cập nhật lớn",
-          id: "Akses pertama ke setiap update besar",
-          pt: "Primeiro acesso a cada atualização")
-    }
-
-    // Plan titles
-    private var annualPlanTitle: String {
-        l("年付方案（最划算）", "Annual Plan (Best Value)", "年間プラン（最もお得）", "연간 플랜 (최고 혜택)",
-          vi: "Gói Năm (Tiết kiệm nhất)", id: "Paket Tahunan (Paling Hemat)", pt: "Plano Anual (Melhor Valor)")
-    }
-    private var monthlyPlanTitle: String { l("月付方案", "Monthly Plan", "月額プラン", "월간 플랜",
-                                            vi: "Gói Tháng", id: "Paket Bulanan", pt: "Plano Mensal") }
-
-    // Period labels
-    private var perYearLabel:  String { l("/ 年",  "/ yr",    "/ 年",  "/ 년",
-                                          vi: "/ năm", id: "/ thn", pt: "/ ano") }
-    private var perMonthLabel: String { l("/ 月",  "/ mo",    "/ 月",  "/ 월",
-                                          vi: "/ tháng", id: "/ bln", pt: "/ mês") }
-
-    // Badge & footnotes
-    private var saveBadgeLabel: String { l("省50%", "Save 50%", "50%お得", "50% 절약",
-                                          vi: "Tiết kiệm 50%", id: "Hemat 50%", pt: "Economize 50%") }
-    private var annualFootnote: String {
-        l("按年计费 · 相当于每月不到一杯咖啡",
-          "Billed annually · Less than a coffee per month",
-          "年間課金 · 月あたりコーヒー1杯以下",
-          "연간 결제 · 월 커피 한 잔도 안 되는 가격",
-          vi: "Thanh toán hàng năm · Rẻ hơn 1 ly cà phê/tháng",
-          id: "Ditagih per tahun · Kurang dari 1 kopi/bulan",
-          pt: "Cobrado anualmente · Menos que 1 café/mês")
-    }
-    private var monthlyFootnote: String {
-        l("按月计费 · 灵活订阅，随时取消",
-          "Billed monthly · Flexible, cancel anytime",
-          "月額課金 · いつでもキャンセル可",
-          "월간 결제 · 유연하게, 언제든 취소",
-          vi: "Thanh toán hàng tháng · Linh hoạt, hủy bất cứ lúc nào",
-          id: "Ditagih per bulan · Fleksibel, batalkan kapan saja",
-          pt: "Cobrado mensalmente · Flexível, cancele quando quiser")
-    }
-
-    // CTA — urgency + confidence
-    private var ctaTitle: String {
-        l("立即解锁全部功能", "Unlock All Features Now", "今すぐ全機能を解除", "지금 모든 기능 잠금 해제",
-          vi: "Mở khóa tất cả ngay", id: "Buka Semua Fitur Sekarang", pt: "Desbloquear Tudo Agora")
-    }
-    private var ctaSubtitle: String {
-        l("随时可取消，无风险",
-          "Cancel anytime — risk free",
-          "いつでもキャンセル可・リスクなし",
-          "언제든 취소 가능 · 위험 없음",
-          vi: "Hủy bất cứ lúc nào — không rủi ro",
-          id: "Batalkan kapan saja — tanpa risiko",
-          pt: "Cancele a qualquer momento — sem risco")
-    }
-
-    private var socialProofLabel: String { l("10,000+ 用户信赖", "Trusted by 10,000+ users", "10,000人以上が信頼", "10,000명 이상이 신뢰",
-                                            vi: "Được 10.000+ người tin dùng", id: "Dipercaya 10.000+ pengguna", pt: "Confiado por 10.000+ usuários") }
-    private var restoreLabel:   String { l("恢复购买", "Restore Purchases", "購入を復元", "구매 복원",
-                                           vi: "Khôi phục mua hàng", id: "Pulihkan Pembelian", pt: "Restaurar Compras") }
-    private var legalNote:      String { l("订阅将自动续期，可随时在 iPhone 设置 › App Store 中取消。",
-                                           "Subscription auto-renews. Cancel in iPhone Settings > App Store.",
-                                           "サブスクリプションは自動更新されます。iPhone設定 > App Storeでキャンセル可。",
-                                           "구독이 자동 갱신됩니다. iPhone 설정 > App Store에서 취소하세요.",
-                                           vi: "Đăng ký tự động gia hạn. Hủy trong Cài đặt iPhone > App Store.",
-                                           id: "Langganan diperpanjang otomatis. Batalkan di Pengaturan iPhone > App Store.",
-                                           pt: "Assinatura renovada automaticamente. Cancele em Ajustes iPhone > App Store.") }
-    private var errorAlertTitle: String { l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패",
-                                           vi: "Mua thất bại", id: "Pembelian Gagal", pt: "Compra Falhou") }
-    private var okLabel:         String { l("好的", "OK", "OK", "확인",
-                                           vi: "OK", id: "OK", pt: "OK") }
+    private var errorAlertTitle: String { l("购买失败", "Purchase Failed", "購入に失敗しました", "구매 실패") }
+    private var okLabel: String { l("好的", "OK", "OK", "확인") }
 }
 
 // MARK: - Legal Links
 
 private enum LegalURLs {
-    static let baseURL = "https://nexus-wei.space/aiidphoto"
+    static let baseURL = "https://aiphoto-cn.foyli.cloud/legal"
 
     static func privacyPolicy(lang: String) -> URL {
         URL(string: "\(baseURL)/privacy/\(legalLang(lang)).html")!
     }
+
     static func termsOfService(lang: String) -> URL {
         URL(string: "\(baseURL)/terms/\(legalLang(lang)).html")!
     }
 
     private static func legalLang(_ code: String) -> String {
-        ["zh", "ja", "ko", "vi", "id", "pt"].contains(code) ? code : "en"
+        if code.hasPrefix("zh") { return "zh" }
+        if code.hasPrefix("ja") { return "ja" }
+        if code.hasPrefix("ko") { return "ko" }
+        if code.hasPrefix("vi") { return "vi" }
+        if code.hasPrefix("id") { return "id" }
+        if code.hasPrefix("pt") { return "pt" }
+        return "en"
     }
 }
 
@@ -532,7 +423,7 @@ struct LegalLinksView: View {
         case "vi": return "Chính sách Bảo mật"
         case "id": return "Kebijakan Privasi"
         case "pt": return "Política de Privacidade"
-        default:   return "Privacy Policy"
+        default: return "Privacy Policy"
         }
     }
 
@@ -544,7 +435,7 @@ struct LegalLinksView: View {
         case "vi": return "Điều khoản Dịch vụ"
         case "id": return "Ketentuan Layanan"
         case "pt": return "Termos de Serviço"
-        default:   return "Terms of Service"
+        default: return "Terms of Service"
         }
     }
 

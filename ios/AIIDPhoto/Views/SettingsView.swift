@@ -1,10 +1,8 @@
 import SwiftUI
-import StoreKit
 
 struct SettingsView: View {
     @EnvironmentObject var langManager: LanguageManager
     @EnvironmentObject var subscription: SubscriptionManager
-    @EnvironmentObject var usage: UsageManager
     @EnvironmentObject var referralManager: ReferralManager
     @Environment(\.dismiss) private var dismiss
 
@@ -12,197 +10,36 @@ struct SettingsView: View {
     @State private var redeemCodeInput = ""
     @State private var isRedeeming = false
     @State private var showRedeemSuccess = false
+    @State private var showRestoreComplete = false
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+            VStack(spacing: 0) {
+                settingsHeader
 
-                List {
-                    // MARK: Subscription
-                    Section {
-                        subscriptionStatusRow
-                        if subscription.isSubscribed {
-                            manageSubscriptionRow
-                            if !subscription.willAutoRenew {
-                                resubscribeHintRow
-                            }
-                        } else {
-                            upgradeRow
-                        }
-                        restoreRow
-                    } header: {
-                        sectionHeader(icon: "crown.fill", title: sectionTitle("Membership", "会员", "会員", "멤버십", vi: "Thành viên", id: "Keanggotaan", pt: "Assinatura"))
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 18) {
+                        settingsHero
+                        photoTaskPanel
+                        appearancePanel
+                        languagePanel
+                        referralPanel
+                        servicePanel
+                        legalPanel
                     }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-
-                    // MARK: Appearance
-                    Section {
-                        ForEach(AppearanceMode.allCases, id: \.self) { mode in
-                            Button {
-                                langManager.appearance = mode
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: mode.icon)
-                                        .foregroundStyle(Color.accentColor)
-                                        .frame(width: 20)
-                                    Text(mode.displayName(language: lang))
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    if langManager.appearance == mode {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(Color.accentColor)
-                                            .font(.callout.bold())
-                                    }
-                                }
-                            }
-                        }
-                    } header: {
-                        sectionHeader(icon: "paintbrush.fill", title: sectionTitle("Appearance", "外观", "外観", "외관", vi: "Giao diện", id: "Tampilan", pt: "Aparência"))
-                    }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-
-                    // MARK: Language
-                    Section {
-                        langRow(.system)
-                        langRow(.chineseSimplified)
-                        langRow(.english)
-                        langRow(.japanese)
-                        langRow(.korean)
-                        langRow(.vietnamese)
-                        langRow(.indonesian)
-                        langRow(.portuguese)
-                    } header: {
-                        sectionHeader(icon: "globe", title: sectionTitle("Language", "语言", "言語", "언어", vi: "Ngôn ngữ", id: "Bahasa", pt: "Idioma"))
-                    } footer: {
-                        Text(footerNote).font(.caption)
-                    }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-
-                    // MARK: Region
-                    Section {
-                        HStack {
-                            Image(systemName: "location.fill")
-                                .foregroundStyle(Color.accentColor)
-                            Text(regionLabel)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text(Locale.current.region?.identifier ?? "—")
-                                .foregroundStyle(.secondary)
-                                .font(.callout.monospacedDigit())
-                        }
-                    } header: {
-                        sectionHeader(icon: "map", title: sectionTitle("Region / Spec Order", "地区 / 规格排序", "地域 / 規格順序", "지역 / 규격 순서", vi: "Vùng / Thứ tự quy cách", id: "Wilayah / Urutan Spek", pt: "Região / Ordem de Formato"))
-                    } footer: {
-                        Text(regionFooter).font(.caption)
-                    }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-
-                    // MARK: App Info
-                    Section {
-                        infoRow(icon: "info.circle.fill", color: .blue,
-                                label: versionLabel, value: appVersion)
-                    } header: {
-                        sectionHeader(icon: "info.circle", title: sectionTitle("App", "应用", "アプリ", "앱", vi: "Ứng dụng", id: "Aplikasi", pt: "Aplicativo"))
-                    }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-
-                    // MARK: Referral
-                    Section {
-                        // Share referral code
-                        Button { shareReferralCode() } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "person.2.fill")
-                                    .foregroundStyle(Color.inkBlack)
-                                    .frame(width: 28, height: 28)
-                                    .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
-                                    .clipShape(Rectangle())
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(inviteLabel).foregroundStyle(.primary)
-                                    if let code = referralManager.referralCode {
-                                        Text("\(codeLabel): \(code)")
-                                            .font(.caption.monospaced())
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                                Image(systemName: "square.and.arrow.up").font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-
-                        // Bonus remaining
-                        if referralManager.bonusGenerations > 0 {
-                            HStack(spacing: 12) {
-                                Image(systemName: "gift.fill")
-                                    .foregroundStyle(Color.inkBlack)
-                                    .frame(width: 28, height: 28)
-                                    .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
-                                    .clipShape(Rectangle())
-                                Text(bonusLabel)
-                                Spacer()
-                                Text("\(referralManager.bonusGenerations)")
-                                    .font(.callout.bold())
-                                    .foregroundStyle(.purple)
-                            }
-                        }
-
-                        // Redeem code
-                        HStack(spacing: 12) {
-                            Image(systemName: "ticket.fill")
-                                .foregroundStyle(Color.inkBlack)
-                                .frame(width: 28, height: 28)
-                                .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
-                                .clipShape(Rectangle())
-                            TextField(redeemPlaceholder, text: $redeemCodeInput)
-                                .textInputAutocapitalization(.characters)
-                                .autocorrectionDisabled()
-                            Button {
-                                Task { await redeemCode() }
-                            } label: {
-                                if isRedeeming {
-                                    ProgressView().scaleEffect(0.8)
-                                } else {
-                                    Text(redeemLabel).font(.callout.bold())
-                                }
-                            }
-                            .disabled(redeemCodeInput.count < 4 || isRedeeming)
-                        }
-                    } header: {
-                        sectionHeader(icon: "gift", title: sectionTitle("Invite Friends", "邀请好友", "友達を招待", "친구 초대", vi: "Mời bạn bè", id: "Undang Teman", pt: "Convidar Amigos"))
-                    } footer: {
-                        Text(referralFooter).font(.caption)
-                    }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-
-                    // MARK: Legal
-                    Section {
-                        Link(destination: LegalURLs.privacyPolicy(lang: lang)) {
-                            legalRow(icon: "hand.raised.fill", color: .teal, title: privacyLabel)
-                        }
-                        Link(destination: LegalURLs.termsOfService(lang: lang)) {
-                            legalRow(icon: "doc.text.fill", color: .orange, title: termsLabel)
-                        }
-                    } header: {
-                        sectionHeader(icon: "lock.shield", title: sectionTitle("Legal", "法律", "法的情報", "법적 정보", vi: "Pháp lý", id: "Hukum", pt: "Legal"))
-                    }
-                    .listRowBackground(Color(.secondarySystemGroupedBackground))
-                }
-                .listStyle(.insetGrouped)
-                .scrollContentBackground(.hidden)
-            }
-            .navigationTitle(navTitle)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
                 }
             }
+            .background(Color(.systemBackground).ignoresSafeArea())
+        }
+        .sheet(isPresented: $showSubscriptionSheet) {
+            SubscriptionSheetView()
+                .environmentObject(subscription)
+                .environmentObject(langManager)
+                .presentationDetents([.large])
         }
         .alert(
             sectionTitle("Success!", "兑换成功！", "成功！", "성공!",
@@ -212,13 +49,13 @@ struct SettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(sectionTitle(
-                "You got 3 free Pro generations!",
-                "获得 3 次免费 Pro 品质生成！",
-                "3回の無料Pro生成を獲得しました！",
-                "3회 무료 Pro 생성을 받았습니다!",
-                vi: "Bạn nhận được 3 lần tạo ảnh Pro miễn phí!",
-                id: "Anda mendapat 3 generasi Pro gratis!",
-                pt: "Você ganhou 3 gerações Pro grátis!"
+                "You got 3 bonus generations!",
+                "获得 3 次奖励生成机会！",
+                "3回のボーナス生成を獲得しました！",
+                "보너스 생성 3회를 받았습니다!",
+                vi: "Bạn nhận được 3 lần tạo ảnh thưởng!",
+                id: "Anda mendapat 3 bonus generasi!",
+                pt: "Você ganhou 3 gerações bônus!"
             ))
         }
         .alert(
@@ -233,9 +70,400 @@ struct SettingsView: View {
         } message: {
             Text(referralManager.redeemError ?? "")
         }
+        .alert(restoreCompleteTitle, isPresented: $showRestoreComplete) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(restoreCompleteMessage)
+        }
+        .alert(
+            sectionTitle("Purchase Error", "购买错误", "購入エラー", "구매 오류",
+                         vi: "Lỗi mua hàng", id: "Kesalahan pembelian", pt: "Erro de compra"),
+            isPresented: Binding(
+                get: { subscription.purchaseError != nil },
+                set: { if !$0 { subscription.purchaseError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(subscription.purchaseError ?? "")
+        }
     }
 
-    // MARK: - Subscription Rows
+    // MARK: - Modern Settings Layout
+
+    private var settingsHeader: some View {
+        HStack(spacing: 10) {
+            Text(navTitle)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(Color.inkBlack)
+
+            Spacer()
+
+            Button { dismiss() } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color.branchGray)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel(Text(sectionTitle("Close", "关闭", "閉じる", "닫기")))
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 18)
+        .padding(.bottom, 10)
+        .background(Color(.systemBackground))
+        .overlay(alignment: .bottom) { Color(.systemGray5).frame(height: 0.5) }
+    }
+
+    private var settingsHero: some View {
+        ZStack(alignment: .trailing) {
+            LinearGradient(
+                colors: [Color.skyBlue, Color.skyBlueMid],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack(spacing: 8) {
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 32, height: 32)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        Text("光影形象馆")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                    Text(subscriptionStatusLabel)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
+                    Text(subscription.generationAttemptsLeft > 0 ? todayRemainingText : freeUserDesc)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.82))
+                        .lineLimit(2)
+
+                    Spacer()
+
+                    Text("3次生成 · 高清下载 · 打印排版")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.white.opacity(0.18))
+                        .clipShape(Capsule())
+                }
+                .padding(.leading, 18)
+                .padding(.vertical, 18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    Rectangle().fill(.white.opacity(0.10))
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 56))
+                        .foregroundStyle(.white.opacity(0.36))
+                }
+                .frame(width: 116)
+            }
+        }
+        .frame(height: 176)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var photoTaskPanel: some View {
+        settingsSection(icon: "cart.fill", title: sectionTitle("Photo Task", "制作包", "制作分", "제작권", vi: "Gói ảnh", id: "Paket foto", pt: "Pacote")) {
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    iconTile(subscriptionStatusIcon, color: subscription.generationAttemptsLeft > 0 ? Color.treeGreen : Color.skyBlue)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(subscriptionStatusLabel)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.inkBlack)
+                        Text(subscription.generationAttemptsLeft > 0 ? todayRemainingText : freeUserDesc)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.branchGray)
+                    }
+                    Spacer()
+                    Text("\(subscription.generationAttemptsLeft)")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(Color.skyBlue)
+                        .monospacedDigit()
+                }
+
+                Button { showSubscriptionSheet = true } label: {
+                    HStack(spacing: 6) {
+                        Text(upgradeLabel)
+                            .font(.system(size: 15, weight: .semibold))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        LinearGradient(colors: [Color.skyBlue, Color.skyBlueMid],
+                                       startPoint: .leading, endPoint: .trailing)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                }
+
+                Button {
+                    Task {
+                        await subscription.restore()
+                        if subscription.purchaseError == nil {
+                            showRestoreComplete = true
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        iconTile("arrow.clockwise.icloud.fill", color: Color.skyBlue)
+                        Text(restoreLabel)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.inkBlack)
+                        Spacer()
+                        if subscription.isRestoring {
+                            ProgressView().scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.branchGray)
+                        }
+                    }
+                    .padding(12)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(.systemGray5), lineWidth: 1))
+                }
+                .disabled(subscription.isRestoring)
+            }
+        }
+    }
+
+    private var appearancePanel: some View {
+        settingsSection(icon: "paintbrush.fill", title: sectionTitle("Appearance", "外观", "外観", "외관", vi: "Giao diện", id: "Tampilan", pt: "Aparência")) {
+            VStack(spacing: 10) {
+                ForEach(AppearanceMode.allCases, id: \.self) { mode in
+                    optionRow(
+                        icon: mode.icon,
+                        title: mode.displayName(language: lang),
+                        selected: langManager.appearance == mode
+                    ) {
+                        withAnimation { langManager.appearance = mode }
+                    }
+                }
+            }
+        }
+    }
+
+    private var languagePanel: some View {
+        settingsSection(icon: "globe", title: sectionTitle("Language", "语言", "言語", "언어", vi: "Ngôn ngữ", id: "Bahasa", pt: "Idioma")) {
+            VStack(spacing: 10) {
+                languageOption(.system)
+                languageOption(.chineseSimplified)
+                languageOption(.english)
+                Text(footerNote)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.branchGray)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var referralPanel: some View {
+        settingsSection(icon: "gift.fill", title: inviteLabel) {
+            VStack(spacing: 10) {
+                Button { shareReferralCode() } label: {
+                    actionRow(
+                        icon: "person.2.fill",
+                        title: inviteLabel,
+                        subtitle: referralManager.referralCode.map { "\(codeLabel): \($0)" },
+                        trailingIcon: "square.and.arrow.up"
+                    )
+                }
+
+                if referralManager.bonusGenerations > 0 {
+                    infoLine(icon: "sparkles", title: bonusLabel, value: "\(referralManager.bonusGenerations)")
+                }
+
+                HStack(spacing: 10) {
+                    iconTile("ticket.fill", color: Color.skyBlue)
+                    TextField(redeemPlaceholder, text: $redeemCodeInput)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .font(.system(size: 14))
+                    Button {
+                        Task { await redeemCode() }
+                    } label: {
+                        if isRedeeming {
+                            ProgressView().scaleEffect(0.8)
+                        } else {
+                            Text(redeemLabel)
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(redeemCodeInput.count < 4 ? Color(.systemGray3) : Color.skyBlue)
+                    .clipShape(Capsule())
+                    .disabled(redeemCodeInput.count < 4 || isRedeeming)
+                }
+                .padding(12)
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(.systemGray5), lineWidth: 1))
+
+                Text(referralFooter)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.branchGray)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var servicePanel: some View {
+        settingsSection(icon: "map.fill", title: sectionTitle("Service", "服务", "サービス", "서비스")) {
+            VStack(spacing: 10) {
+                infoLine(icon: "location.fill", title: regionLabel, value: lang == "zh" ? "中国大陆 CN" : "China CN")
+                infoLine(icon: "info.circle.fill", title: versionLabel, value: appVersion)
+            }
+        }
+    }
+
+    private var legalPanel: some View {
+        settingsSection(icon: "lock.shield.fill", title: sectionTitle("Legal", "法律", "法的情報", "법적 정보", vi: "Pháp lý", id: "Hukum", pt: "Legal")) {
+            VStack(spacing: 10) {
+                Link(destination: LegalURLs.privacyPolicy(lang: lang)) {
+                    actionRow(icon: "hand.raised.fill", title: privacyLabel, subtitle: nil, trailingIcon: "arrow.up.right")
+                }
+                Link(destination: LegalURLs.termsOfService(lang: lang)) {
+                    actionRow(icon: "doc.text.fill", title: termsLabel, subtitle: nil, trailingIcon: "arrow.up.right")
+                }
+            }
+        }
+    }
+
+    private func settingsSection<Content: View>(icon: String, title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.skyBlue)
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.inkBlack)
+            }
+            content()
+        }
+        .padding(14)
+        .background(Color(.systemGray6).opacity(0.62))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func optionRow(icon: String, title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                iconTile(icon, color: selected ? Color.skyBlue : Color.branchGray)
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.inkBlack)
+                Spacer()
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.skyBlue)
+                }
+            }
+            .padding(12)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(selected ? Color.skyBlue.opacity(0.35) : Color(.systemGray5), lineWidth: 1))
+        }
+    }
+
+    private func languageOption(_ option: AppLanguage) -> some View {
+        Button {
+            withAnimation { langManager.language = option }
+        } label: {
+            HStack(spacing: 12) {
+                Text(option.flag)
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .background(Color.skyBlue.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                Text(option.displayName)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.inkBlack)
+                Spacer()
+                if langManager.language == option {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.skyBlue)
+                }
+            }
+            .padding(12)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(langManager.language == option ? Color.skyBlue.opacity(0.35) : Color(.systemGray5), lineWidth: 1))
+        }
+    }
+
+    private func actionRow(icon: String, title: String, subtitle: String?, trailingIcon: String) -> some View {
+        HStack(spacing: 12) {
+            iconTile(icon, color: Color.skyBlue)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.inkBlack)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(Color.branchGray)
+                }
+            }
+            Spacer()
+            Image(systemName: trailingIcon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.branchGray)
+        }
+        .padding(12)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(.systemGray5), lineWidth: 1))
+    }
+
+    private func infoLine(icon: String, title: String, value: String) -> some View {
+        HStack(spacing: 12) {
+            iconTile(icon, color: Color.skyBlue)
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.inkBlack)
+            Spacer()
+            Text(value)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color.branchGray)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+        }
+        .padding(12)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(.systemGray5), lineWidth: 1))
+    }
+
+    private func iconTile(_ icon: String, color: Color) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.10))
+                .frame(width: 44, height: 44)
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(color)
+        }
+    }
+
+    // MARK: - Photo Task Rows
 
     private var subscriptionStatusRow: some View {
         HStack(spacing: 12) {
@@ -248,17 +476,7 @@ struct SettingsView: View {
                 Text(subscriptionStatusLabel)
                     .font(.callout)
                     .foregroundStyle(.primary)
-                if subscription.isSubscribed, let exp = subscription.expirationDate {
-                    if subscription.willAutoRenew {
-                        Text(renewsText(exp))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(expiresText(exp))
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                    }
-                } else if subscription.isSubscribed {
+                if subscription.generationAttemptsLeft > 0 {
                     Text(todayRemainingText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -273,18 +491,15 @@ struct SettingsView: View {
     }
 
     private var subscriptionStatusIcon: String {
-        if !subscription.isSubscribed { return "crown" }
-        return subscription.willAutoRenew ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
+        subscription.generationAttemptsLeft > 0 ? "checkmark.seal.fill" : "cart"
     }
 
     private var subscriptionStatusColor: Color {
-        if !subscription.isSubscribed { return .gray }
-        return subscription.willAutoRenew ? .orange : .yellow
+        subscription.generationAttemptsLeft > 0 ? .orange : .gray
     }
 
     private var subscriptionStatusLabel: String {
-        if !subscription.isSubscribed { return notSubscribedLabel }
-        return subscription.willAutoRenew ? subscribedLabel : cancelledLabel
+        subscription.generationAttemptsLeft > 0 ? subscribedLabel : notSubscribedLabel
     }
 
     private var upgradeRow: some View {
@@ -309,86 +524,6 @@ struct SettingsView: View {
                 .environmentObject(langManager)
                 .presentationDetents([.large])
         }
-    }
-
-    private var manageSubscriptionRow: some View {
-        Button {
-            Task {
-                if let scene = UIApplication.shared.connectedScenes
-                    .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
-                    do {
-                        try await AppStore.showManageSubscriptions(in: scene)
-                    } catch {
-                        // Fallback to URL if native sheet fails
-                        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
-                            await UIApplication.shared.open(url)
-                        }
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "gearshape.fill")
-                    .foregroundStyle(Color.inkBlack)
-                    .frame(width: 28, height: 28)
-                    .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
-                    .clipShape(Rectangle())
-                Text(manageLabel)
-                    .foregroundStyle(.primary)
-                Spacer()
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var resubscribeHintRow: some View {
-        Button {
-            showSubscriptionSheet = true
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.up.heart.fill")
-                    .foregroundStyle(Color.inkBlack)
-                    .frame(width: 28, height: 28)
-                    .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
-                    .clipShape(Rectangle())
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(resubscribeLabel)
-                        .foregroundStyle(.primary)
-                    Text(resubscribeDesc)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
-            }
-        }
-        .sheet(isPresented: $showSubscriptionSheet) {
-            SubscriptionSheetView()
-                .environmentObject(subscription)
-                .environmentObject(langManager)
-                .presentationDetents([.large])
-        }
-    }
-
-    private var restoreRow: some View {
-        Button {
-            Task { await subscription.restore() }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.clockwise")
-                    .foregroundStyle(Color.inkBlack)
-                    .frame(width: 28, height: 28)
-                    .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
-                    .clipShape(Rectangle())
-                Text(restoreLabel)
-                    .foregroundStyle(.primary)
-                Spacer()
-                if subscription.isRestoring {
-                    ProgressView().scaleEffect(0.8)
-                }
-            }
-        }
-        .disabled(subscription.isRestoring)
     }
 
     // MARK: - Row Builders
@@ -465,51 +600,50 @@ struct SettingsView: View {
     private var navTitle:     String { sectionTitle("Settings", "设置", "設定", "설정", vi: "Cài đặt", id: "Pengaturan", pt: "Configurações") }
     private var footerNote:   String {
         sectionTitle(
-            "App display language. Spec ordering is always based on device region.",
-            "应用界面语言。规格排序始终根据设备地区自动调整。",
-            "アプリの表示言語。規格の並び順はデバイスの地域設定に従います。",
-            "앱 표시 언어입니다. 규격 순서는 기기 지역 설정을 따릅니다.",
-            vi: "Ngôn ngữ hiển thị ứng dụng. Thứ tự quy cách luôn theo vùng thiết bị.",
-            id: "Bahasa tampilan aplikasi. Urutan spek selalu berdasarkan wilayah perangkat.",
-            pt: "Idioma do aplicativo. A ordem dos formatos segue a região do dispositivo."
+            "App display language.",
+            "应用界面语言。",
+            "アプリの表示言語。",
+            "앱 표시 언어입니다."
         )
     }
-    private var regionLabel:  String { sectionTitle("Device Region", "设备地区", "デバイス地域", "기기 지역", vi: "Vùng thiết bị", id: "Wilayah Perangkat", pt: "Região do Dispositivo") }
-    private var regionFooter: String {
-        sectionTitle(
-            "ID photo formats are sorted by your device region. To change, go to iOS Settings → General → Language & Region.",
-            "证件照规格按设备地区自动排序。在 iOS 设置 → 通用 → 语言与地区 中更改。",
-            "規格の並び順はデバイスの地域設定で変わります。iOS設定 → 一般 → 言語と地域 で変更できます。",
-            "규격 순서는 기기 지역에 따라 정렬됩니다. iOS 설정 → 일반 → 언어 및 지역에서 변경하세요.",
-            vi: "Quy cách ảnh thẻ được sắp xếp theo vùng thiết bị. Để thay đổi, vào Cài đặt iOS → Cài đặt chung → Ngôn ngữ & Vùng.",
-            id: "Format foto ID diurutkan berdasarkan wilayah perangkat. Untuk mengubah, buka Pengaturan iOS → Umum → Bahasa & Wilayah.",
-            pt: "Os formatos são ordenados pela região do dispositivo. Para alterar, vá em Ajustes iOS → Geral → Idioma e Região."
-        )
-    }
+    private var regionLabel:  String { sectionTitle("Region", "服务地区", "地域", "지역") }
     private var versionLabel:      String { sectionTitle("Version", "版本", "バージョン", "버전", vi: "Phiên bản", id: "Versi", pt: "Versão") }
     private var privacyLabel:      String { sectionTitle("Privacy Policy", "隐私政策", "プライバシーポリシー", "개인정보 처리방침", vi: "Chính sách Bảo mật", id: "Kebijakan Privasi", pt: "Política de Privacidade") }
     private var termsLabel:        String { sectionTitle("Terms of Service", "服务条款", "利用規約", "이용약관", vi: "Điều khoản Dịch vụ", id: "Ketentuan Layanan", pt: "Termos de Serviço") }
-    private var subscribedLabel:   String { sectionTitle("Pro Member", "专业会员", "プロ会員", "프로 회원", vi: "Thành viên Pro", id: "Anggota Pro", pt: "Membro Pro") }
-    private var notSubscribedLabel:String { sectionTitle("Free Plan", "免费版", "無料プラン", "무료 플랜", vi: "Gói Miễn phí", id: "Paket Gratis", pt: "Plano Gratuito") }
-    private var upgradeLabel:      String { sectionTitle("Upgrade to Pro", "升级为会员", "プロにアップグレード", "프로로 업그레이드", vi: "Nâng cấp Pro", id: "Upgrade ke Pro", pt: "Assinar Pro") }
-    private var manageLabel:       String { sectionTitle("Manage Subscription", "管理订阅", "サブスクリプション管理", "구독 관리", vi: "Quản lý đăng ký", id: "Kelola Langganan", pt: "Gerenciar Assinatura") }
-    private var restoreLabel:      String { sectionTitle("Restore Purchases", "恢复购买", "購入を復元", "구매 복원", vi: "Khôi phục mua hàng", id: "Pulihkan Pembelian", pt: "Restaurar Compras") }
-    private var freeUserDesc:      String { sectionTitle("First gen free, then watch a 30s ad", "首次免费，此后需观看30秒广告", "初回無料、次回から30秒広告視聴", "첫 생성 무료, 이후 30초 광고", vi: "Lần đầu miễn phí, sau đó xem QC 30 giây", id: "Pertama gratis, lalu tonton iklan 30 detik", pt: "1ª grátis, depois assista anúncio de 30s") }
+    private var subscribedLabel:   String { sectionTitle("Photo Task Active", "制作包可用", "制作分あり", "제작권 사용 가능", vi: "Gói ảnh khả dụng", id: "Paket aktif", pt: "Pacote ativo") }
+    private var notSubscribedLabel:String { sectionTitle("No Photo Task", "暂无制作包", "制作分なし", "제작권 없음", vi: "Chưa có gói ảnh", id: "Belum ada paket", pt: "Sem pacote") }
+    private var upgradeLabel:      String { sectionTitle("Buy Photo Task", "购买制作包", "制作分を購入", "제작권 구매", vi: "Mua gói ảnh", id: "Beli paket foto", pt: "Comprar pacote") }
+    private var manageLabel:       String { sectionTitle("Purchase History", "购买记录", "購入履歴", "구매 내역", vi: "Lịch sử mua", id: "Riwayat pembelian", pt: "Histórico") }
+    private var restoreLabel:      String { sectionTitle("Restore Purchases", "恢复购买", "購入を復元", "구매 복원", vi: "Khôi phục mua hàng", id: "Pulihkan pembelian", pt: "Restaurar compras") }
+    private var restoreCompleteTitle: String {
+        sectionTitle("Purchases Restored", "购买已恢复", "購入を復元しました", "구매 복원 완료",
+                     vi: "Đã khôi phục", id: "Pembelian dipulihkan", pt: "Compras restauradas")
+    }
+    private var restoreCompleteMessage: String {
+        sectionTitle("If App Store has pending transactions, they will be reflected automatically.",
+                     "如果 App Store 有待处理交易，系统会自动同步到当前制作包状态。",
+                     "App Store に未処理の取引がある場合、自動的に反映されます。",
+                     "App Store에 보류 중인 거래가 있으면 자동으로 반영됩니다.",
+                     vi: "Nếu App Store có giao dịch đang chờ, ứng dụng sẽ tự động cập nhật.",
+                     id: "Jika ada transaksi tertunda di App Store, status akan diperbarui otomatis.",
+                     pt: "Se houver transações pendentes na App Store, elas serão refletidas automaticamente.")
+    }
+    private var freeUserDesc:      String { sectionTitle("Buy once for 3 AI attempts", "购买后获得 3 次 AI 生成机会", "購入後AI生成3回", "구매 후 AI 생성 3회", vi: "Mua một lần có 3 lượt", id: "Beli sekali untuk 3 kali", pt: "Compre para 3 tentativas") }
     private var todayRemainingText: String {
-        let n = usage.subscriberUsesLeft
-        return sectionTitle("Today's remaining: \(n)", "今日剩余：\(n) 次", "本日残り：\(n)回", "오늘 남은 횟수: \(n)회", vi: "Còn lại hôm nay: \(n)", id: "Sisa hari ini: \(n)", pt: "Restantes hoje: \(n)")
+        let n = subscription.generationAttemptsLeft
+        return sectionTitle("Attempts left: \(n)", "剩余生成：\(n) 次", "残り：\(n)回", "남은 횟수: \(n)회", vi: "Còn lại: \(n)", id: "Sisa: \(n)", pt: "Restantes: \(n)")
     }
     private var cancelledLabel: String {
-        sectionTitle("Pro (Cancelled)", "专业会员（已取消）", "プロ会員（解約済み）", "프로 회원 (취소됨)",
-                     vi: "Pro (Đã hủy)", id: "Pro (Dibatalkan)", pt: "Pro (Cancelado)")
+        sectionTitle("Photo Task Used", "制作包已用完", "制作分を使用済み", "제작권 사용 완료",
+                     vi: "Đã dùng hết gói", id: "Paket habis", pt: "Pacote usado")
     }
     private var resubscribeLabel: String {
-        sectionTitle("Resubscribe", "重新订阅", "再購読", "다시 구독",
-                     vi: "Đăng ký lại", id: "Berlangganan Lagi", pt: "Reativar Assinatura")
+        sectionTitle("Buy Another Task", "再买一个制作包", "もう一度購入", "제작권 추가 구매",
+                     vi: "Mua thêm gói", id: "Beli lagi", pt: "Comprar outro")
     }
     private var resubscribeDesc: String {
-        sectionTitle("Don't lose your Pro features", "保留专业功能，不要错过", "プロ機能を失わないように", "프로 기능을 잃지 마세요",
-                     vi: "Đừng mất tính năng Pro", id: "Jangan kehilangan fitur Pro", pt: "Não perca seus recursos Pro")
+        sectionTitle("Get 3 more attempts", "再获得 3 次生成机会", "さらに3回生成", "생성 3회 추가",
+                     vi: "Thêm 3 lượt", id: "Tambah 3 kali", pt: "Mais 3 tentativas")
     }
     private func renewsText(_ date: Date) -> String {
         let fmt = DateFormatter()
@@ -535,26 +669,26 @@ struct SettingsView: View {
     private var redeemLabel:       String { sectionTitle("Redeem", "兑换", "引き換え", "사용", vi: "Đổi", id: "Tukar", pt: "Resgatar") }
     private var referralFooter:    String {
         sectionTitle(
-            "Share your code with friends. You both get 3 free Pro generations when they redeem it.",
-            "分享邀请码给朋友，双方各得 3 次 Pro 品质生成。",
-            "友達にコードをシェア。引き換えると双方に3回の無料Pro生成が付与されます。",
-            "친구에게 코드를 공유하세요. 사용 시 양쪽 모두 3회 Pro 생성을 받습니다.",
-            vi: "Chia sẻ mã cho bạn bè. Cả hai nhận 3 lần tạo ảnh Pro miễn phí.",
-            id: "Bagikan kode ke teman. Keduanya dapat 3 kali generasi Pro gratis.",
-            pt: "Compartilhe seu código. Ambos ganham 3 gerações Pro grátis."
+            "Share your code with friends. You both get 3 bonus generations when they redeem it.",
+            "分享邀请码给朋友，双方各得 3 次奖励生成机会。",
+            "友達にコードをシェア。引き換えると双方に3回のボーナス生成が付与されます。",
+            "친구에게 코드를 공유하세요. 사용 시 양쪽 모두 보너스 생성 3회를 받습니다.",
+            vi: "Chia sẻ mã cho bạn bè. Cả hai nhận 3 lần tạo ảnh thưởng.",
+            id: "Bagikan kode ke teman. Keduanya dapat 3 bonus generasi.",
+            pt: "Compartilhe seu código. Ambos ganham 3 gerações bônus."
         )
     }
 
     private func shareReferralCode() {
         guard let code = referralManager.referralCode else { return }
         let message = sectionTitle(
-            "用我的邀请码 \(code) 下载 AI ID Photo，我们都能获得 3 次免费 Pro 生成！",
-            "Use my referral code \(code) on AI ID Photo — we both get 3 free Pro generations!",
-            "AI証明写真アプリで招待コード \(code) を使うと、お互いに3回無料Pro生成がもらえます！",
-            "AI 증명사진 앱에서 추천 코드 \(code) 을 사용하면 서로 3회 Pro 생성을 받아요!",
-            vi: "Dùng mã giới thiệu \(code) trên AI ID Photo — cả hai nhận 3 lần Pro miễn phí!",
-            id: "Gunakan kode referral \(code) di AI ID Photo — kita berdua dapat 3 kali gratis!",
-            pt: "Use o código \(code) no AI ID Photo — nós dois ganhamos 3 gerações Pro grátis!"
+            "用我的邀请码 \(code) 下载 AI ID Photo，我们都能获得 3 次奖励生成机会！",
+            "Use my referral code \(code) on AI ID Photo — we both get 3 bonus generations!",
+            "AI証明写真アプリで招待コード \(code) を使うと、お互いに3回のボーナス生成がもらえます！",
+            "AI 증명사진 앱에서 추천 코드 \(code) 을 사용하면 서로 보너스 생성 3회를 받아요!",
+            vi: "Dùng mã giới thiệu \(code) trên AI ID Photo — cả hai nhận 3 lần tạo ảnh thưởng!",
+            id: "Gunakan kode referral \(code) di AI ID Photo — kita berdua dapat 3 bonus generasi!",
+            pt: "Use o código \(code) no AI ID Photo — nós dois ganhamos 3 gerações bônus!"
         )
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.keyWindow?.rootViewController {
@@ -581,7 +715,7 @@ struct SettingsView: View {
 // MARK: - Legal URLs
 
 private enum LegalURLs {
-    static let baseURL = "https://nexus-wei.space/aiidphoto"
+    static let baseURL = "https://aiphoto-cn.foyli.cloud/legal"
 
     static func privacyPolicy(lang: String) -> URL {
         URL(string: "\(baseURL)/privacy/\(legalLang(lang)).html")!
@@ -591,6 +725,12 @@ private enum LegalURLs {
     }
 
     private static func legalLang(_ code: String) -> String {
-        ["zh", "ja", "ko", "vi", "id", "pt"].contains(code) ? code : "en"
+        if code.hasPrefix("zh") { return "zh" }
+        if code.hasPrefix("ja") { return "ja" }
+        if code.hasPrefix("ko") { return "ko" }
+        if code.hasPrefix("vi") { return "vi" }
+        if code.hasPrefix("id") { return "id" }
+        if code.hasPrefix("pt") { return "pt" }
+        return "en"
     }
 }
