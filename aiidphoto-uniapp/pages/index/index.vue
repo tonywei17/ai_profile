@@ -493,7 +493,7 @@ const navigateToSettings = () => {
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--color-sky-blue), var(--color-sky-blue-mid));
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px rgba(36, 100, 200, 0.2);
 }
 
@@ -559,7 +559,7 @@ const navigateToSettings = () => {
 /* 滚动内容 */
 .scroll-content {
   flex: 1;
-  padding: 0 0 100px;
+  padding: 0 0 calc(64px + var(--spacing-2xl) + env(safe-area-inset-bottom));
   overflow-y: auto;
 }
 
@@ -594,7 +594,7 @@ const navigateToSettings = () => {
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  padding: 22px 20px;
+  padding: var(--spacing-xl) var(--spacing-lg);
 }
 
 .hero-left {
@@ -704,13 +704,13 @@ const navigateToSettings = () => {
 
 /* 服务分类 */
 .service-categories {
-  padding: 20px 16px 24px;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl);
 }
 
 .category-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: var(--spacing-md);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -767,15 +767,6 @@ const navigateToSettings = () => {
 }
 
 /* 信任统计 */
-.trust-stats {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  background-color: rgba(0, 0, 0, 0.03);
-  margin: 0 -16px 24px;
-}
-
 .stat-item {
   flex: 1;
   display: flex;
@@ -788,12 +779,6 @@ const navigateToSettings = () => {
   display: flex;
   align-items: baseline;
   gap: 1px;
-}
-
-.stat-number {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-sky-blue);
 }
 
 .stat-label {
@@ -819,10 +804,6 @@ const navigateToSettings = () => {
   padding: 0 0 24px;
 }
 
-.showcase-header {
-  padding: 0 16px 12px;
-}
-
 .showcase-title {
   font-size: 15px;
   font-weight: 600;
@@ -833,26 +814,6 @@ const navigateToSettings = () => {
   display: flex;
   gap: 12px;
   padding: 0 16px;
-}
-
-.showcase-card {
-  flex: 1;
-  height: 120px;
-  background-color: var(--color-bg-secondary);
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-}
-
-.showcase-label {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  font-size: 11px;
-  color: #333333;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .category-subtitle {
@@ -867,10 +828,10 @@ const navigateToSettings = () => {
 .trust-stats {
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: var(--spacing-lg);
   background-color: var(--color-bg-secondary);
-  border-radius: 14px;
-  margin: 0 0 24px;
+  border-radius: var(--radius-xl);
+  margin: 0 var(--spacing-lg) var(--spacing-xl);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -891,7 +852,7 @@ const navigateToSettings = () => {
 .stat-number {
   font-size: 20px;
   font-weight: 700;
-  color: var(--color-ink-black);
+  color: var(--color-sky-blue);
   letter-spacing: -0.5px;
 }
 
@@ -923,8 +884,8 @@ const navigateToSettings = () => {
 }
 
 .showcase-header {
-  margin-bottom: 14px;
-  padding: 0 4px;
+  margin-bottom: var(--spacing-md);
+  padding: 0 var(--spacing-lg);
 }
 
 .showcase-title {
@@ -994,7 +955,7 @@ const navigateToSettings = () => {
 
 .showcase-note {
   display: block;
-  padding: 10px 4px 0;
+  padding: var(--spacing-sm) var(--spacing-lg) 0;
   color: var(--color-branch-gray);
   font-size: 11px;
   line-height: 1.5;
@@ -1006,7 +967,7 @@ const navigateToSettings = () => {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 12px 32px 16px;
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
   background-color: var(--color-bg-primary);
   border-top: 0.5px solid var(--color-bg-secondary);
   z-index: 100;

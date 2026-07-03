@@ -104,10 +104,10 @@
       </view>
 
       <!-- 服务信息 -->
-      <view class="service-section">
-        <view class="service-header">
+      <view class="service-section settings-section">
+        <view class="service-header section-header">
           <AppIcon name="document" :size="20" color="var(--color-ink-black)" />
-          <text class="service-title">{{ t('settings.legal') }}</text>
+          <text class="service-title section-title">{{ t('settings.legal') }}</text>
         </view>
         <view class="service-content">
           <view class="action-row" @tap="openPrivacyPolicy">
@@ -375,10 +375,10 @@ const goBack = () => {
 
 /* Hero区域 */
 .settings-hero {
-  height: 176px;
-  border-radius: 16px;
+  min-height: 176px;
+  border-radius: var(--radius-xl);
   overflow: visible;
-  margin-bottom: 18px;
+  margin-bottom: var(--spacing-xl);
   position: relative;
   background: transparent;
 }
@@ -391,7 +391,7 @@ const goBack = () => {
   bottom: 0;
   background: var(--gradient-premium);
   opacity: 0.85;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   z-index: 0;
 }
 
@@ -399,17 +399,18 @@ const goBack = () => {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  height: 100%;
-  padding: 18px 20px;
+  min-height: 100%;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  box-sizing: border-box;
 }
 
 .hero-left {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: var(--spacing-sm);
   max-width: calc(100% - 116px);
 }
 
@@ -423,7 +424,7 @@ const goBack = () => {
   width: 32px;
   height: 32px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,9 +462,8 @@ const goBack = () => {
   display: inline-block;
   padding: 6px 10px;
   background-color: rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   align-self: flex-start;
-  margin-top: auto;
 }
 
 .badge-text {
@@ -483,7 +483,7 @@ const goBack = () => {
   width: 80px;
   height: 80px;
   background: rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -491,9 +491,9 @@ const goBack = () => {
 
 /* 设置区域 */
 .settings-section {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-xl);
   background-color: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1.5px solid var(--color-bg-secondary);
 }
@@ -501,8 +501,8 @@ const goBack = () => {
 .section-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
   background-color: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-bg-secondary);
 }
@@ -520,8 +520,8 @@ const goBack = () => {
 .option-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-lg);
   transition: background-color 0.15s ease;
 }
 
@@ -530,7 +530,8 @@ const goBack = () => {
 }
 
 .option-row.active {
-  background-color: #e8f4fd;
+  background-color: rgba(36, 100, 200, 0.08);
+  box-shadow: inset 0 0 0 1px var(--color-sky-blue);
 }
 
 .option-icon {
@@ -553,8 +554,8 @@ const goBack = () => {
 .language-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-lg);
   transition: background-color 0.15s ease;
 }
 
@@ -563,7 +564,8 @@ const goBack = () => {
 }
 
 .language-row.active {
-  background-color: #e8f4fd;
+  background-color: rgba(36, 100, 200, 0.08);
+  box-shadow: inset 0 0 0 1px var(--color-sky-blue);
 }
 
 .language-name {
@@ -573,16 +575,13 @@ const goBack = () => {
   color: var(--color-ink-black);
 }
 
-/* 服务区域 */
+/* 服务区域：复用 .settings-section / .section-header 卡片样式，保持同层级分区视觉一致 */
 .service-section {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .service-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: var(--spacing-sm);
 }
 
 .service-title {
@@ -593,16 +592,13 @@ const goBack = () => {
 
 .service-content {
   background-color: var(--color-bg-primary);
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1.5px solid var(--color-bg-secondary);
 }
 
 .action-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-lg);
   transition: background-color 0.15s ease;
 }
 
@@ -655,8 +651,7 @@ const goBack = () => {
 .attempts-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 12px 0;
+  gap: var(--spacing-sm);
 }
 
 .attempts-number {
@@ -737,12 +732,14 @@ const goBack = () => {
   color: #ffffff;
 }
 
-/* 订阅管理样式 */
+/* 订阅管理样式：与 action-row/language-row 保持一致的无独立圆角通栏行，
+   避免其自身圆角与 section-header 的直角分割线贴死拼贴 */
 .subscription-info {
-  padding: 16px;
-  background-color: var(--color-bg-secondary);
-  border-radius: 12px;
-  margin-bottom: 12px;
+  padding: var(--spacing-lg);
+}
+
+.subscription-info:not(:last-child) {
+  border-bottom: 1px solid var(--color-bg-secondary);
 }
 
 .subscription-status {

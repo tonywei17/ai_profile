@@ -7,7 +7,7 @@
     <view class="subscription-header" :style="{ height: navigationBarHeight + 'px' }">
       <view class="header-left">
         <view class="back-btn" @click="goBack">
-          <text>←</text>
+          <AppIcon name="back" :size="20" color="var(--color-ink-black)" />
         </view>
         <text class="header-title">{{ t('subscription.title') }}</text>
       </view>
@@ -89,7 +89,7 @@
       </view>
 
       <view v-if="!paymentEnabled" class="product-card">
-        <text class="product-title">当前微信版本暂不支持购买</text>
+        <text class="product-title product-title-standalone">当前微信版本暂不支持购买</text>
         <text class="product-desc">请将微信升级到最新版本后重试；可继续使用已有生成次数。</text>
       </view>
 
@@ -254,7 +254,7 @@ const goBack = () => {
   align-items: center;
   justify-content: space-between;
   min-height: 48px;
-  padding: 0 16px;
+  padding: 0 var(--spacing-lg);
   box-sizing: border-box;
   background-color: var(--color-bg-primary);
   border-bottom: 0.5px solid var(--color-bg-secondary);
@@ -275,7 +275,7 @@ const goBack = () => {
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-secondary);
   color: var(--color-branch-gray);
 }
@@ -301,14 +301,14 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-secondary);
 }
 
 /* 滚动内容 */
 .scroll-content {
   flex: 1;
-  padding: 16px 20px;
+  padding: var(--spacing-lg) var(--spacing-lg);
   max-width: 400px;
   margin: 0 auto;
   width: 100%;
@@ -318,9 +318,9 @@ const goBack = () => {
 /* Hero区域 */
 .subscription-hero {
   height: 200px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-xl);
   position: relative;
 }
 
@@ -341,15 +341,15 @@ const goBack = () => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 24px;
+  padding: var(--spacing-xl);
   text-align: center;
 }
 
 .discount-badge {
-  padding: 6px 12px;
+  padding: var(--spacing-xs) var(--spacing-md);
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--spacing-lg);
 }
 
 .badge-text {
@@ -362,7 +362,7 @@ const goBack = () => {
   font-size: 24px;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .hero-subtitle {
@@ -373,11 +373,11 @@ const goBack = () => {
 
 /* 产品卡片 */
 .product-card {
-  padding: 24px;
+  padding: var(--spacing-xl);
   background: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-bg-secondary);
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-xl);
   box-sizing: border-box;
 }
 
@@ -385,13 +385,19 @@ const goBack = () => {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .product-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--color-ink-black);
+}
+
+/* 禁用购买态：标题独立成行，与说明文字保持间距，避免与 product-header 内的胶囊布局冲突 */
+.product-title-standalone {
+  display: block;
+  margin-bottom: var(--spacing-sm);
 }
 
 .product-price {
@@ -401,16 +407,17 @@ const goBack = () => {
 }
 
 .product-desc {
+  display: block;
   font-size: 13px;
   color: var(--color-branch-gray);
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .features-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
 }
 
 .feature-item {
@@ -438,13 +445,13 @@ const goBack = () => {
 
 .purchase-btn {
   width: 100%;
-  padding: 16px;
+  padding: var(--spacing-lg);
   background: var(--gradient-premium);
-  border-radius: 24px;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-md);
   transition: opacity 0.2s, transform 0.15s ease;
   box-sizing: border-box;
   /* 取 --color-premium-start (#2464C8) 的 24% 透明度，token 体系暂无半透明变体 */
@@ -474,12 +481,12 @@ const goBack = () => {
 
 .restore-btn {
   width: 100%;
-  padding: 12px;
+  padding: var(--spacing-md);
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-secondary);
 }
 
@@ -490,7 +497,7 @@ const goBack = () => {
 
 /* 底部说明 */
 .footer-note {
-  padding: 16px;
+  padding: var(--spacing-lg);
   text-align: center;
 }
 

@@ -7,7 +7,7 @@
     <view class="terms-header">
       <view class="header-left">
         <view class="back-btn" @click="goBack">
-          <text>←</text>
+          <AppIcon name="back" :size="20" color="var(--color-ink-black)" />
         </view>
         <text class="header-title">用户协议</text>
       </view>
@@ -101,6 +101,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import AppIcon from '@/components/AppIcon.vue'
 // 系统信息
 const statusBarHeight = ref(0)
 
