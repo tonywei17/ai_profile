@@ -3,6 +3,23 @@
     "name": "光影形象馆",
     "slogan": "AI职业形象照与证件照助手"
   },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "back": "返回",
+    "error": "错误",
+    "loading": "加载中...",
+    "retry": "重试",
+    "pro": "PRO",
+    "locked": "已锁定",
+    "albumAuth": {
+      "title": "需要相册权限",
+      "content": "保存图片需要相册权限，请在设置中开启「添加到相册」权限后重试",
+      "confirm": "去设置",
+      "cancel": "取消",
+      "saveFailed": "保存失败"
+    }
+  },
   "home": {
     "title": "AI职业形象照",
     "subtitle": "简历照 · 证件照",
@@ -45,7 +62,6 @@
       "badge": "AI生成示例",
       "disclaimer": "示例用于展示可实现的处理类型，实际效果会因原始照片、所选规格和编辑选项而有所不同。"
     },
-    "start": "开始制作",
     "userStatus": "用户状态",
     "basicUser": "基础用户",
     "premiumUser": "付费用户",
@@ -112,7 +128,7 @@
     "customSize": "自定义尺寸",
     "aiCustomize": "AI 自定义",
     "beauty": "美颜",
-    "attire": "服装", 
+    "attire": "服装",
     "hair": "发型",
     "background": "背景色",
     "accessories": "配饰",
@@ -195,12 +211,8 @@
     },
     "proAttemptFallback": {
       "title": "提示",
-      "content": "您选择了Pro功能但没有Pro次数，是否使用免费次数生成（不应用Pro效果）？"
-    },
-    "albumAuth": {
-      "title": "需要相册权限",
-      "content": "保存图片需要相册权限，请在设置中开启「添加到相册」权限后重试",
-      "confirm": "去设置",
+      "content": "您选择了Pro功能但没有Pro次数，是否使用免费次数生成（不应用Pro效果）？",
+      "confirm": "免费生成",
       "cancel": "取消"
     },
     "toast": {
@@ -244,7 +256,13 @@
       "justNow": "刚刚",
       "minutesAgo": "分钟前",
       "hoursAgo": "小时前"
-    }
+    },
+    "errorState": {
+      "title": "图片加载失败",
+      "desc": "未能获取有效的证件照图片，请返回重新拍摄或生成",
+      "back": "返回上一页"
+    },
+    "aigcBadge": "AI生成/编辑"
   },
   "history": {
     "title": "历史记录",
@@ -278,9 +296,6 @@
     "generate": "生成打印图",
     "generateFailed": "生成失败"
   },
-  "common": {
-    "cancel": "取消"
-  },
   "subscription": {
     "title": "购买生成次数",
     "discount": "一次性购买",
@@ -298,15 +313,5 @@
     "purchase": "立即购买",
     "restore": "刷新购买状态",
     "close": "关闭"
-  },
-  "common": {
-    "ok": "确定",
-    "cancel": "取消",
-    "back": "返回",
-    "error": "错误",
-    "loading": "加载中...",
-    "retry": "重试",
-    "pro": "PRO",
-    "locked": "已锁定"
   }
 }

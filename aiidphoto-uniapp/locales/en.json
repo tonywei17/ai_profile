@@ -3,6 +3,23 @@
     "name": "AIIDPhoto",
     "slogan": "AI Professional Photo & ID Photo Assistant"
   },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "back": "Back",
+    "error": "Error",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "pro": "PRO",
+    "locked": "Locked",
+    "albumAuth": {
+      "title": "Album Access Needed",
+      "content": "Saving photos requires album access. Please enable \"Add to Album\" in Settings and try again.",
+      "confirm": "Open Settings",
+      "cancel": "Cancel",
+      "saveFailed": "Save failed"
+    }
+  },
   "home": {
     "title": "AI Professional Photo",
     "subtitle": "Resume Photo · ID Photo",
@@ -168,13 +185,9 @@
     },
     "proAttemptFallback": {
       "title": "Notice",
-      "content": "You selected Pro options but have no Pro attempts. Use a free attempt instead (Pro effects will not apply)?"
-    },
-    "albumAuth": {
-      "title": "Album Permission Needed",
-      "content": "Saving photos requires album permission. Please enable \"Add to Album\" in Settings and try again.",
-      "confirm": "Open",
-      "cancel": "Back"
+      "content": "You selected Pro options but have no Pro attempts. Use a free attempt instead (Pro effects will not apply)?",
+      "confirm": "Use Free",
+      "cancel": "Cancel"
     },
     "toast": {
       "privacyRequired": "Please agree to the privacy guideline first",
@@ -217,7 +230,13 @@
       "justNow": "Just Now",
       "minutesAgo": " minutes ago",
       "hoursAgo": " hours ago"
-    }
+    },
+    "errorState": {
+      "title": "Image Failed to Load",
+      "desc": "No valid photo was received. Please go back and retake or regenerate.",
+      "back": "Go Back"
+    },
+    "aigcBadge": "AI Generated/Edited"
   },
   "history": {
     "title": "History",
@@ -251,9 +270,6 @@
     "generate": "Generate Print",
     "generateFailed": "Generate Failed"
   },
-  "common": {
-    "cancel": "Cancel"
-  },
   "subscription": {
     "title": "Buy Generations",
     "discount": "One-time Purchase",
@@ -271,15 +287,5 @@
     "purchase": "Purchase Now",
     "restore": "Refresh Purchase Status",
     "close": "Close"
-  },
-  "common": {
-    "ok": "OK",
-    "cancel": "Cancel",
-    "back": "Back",
-    "error": "Error",
-    "loading": "Loading...",
-    "retry": "Retry",
-    "pro": "PRO",
-    "locked": "Locked"
   }
 }

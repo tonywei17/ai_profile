@@ -21,10 +21,10 @@
     <!-- 图片缺失/异常兜底态：防止坏图/白屏 -->
     <view v-if="!hasValidImages" class="error-state">
       <AppIcon name="album" :size="48" color="var(--color-branch-gray)" />
-      <text class="error-title">图片加载失败</text>
-      <text class="error-desc">未能获取有效的证件照图片，请返回重新拍摄或生成</text>
+      <text class="error-title">{{ t('result.errorState.title') }}</text>
+      <text class="error-desc">{{ t('result.errorState.desc') }}</text>
       <view class="error-back-btn" @tap="goBack">
-        <text class="error-back-text">返回上一页</text>
+        <text class="error-back-text">{{ t('result.errorState.back') }}</text>
       </view>
     </view>
 
@@ -35,7 +35,7 @@
         <view class="comparison-section">
           <view class="section-heading">
             <text class="section-title">{{ t('result.comparison') }}</text>
-            <text class="aigc-badge">AI生成/编辑</text>
+            <text class="aigc-badge">{{ t('result.aigcBadge') }}</text>
           </view>
           <view class="comparison-container">
             <ComparisonSlider
@@ -103,6 +103,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from '@/utils/i18n.js'
+import { handleSaveAlbumFail } from '@/utils/albumPermission.js'
 import ComparisonSlider from '@/components/ComparisonSlider.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import historyAPI from '@/api/history.js'
@@ -212,29 +213,6 @@ const onSliderChange = (value) => {
   console.log('滑块位置:', value)
 }
 
-// 相册保存失败统一处理：权限被拒时引导用户去设置开启，其余情况提示保存失败
-const handleSaveAlbumFail = (err, failTitle) => {
-  const errMsg = (err && err.errMsg) || ''
-  if (errMsg.indexOf('auth deny') !== -1 || errMsg.indexOf('auth denied') !== -1 || errMsg.indexOf('authorize') !== -1) {
-    uni.showModal({
-      title: '需要相册权限',
-      content: '保存图片需要相册权限，请在设置中开启「添加到相册」权限后重试',
-      confirmText: '去设置',
-      cancelText: '取消',
-      success: (res) => {
-        if (res.confirm) {
-          uni.openSetting()
-        }
-      }
-    })
-  } else {
-    console.error('保存到相册失败:', err)
-    uni.showToast({
-      title: failTitle || t('result.saveFailed'),
-      icon: 'none'
-    })
-  }
-}
 
 // 保存到相册
 const saveToAlbum = async () => {
@@ -342,10 +320,11 @@ const openPrintLayout = () => {
   })
 }
 
-// 重新拍摄
+// 重新拍摄(携带当前规格,保持 creation 页预选一致,避免深链规格被静默重置)
 const retakePhoto = () => {
+  const specId = specInfo.value && specInfo.value.id
   uni.redirectTo({
-    url: '/pages/creation/creation'
+    url: specId ? `/pages/creation/creation?specId=${specId}` : '/pages/creation/creation'
   })
 }
 

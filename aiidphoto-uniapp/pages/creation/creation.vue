@@ -360,6 +360,7 @@ import printLayoutAPI from '@/api/printLayout.js'
 import historyAPI from '@/api/history.js'
 import paymentAPI from '@/api/payment.js'
 import { useI18n } from '@/utils/i18n.js'
+import { handleSaveAlbumFail } from '@/utils/albumPermission.js'
 
 // 获取i18n实例
 const { t } = useI18n()
@@ -733,15 +734,18 @@ onLoad((options) => {
     selectedSpec.value = matched
     isCustomSize.value = false
     showCustomSizePanel.value = false
-    // 预选规格位于折叠区(前4个之外)时展开列表,保证选中态可见
-    if (specs.value.indexOf(matched) >= 4) {
+    // 预选规格位于折叠区时展开列表,保证选中态可见
+    if (specs.value.indexOf(matched) >= COLLAPSED_SPEC_COUNT) {
       showAll.value = true
     }
   }
 })
 
+// 折叠态展示的规格数量(onLoad 预选展开判断与 displayedSpecs 共用)
+const COLLAPSED_SPEC_COUNT = 4
+
 const displayedSpecs = computed(() => {
-  return showAll.value ? specs.value : specs.value.slice(0, 4)
+  return showAll.value ? specs.value : specs.value.slice(0, COLLAPSED_SPEC_COUNT)
 })
 
 // Pro选项数据（使用i18n）
@@ -1074,9 +1078,23 @@ const generatePhoto = async () => {
     return
   }
 
+  // 立即置位:封死次数查询等异步间隙内的重复点击窗口
+  isGenerating.value = true
+
   // 检查是否有足够的生成次数
-  const status = await paymentAPI.getRemainingAttempts()
+  let status
+  try {
+    status = await paymentAPI.getRemainingAttempts()
+  } catch (error) {
+    isGenerating.value = false
+    uni.showToast({
+      title: error.message || t('creation.toast.generateFailed'),
+      icon: 'none'
+    })
+    return
+  }
   if (status.totalAttempts <= 0) {
+    isGenerating.value = false
     // 次数耗尽：弹窗说明并引导去购买（取消则留在当前页）
     if (paymentEnabled) {
       uni.showModal({
@@ -1121,13 +1139,19 @@ const generatePhoto = async () => {
       uni.showModal({
         title: t('creation.proAttemptFallback.title'),
         content: t('creation.proAttemptFallback.content'),
+        confirmText: t('creation.proAttemptFallback.confirm'),
+        cancelText: t('creation.proAttemptFallback.cancel'),
         success: (res) => resolve(res.confirm)
       })
     })
 
-    if (!useFree) return
+    if (!useFree) {
+      isGenerating.value = false
+      return
+    }
     useProAttempts = false
   } else {
+    isGenerating.value = false
     uni.showToast({
       title: t('creation.toast.noAttempts'),
       icon: 'none'
@@ -1140,7 +1164,6 @@ const generatePhoto = async () => {
   console.log('selectedSpec:', selectedSpec.value)
   console.log('isSubscribed:', isSubscribed.value)
 
-  isGenerating.value = true
   currentStep.value = 3 // 生成开始时进入AI优化步骤
 
   try {
@@ -1231,19 +1254,16 @@ const generatePhoto = async () => {
     currentStep.value = 4 // 生成成功时进入下载保存步骤
     await loadUserStatus()
 
-    // 7. 保存到历史记录
-    try {
-      await historyAPI.addRecord({
-        imagePath: tempFilePath,
-        specId: selectedSpec.value.id,
-        specName: selectedSpec.value.displayName,
-        sizeLabel: selectedSpec.value.sizeLabel,
-        isCustomSize: isCustomSize.value
-      })
-    } catch (err) {
+    // 7. 保存到历史记录(不 await:同步读写整份历史列表较重,不阻塞跳转,失败静默)
+    historyAPI.addRecord({
+      imagePath: tempFilePath,
+      specId: selectedSpec.value.id,
+      specName: selectedSpec.value.displayName,
+      sizeLabel: selectedSpec.value.sizeLabel,
+      isCustomSize: isCustomSize.value
+    }).catch((err) => {
       console.error('保存历史记录失败:', err)
-      // 不影响主流程，静默失败
-    }
+    })
 
     uni.showToast({
       title: t('creation.toast.generateSuccess'),
@@ -1267,40 +1287,16 @@ const generatePhoto = async () => {
   } catch (error) {
     console.error('生成失败:', error)
     currentStep.value = 2 // 生成失败时回到选择场景步骤
+    isGenerating.value = false
     uni.showToast({
       title: error.message || t('creation.toast.generateFailed'),
       icon: 'none',
       duration: 3000
     })
-  } finally {
-    // 成功路径已先发起 redirectTo 再走到这里复位，不存在可重复点击的窗口
-    isGenerating.value = false
   }
+  // 成功路径不复位 isGenerating:redirectTo 过渡期间保持遮罩,页面随即销毁
 }
 
-// 相册保存失败统一处理：权限被拒时引导用户去设置开启，其余情况提示保存失败
-const handleSaveAlbumFail = (err) => {
-  const errMsg = (err && err.errMsg) || ''
-  if (errMsg.indexOf('auth deny') !== -1 || errMsg.indexOf('auth denied') !== -1 || errMsg.indexOf('authorize') !== -1) {
-    uni.showModal({
-      title: t('creation.albumAuth.title'),
-      content: t('creation.albumAuth.content'),
-      confirmText: t('creation.albumAuth.confirm'),
-      cancelText: t('creation.albumAuth.cancel'),
-      success: (res) => {
-        if (res.confirm) {
-          uni.openSetting()
-        }
-      }
-    })
-  } else {
-    console.error('保存到相册失败:', err)
-    uni.showToast({
-      title: t('result.saveFailed'),
-      icon: 'none'
-    })
-  }
-}
 
 const saveImage = async () => {
   try {

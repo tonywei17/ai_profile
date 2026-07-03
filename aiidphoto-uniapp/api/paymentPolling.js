@@ -1,14 +1,13 @@
 /**
  * 支付订单结果轮询(标准支付与虚拟支付共用)
  *
- * 说明:closed/refunded 属终态,无论 tolerateQueryErrors 与否都立即抛出
- * (终态订单不可能再变为 paid,继续轮询只会白等到超时)。
+ * closed/refunded 的处理跟随 tolerateQueryErrors:
+ * - false(标准支付):立即抛出;
+ * - true(虚拟支付):与查询失败一样容忍到最后一次——虚拟支付回调链路慢,
+ *   后端过期关单任务可能与迟到的支付回调竞争,短暂读到 closed 不代表真正终态。
  */
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
-// 终态异常标记,确保不被 tolerateQueryErrors 吞掉
-class OrderTerminalError extends Error {}
 
 /**
  * 轮询订单直到支付成功
@@ -36,17 +35,16 @@ export const waitForPaidOrder = async (queryOrderStatus, orderId, {
         return order
       }
       if (order.status === 'closed' || order.status === 'refunded') {
-        throw new OrderTerminalError(unpaidMessage)
+        throw new Error(unpaidMessage)
       }
     } catch (error) {
-      if (error instanceof OrderTerminalError) {
-        throw error
-      }
       if (!tolerateQueryErrors || attempt === maxAttempts - 1) {
         throw error
       }
     }
-    await sleep(intervalMs)
+    if (attempt < maxAttempts - 1) {
+      await sleep(intervalMs)
+    }
   }
   throw new Error(timeoutMessage)
 }
