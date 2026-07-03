@@ -1,5 +1,6 @@
 import { get, post } from './request.js'
 import wechatAuthService from '../services/wechatAuthService.js'
+import { waitForPaidOrder } from './paymentPolling.js'
 
 const PRODUCT_ID = 'photo_task_3'
 const CREATE_ORDER_ENDPOINT = '/api/payment/wechat/create-order'
@@ -31,20 +32,6 @@ export const queryOrderStatus = async (orderId) => {
   return response.data
 }
 
-const waitForPaidOrder = async (orderId) => {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const order = await queryOrderStatus(orderId)
-    if (order.status === 'paid') {
-      return order
-    }
-    if (order.status === 'closed' || order.status === 'refunded') {
-      throw new Error('订单未支付')
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-  }
-  throw new Error('支付结果确认超时，请稍后在页面重新查看次数')
-}
-
 export const purchasePhotoTask = async () => {
   await wechatAuthService.ensureLogin()
   const response = await post(CREATE_ORDER_ENDPOINT, {
@@ -55,5 +42,9 @@ export const purchasePhotoTask = async () => {
   }
 
   await requestPayment(response.data)
-  return waitForPaidOrder(response.data.orderId)
+  return waitForPaidOrder(queryOrderStatus, response.data.orderId, {
+    maxAttempts: 8,
+    unpaidMessage: '订单未支付',
+    timeoutMessage: '支付结果确认超时，请稍后在页面重新查看次数'
+  })
 }

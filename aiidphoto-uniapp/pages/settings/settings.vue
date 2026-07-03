@@ -235,17 +235,6 @@ const openTerms = () => {
   })
 }
 
-// 获取法律文档语言代码
-const getLegalLang = (code) => {
-  if (code.startsWith('zh')) return 'zh'
-  if (code.startsWith('ja')) return 'ja'
-  if (code.startsWith('ko')) return 'ko'
-  if (code.startsWith('vi')) return 'vi'
-  if (code.startsWith('id')) return 'id'
-  if (code.startsWith('pt')) return 'pt'
-  return 'en'
-}
-
 // 打开购买页面
 const openSubscription = () => {
   uni.navigateTo({

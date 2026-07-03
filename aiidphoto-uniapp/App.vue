@@ -4,7 +4,6 @@ import wechatAuthService from './services/wechatAuthService.js'
 
 onLaunch(async () => {
   console.log('App Launch')
-  uni.setStorageSync('appearance', 'light')
   // #ifdef MP-WEIXIN
   try {
     await wechatAuthService.ensureLogin()
@@ -90,32 +89,6 @@ onHide(() => {
   --duration-fast: 150ms;
   --duration-normal: 200ms;
   --duration-slow: 250ms;
-}
-
-/* 暗色模式适配 - 通过CSS类控制 */
-.dark-theme {
-  --color-paper-tan: #3C342A;
-  --color-ink-black: #E6E6E6;
-  --color-ink-border: rgba(255, 255, 255, 0.12);
-  --color-branch-gray: #B9B9B9;
-  --color-ink-fill: #E6E6E6;
-  --color-ink-fill-foreground: #1A1A1A;
-  --color-bg-primary: #0F0F19;
-  --color-bg-secondary: #1A1A1A;
-  --color-bg-tertiary: #0F0F19;
-}
-
-/* 暗色模式下的玻璃效果 */
-.dark-theme .glass-background {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-}
-
-/* 暗色模式下的标题渐变 */
-.dark-theme .title-gradient {
-  background: linear-gradient(135deg, #8CB3FF, #B3C7FF);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* 全局重置 */
