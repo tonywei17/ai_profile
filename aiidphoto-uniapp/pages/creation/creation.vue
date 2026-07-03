@@ -154,7 +154,7 @@
       <!-- Pro选项 -->
       <view class="section">
         <view class="pro-options">
-          <view class="pro-header" @tap="toggleProOptions">
+          <view class="pro-header" :class="{ expanded: isProOptionsExpanded }" @tap="toggleProOptions">
             <text class="pro-title">{{ t('creation.aiCustomize') }}</text>
             <text v-if="!isSubscribed" class="pro-badge">{{ t('common.pro') }}</text>
             <view class="icon-down" :class="{ rotate: isProOptionsExpanded }">
@@ -1521,7 +1521,7 @@ const showPrintLayout = async () => {
 
 /* 进度步骤 */
 .progress-steps {
-  padding: 14px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   background-color: #ffffff;
   border-bottom: 1px solid #e5e5e5;
 }
@@ -1612,7 +1612,7 @@ const showPrintLayout = async () => {
   padding: 36px 24px;
   background: rgba(36, 100, 200, 0.03);
   border: 1.5px dashed rgba(36, 100, 200, 0.35);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 
 .upload-icon {
@@ -1805,11 +1805,6 @@ const showPrintLayout = async () => {
 }
 
 /* 规格选择 */
-.section {
-  padding: 20px 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
 .section-label {
   font-size: 15px;
   font-weight: 600;
@@ -1940,13 +1935,14 @@ const showPrintLayout = async () => {
 
 /* Section */
 .section {
-  padding: 0 0 24px;
+  padding: 0 var(--spacing-lg) var(--spacing-xl);
 }
 
 /* 规格选择 */
 .spec-selector {
-  border: 1.5px solid var(--color-ink-black);
-  border-radius: 12px;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
@@ -1958,32 +1954,30 @@ const showPrintLayout = async () => {
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--color-branch-gray);
-  padding: 12px 16px;
-  background-color: var(--color-bg-secondary);
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-bg-tertiary);
 }
 
 .spec-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
 }
 
 .spec-item {
   position: relative;
-  padding: 18px 16px;
+  padding: var(--spacing-lg) var(--spacing-lg);
   min-height: 88px;
   background-color: var(--color-bg-primary);
-  border-right: 1px solid var(--color-ink-black);
-  border-bottom: 1px solid var(--color-ink-black);
-  transition: background-color 0.15s ease;
-}
-
-.spec-item:nth-child(2n) {
-  border-right: none;
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .spec-item.active {
-  background-color: var(--color-paper-tan);
+  background-color: rgba(36, 100, 200, 0.08);
+  border-color: var(--color-sky-blue);
 }
 
 .spec-item.locked {
@@ -2023,7 +2017,7 @@ const showPrintLayout = async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px;
+  padding: var(--spacing-lg);
   border-top: 1px solid var(--color-ink-black);
   background-color: var(--color-bg-primary);
   transition: background-color 0.15s ease;
@@ -2054,7 +2048,7 @@ const showPrintLayout = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 16px;
+  padding: var(--spacing-lg) var(--spacing-lg);
   border-top: 1px solid var(--color-ink-black);
   background-color: var(--color-bg-primary);
   transition: background-color 0.15s ease;
@@ -2201,7 +2195,7 @@ const showPrintLayout = async () => {
 /* Pro选项 */
 .pro-options {
   border: 1.5px solid var(--color-ink-black);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
@@ -2210,13 +2204,16 @@ const showPrintLayout = async () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px;
-  background-color: var(--color-bg-secondary);
+  padding: var(--spacing-lg);
   transition: background-color 0.15s ease;
 }
 
 .pro-header:active {
   background-color: var(--color-bg-tertiary);
+}
+
+.pro-header.expanded {
+  background-color: rgba(36, 100, 200, 0.04);
 }
 
 .pro-title {
@@ -2289,19 +2286,21 @@ const showPrintLayout = async () => {
 
 .option-chips {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm);
   padding: 4px 16px;
 }
 
 .option-chip {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 6px;
   padding: 0 14px;
   min-height: 40px;
+  white-space: nowrap;
   background-color: var(--color-bg-primary);
   border: 1.5px solid var(--color-ink-black);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: all 0.2s ease;
 }
 
@@ -2326,6 +2325,8 @@ const showPrintLayout = async () => {
   font-weight: 500;
   color: var(--color-ink-black);
   letter-spacing: -0.1px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .option-chip.active .chip-label {
@@ -2410,7 +2411,7 @@ const showPrintLayout = async () => {
 /* 结果卡片 */
 .result-card {
   border: 1.5px solid var(--color-ink-black);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -2491,11 +2492,11 @@ const showPrintLayout = async () => {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 16px 20px 28px;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl);
   background-color: #ffffff;
   border-top: 0.5px solid #e5e5e5;
   z-index: 100;
-  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom));
 }
 
 .generate-btn {
@@ -2505,7 +2506,7 @@ const showPrintLayout = async () => {
   align-items: center;
   justify-content: center;
   background: linear-gradient(90deg, var(--color-sky-blue), var(--color-sky-blue-mid));
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 16px rgba(36, 100, 200, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -2552,7 +2553,7 @@ const showPrintLayout = async () => {
   gap: 12px;
   min-width: 200px;
   padding: 28px 32px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--color-bg-primary);
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
 }

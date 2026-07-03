@@ -7,7 +7,7 @@
     <view class="history-header">
       <view class="header-left">
         <view class="back-btn" @click="goBack">
-          <text>←</text>
+          <AppIcon name="back" :size="20" color="var(--color-ink-black)" />
         </view>
         <text class="header-title">{{ t('history.title') }}</text>
       </view>
@@ -224,7 +224,8 @@ const goBack = () => {
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100vh;
+  /* 固定视口高度,让 .scroll-content 的 flex:1 拿到确定高度(空态/加载态居中的前提) */
+  height: 100vh;
   background-color: var(--color-bg-primary);
   display: flex;
   flex-direction: column;
@@ -241,7 +242,7 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-lg);
   background-color: var(--color-bg-primary);
   border-bottom: 0.5px solid var(--color-bg-secondary);
 }
@@ -249,7 +250,7 @@ const goBack = () => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .back-btn {
@@ -280,9 +281,9 @@ const goBack = () => {
 }
 
 .clear-btn {
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--color-bg-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: background-color 0.15s ease;
 }
 
@@ -297,25 +298,65 @@ const goBack = () => {
 }
 
 /* 滚动内容 */
+/*
+ * uni-app 编译后 <scroll-view> 的真实 DOM 结构是:
+ * <uni-scroll-view class="scroll-content">
+ *   <div class="uni-scroll-view">            (定位包裹层,height:100% 但默认 display:block)
+ *     <div class="uni-scroll-view">           (真正滚动层,同名 class,同样默认 display:block)
+ *       <div class="uni-scroll-view-content"> (内容层,height:100% 但默认 display:block)
+ *         <!-- 这里才是本文件模板里的 v-if 分支 -->
+ *       </div>
+ *     </div>
+ *   </div>
+ * </uni-scroll-view>
+ * 直接在 .scroll-content 上写 flex:1/display:flex 只会作用在最外层 <uni-scroll-view>
+ * 标签本身,而它只有一个块级子节点,flex 上下文在这里毫无意义——真正承载空状态/
+ * 加载态/列表的是两层之外的 .uni-scroll-view-content,它默认是 display:block,
+ * 导致 .empty-state 等子级的 flex:1 完全不生效,只能靠自身 min-height 撑出一个
+ * 固定在顶部的盒子,而不是在可视区域内居中。这里必须用 :deep() 把中间这两层
+ * 也强制改成 flex 列,让 flex:1 能一路传递到底。
+ */
 .scroll-content {
   flex: 1;
-  padding: 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+  box-sizing: border-box;
   overflow-y: auto;
 }
 
+.scroll-content :deep(.uni-scroll-view) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.scroll-content :deep(.uni-scroll-view-content) {
+  display: flex;
+  flex-direction: column;
+  /* 内容层默认 height:auto,需撑满滚动层空态/加载态的 flex:1 才有居中空间 */
+  min-height: 100%;
+}
+
 /* 加载态 */
+/* 不再用 min-height:60vh 硬性撑出一个居中的盒子,而是 flex:1 真正填满
+   .uni-scroll-view-content 传递下来的剩余可视高度,再用 justify-content:center
+   在这个真实高度里居中,避免"盒子本身贴顶、盒子以下大片留白"的问题。 */
 .loading-state {
   display: flex;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 24px;
+  padding: var(--spacing-2xl) var(--spacing-lg);
 }
 
 .loading-spinner {
   width: 32px;
   height: 32px;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg);
   border: 3px solid var(--color-bg-tertiary);
   border-top-color: var(--color-sky-blue);
   border-radius: 50%;
@@ -333,13 +374,16 @@ const goBack = () => {
   color: var(--color-branch-gray);
 }
 
-/* 空状态 */
+/* 空状态:同上,依赖真正生效的 flex:1 在整段剩余可视高度内居中,
+   而不是在自身 60vh 的盒子里居中、盒子本身却贴在 header 下方。 */
 .empty-state {
   display: flex;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 24px;
+  padding: var(--spacing-2xl) var(--spacing-lg);
 }
 
 .empty-icon {
@@ -348,7 +392,7 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg);
   opacity: 0.5;
 }
 
@@ -361,16 +405,16 @@ const goBack = () => {
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 .history-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
   background-color: var(--color-bg-secondary);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   transition: background-color 0.15s ease;
 }
 
@@ -381,7 +425,7 @@ const goBack = () => {
 .item-image {
   width: 72px;
   height: 72px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background-color: var(--color-bg-primary);
 }
@@ -395,7 +439,7 @@ const goBack = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .item-spec {
@@ -416,7 +460,7 @@ const goBack = () => {
 
 .item-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .action-btn {
@@ -425,7 +469,7 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background-color: var(--color-bg-primary);
   transition: background-color 0.15s ease;
 }
