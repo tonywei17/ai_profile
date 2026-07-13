@@ -455,7 +455,7 @@ const goBack = () => {
   line-height: 1.5;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
+  word-break: keep-all;
 }
 
 .feature-badge {

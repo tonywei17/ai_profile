@@ -7,7 +7,7 @@
     <view class="home-header" :style="{ height: navigationBarHeight + 'px' }">
       <view class="header-left">
         <view class="app-logo">
-          <image :src="appIconSrc" class="logo-image" mode="aspectFit"></image>
+          <image :src="appIconSrc" class="logo-image" mode="aspectFill"></image>
         </view>
         <view class="header-title">
           <text class="title">{{ t('home.title') }}</text>
@@ -495,11 +495,12 @@ const navigateToSettings = () => {
   background: linear-gradient(135deg, var(--color-sky-blue), var(--color-sky-blue-mid));
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px rgba(36, 100, 200, 0.2);
+  overflow: hidden;
 }
 
 .logo-image {
-  width: 32px;
-  height: 32px;
+  width: 100%;
+  height: 100%;
 }
 
 .logo-text {
@@ -594,7 +595,7 @@ const navigateToSettings = () => {
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  padding: var(--spacing-xl) var(--spacing-lg);
+  padding: var(--spacing-xl);
 }
 
 .hero-left {
