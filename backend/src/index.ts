@@ -12,7 +12,9 @@ import tripoRouter from "./routes/tripo";
 import paymentRouter from "./routes/payment";
 import wechatRouter from "./routes/wechat";
 
-validateProductionConfig();
+if (process.env.NODE_ENV === "production") {
+  validateProductionConfig();
+}
 
 const app = express();
 app.set("trust proxy", true);
@@ -25,7 +27,14 @@ app.use(
     },
   })
 );
-app.use(cors({ origin: false, methods: ["GET", "POST"] }));
+// 生产环境禁用 CORS（小程序/App 走原生请求，不经浏览器同源策略）；
+// 本地开发放开，方便用普通网页/Chrome 直接调后端联调。
+app.use(
+  cors({
+    origin: process.env.NODE_ENV === "production" ? false : true,
+    methods: ["GET", "POST"],
+  })
+);
 app.use(requestLogger);
 app.use("/legal", express.static(path.join(__dirname, "../public/legal")));
 

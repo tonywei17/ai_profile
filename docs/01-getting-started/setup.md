@@ -38,12 +38,13 @@ xcodebuild \
 ```bash
 cd backend
 cp .env.example .env
+# 把 NODE_ENV 改成 development（否则会强制校验微信支付生产证书，本地启动不了）
 # 编辑 .env，填入 HIVISION_URL / BAILIAN_API_KEY / APP_API_KEY / REFERRAL_HMAC_SECRET
 npm install
 npm run dev
 ```
 
-本地服务运行在 `http://localhost:8080`。
+本地服务运行在 `http://localhost:8080`。`validateProductionConfig()`（微信支付证书/密钥的强校验）只在 `NODE_ENV=production` 时执行，本地开发不需要准备微信支付证书。
 
 ## 配置说明（Info.plist）
 
