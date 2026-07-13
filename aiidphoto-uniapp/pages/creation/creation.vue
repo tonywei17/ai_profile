@@ -21,55 +21,48 @@
       </view>
     </view>
 
+    <!-- 进度步骤：固定在头部下方，不随内容滚动 -->
+    <view class="progress-steps">
+      <view class="steps-container">
+        <view
+          v-for="(step, index) in steps"
+          :key="index"
+          class="step-item"
+          :class="{ active: index + 1 <= currentStep, completed: index + 1 < currentStep }"
+        >
+          <view class="step-circle">
+            <AppIcon v-if="index + 1 < currentStep" name="check" :size="14" color="#FFFFFF" />
+            <text v-else class="step-number">{{ index + 1 }}</text>
+          </view>
+          <text class="step-title">{{ step }}</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 滚动内容 -->
     <scroll-view scroll-y class="scroll-content">
-      <!-- 进度步骤 -->
-      <view class="progress-steps">
-        <view class="steps-container">
-          <view 
-            v-for="(step, index) in steps" 
-            :key="index"
-            class="step-item"
-            :class="{ active: index + 1 <= currentStep, completed: index + 1 < currentStep }"
-          >
-            <view class="step-circle">
-              <AppIcon v-if="index + 1 < currentStep" name="check" :size="14" color="#FFFFFF" />
-              <text v-else class="step-number">{{ index + 1 }}</text>
+      <!-- 折叠式步骤区：规格 / 照片 / AI优化，同一时间仅展开一个，其余折叠为一行摘要 -->
+      <view class="accordion-list">
+        <!-- 01 规格选择 -->
+        <view class="accordion-section" :class="{ expanded: activeSection === 'spec' }">
+          <view class="accordion-header" @tap="setActiveSection('spec')">
+            <view class="accordion-header-left">
+              <view class="accordion-check" :class="{ done: !!selectedSpec }">
+                <AppIcon v-if="selectedSpec" name="check" :size="12" color="#FFFFFF" />
+                <text v-else class="accordion-step-num">1</text>
+              </view>
+              <view class="accordion-heading-text">
+                <text class="accordion-title">{{ steps[0] }}</text>
+                <text v-if="selectedSpec && activeSection !== 'spec'" class="accordion-summary">{{ selectedSpec.displayName }} · {{ selectedSpec.sizeLabel }}</text>
+              </view>
             </view>
-            <text class="step-title">{{ step }}</text>
+            <view class="icon-down" :class="{ rotate: activeSection === 'spec' }">
+              <AppIcon name="chevron-down" :size="14" color="var(--color-branch-gray)" />
+            </view>
           </view>
-        </view>
-      </view>
-
-      <!-- Hero区域 - 图片选择 -->
-      <view class="hero-section">
-        <view v-if="!inputImage" class="upload-placeholder" @tap="showPhotoSourceDialog">
-          <view class="upload-icon">
-            <AppIcon name="arrow-up-right" :size="32" color="var(--color-sky-blue)" />
-          </view>
-          <text class="upload-title">{{ t('creation.upload.title') }}</text>
-          <text class="upload-subtitle">{{ t('creation.upload.subtitle') }}</text>
-          <view class="upload-tips">
-            <AppIcon name="check" :size="12" color="var(--color-sky-blue-mid)" />
-            <text class="tips-text">{{ t('creation.upload.tips') }}</text>
-          </view>
-        </view>
-        <view v-else class="image-preview">
-          <image class="preview-image" :src="inputImage" mode="aspectFit" />
-          <view class="change-photo-btn" @tap="showPhotoChangeDialog">
-            <AppIcon name="refresh" :size="12" color="#FFFFFF" />
-            <text class="change-photo-text">{{ t('creation.upload.changePhoto') }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 规格选择 -->
-      <view class="section">
-        <view class="spec-selector">
-          <text class="section-label">{{ t('creation.format') }}</text>
-          <view class="spec-grid">
-            <view 
-              v-for="(spec, index) in displayedSpecs" 
+          <view v-if="activeSection === 'spec'" class="spec-grid">
+            <view
+              v-for="(spec, index) in displayedSpecs"
               :key="spec.id"
               class="spec-item"
               :class="{ active: selectedSpec && selectedSpec.id === spec.id && !isCustomSize, locked: spec.isPro && !isSubscribed }"
@@ -84,13 +77,14 @@
               </view>
             </view>
           </view>
-          <view v-if="specs.length > 4" class="expand-btn" @tap="toggleShowAll">
+          <view v-if="activeSection === 'spec' && specs.length > 4" class="expand-btn" @tap="toggleShowAll">
             <text class="expand-text">{{ showAll ? t('creation.showLess') : t('creation.showMore') }}</text>
             <view class="icon-down" :class="{ rotate: showAll }">
               <AppIcon name="chevron-down" :size="14" color="var(--color-branch-gray)" />
             </view>
           </view>
           <view
+            v-if="activeSection === 'spec'"
             class="custom-size-row"
             :class="{ active: isCustomSize, locked: !isSubscribed }"
             @tap="selectCustomSize"
@@ -113,7 +107,7 @@
             </view>
             <AppIcon v-else name="chevron-right" :size="18" color="var(--color-branch-gray)" />
           </view>
-          <view v-if="showCustomSizePanel && isSubscribed" class="custom-size-panel">
+          <view v-if="activeSection === 'spec' && showCustomSizePanel && isSubscribed" class="custom-size-panel">
             <view class="dimension-fields">
               <view class="dimension-field">
                 <text class="dimension-label">宽度</text>
@@ -149,19 +143,63 @@
             </view>
           </view>
         </view>
-      </view>
 
-      <!-- Pro选项 -->
-      <view class="section">
-        <view class="pro-options">
-          <view class="pro-header" :class="{ expanded: isProOptionsExpanded }" @tap="toggleProOptions">
-            <text class="pro-title">{{ t('creation.aiCustomize') }}</text>
-            <text v-if="!isSubscribed" class="pro-badge">{{ t('common.pro') }}</text>
-            <view class="icon-down" :class="{ rotate: isProOptionsExpanded }">
+        <!-- 02 上传照片 -->
+        <view class="accordion-section" :class="{ expanded: activeSection === 'photo' }">
+          <view class="accordion-header" @tap="setActiveSection('photo')">
+            <view class="accordion-header-left">
+              <view class="accordion-check" :class="{ done: !!inputImage }">
+                <AppIcon v-if="inputImage" name="check" :size="12" color="#FFFFFF" />
+                <text v-else class="accordion-step-num">2</text>
+              </view>
+              <view class="accordion-heading-text">
+                <text class="accordion-title">{{ steps[1] }}</text>
+                <text v-if="inputImage && activeSection !== 'photo'" class="accordion-summary">{{ t('creation.photoUploaded') }}</text>
+              </view>
+            </view>
+            <view class="icon-down" :class="{ rotate: activeSection === 'photo' }">
               <AppIcon name="chevron-down" :size="14" color="var(--color-branch-gray)" />
             </view>
           </view>
-          <view v-if="isProOptionsExpanded" class="pro-content">
+          <view v-if="activeSection === 'photo'" class="hero-section">
+            <view v-if="!inputImage" class="upload-placeholder" @tap="showPhotoSourceDialog">
+              <view class="upload-icon">
+                <AppIcon name="arrow-up-right" :size="32" color="var(--color-sky-blue)" />
+              </view>
+              <text class="upload-title">{{ t('creation.upload.title') }}</text>
+              <text class="upload-subtitle">{{ t('creation.upload.subtitle') }}</text>
+              <view class="upload-tips">
+                <AppIcon name="check" :size="12" color="var(--color-sky-blue-mid)" />
+                <text class="tips-text">{{ t('creation.upload.tips') }}</text>
+              </view>
+            </view>
+            <view v-else class="image-preview">
+              <image class="preview-image" :src="inputImage" mode="aspectFit" />
+              <view class="change-photo-btn" @tap="showPhotoChangeDialog">
+                <AppIcon name="refresh" :size="12" color="#FFFFFF" />
+                <text class="change-photo-text">{{ t('creation.upload.changePhoto') }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 03 AI优化 -->
+        <view class="accordion-section" :class="{ expanded: activeSection === 'pro' }">
+          <view class="accordion-header" @tap="setActiveSection('pro')">
+            <view class="accordion-header-left">
+              <view class="accordion-check optional">
+                <text class="accordion-step-num">3</text>
+              </view>
+              <view class="accordion-heading-text">
+                <text class="accordion-title">{{ steps[2] }}</text>
+              </view>
+            </view>
+            <text v-if="!isSubscribed" class="pro-badge">{{ t('common.pro') }}</text>
+            <view class="icon-down" :class="{ rotate: activeSection === 'pro' }">
+              <AppIcon name="chevron-down" :size="14" color="var(--color-branch-gray)" />
+            </view>
+          </view>
+          <view v-if="activeSection === 'pro'" class="pro-content">
             <!-- 美颜 -->
             <view class="option-category">
               <view class="category-heading">
@@ -170,8 +208,8 @@
               </view>
               <scroll-view scroll-x class="option-scroll">
                 <view class="option-chips">
-                  <view 
-                    v-for="level in beautyLevels" 
+                  <view
+                    v-for="level in beautyLevels"
                     :key="level.id"
                     class="option-chip"
                     :class="{ active: photoOptions.beauty === level.id, locked: level.isPro && !isSubscribed }"
@@ -194,8 +232,8 @@
               </view>
               <scroll-view scroll-x class="option-scroll">
                 <view class="option-chips">
-                  <view 
-                    v-for="attire in attires" 
+                  <view
+                    v-for="attire in attires"
                     :key="attire.id"
                     class="option-chip"
                     :class="{ active: photoOptions.attire === attire.id, locked: attire.isPro && !isSubscribed }"
@@ -218,8 +256,8 @@
               </view>
               <scroll-view scroll-x class="option-scroll">
                 <view class="option-chips">
-                  <view 
-                    v-for="hair in hairs" 
+                  <view
+                    v-for="hair in hairs"
                     :key="hair.id"
                     class="option-chip"
                     :class="{ active: photoOptions.hair === hair.id, locked: hair.isPro && !isSubscribed }"
@@ -242,8 +280,8 @@
               </view>
               <scroll-view scroll-x class="option-scroll">
                 <view class="option-chips">
-                  <view 
-                    v-for="bg in backgrounds" 
+                  <view
+                    v-for="bg in backgrounds"
                     :key="bg.id"
                     class="option-chip"
                     :class="{ active: photoOptions.background === bg.id, locked: bg.isPro && !isSubscribed }"
@@ -267,8 +305,8 @@
               </view>
               <scroll-view scroll-x class="option-scroll">
                 <view class="option-chips">
-                  <view 
-                    v-for="acc in accessories" 
+                  <view
+                    v-for="acc in accessories"
                     :key="acc.id"
                     class="option-chip"
                     :class="{ active: photoOptions.accessories === acc.id, locked: acc.isPro && !isSubscribed }"
@@ -323,10 +361,18 @@
 
     <!-- 底部操作栏 -->
     <view class="bottom-bar" :style="{ paddingBottom: (16 + bottomSafeHeight) + 'px' }">
-      <view class="generate-btn" :class="{ disabled: !inputImage || isGenerating }" @tap="generatePhoto">
+      <view class="generate-btn" :class="{ disabled: !canGenerate || isGenerating }" @tap="generatePhoto">
         <text class="btn-text">{{ isGenerating ? t('creation.generating') : t('creation.generate') }}</text>
       </view>
-      <text class="generate-footnote">{{ t('creation.footnote') }}</text>
+      <view v-if="!canGenerate" class="requirement-checklist">
+        <view v-for="item in requirementChecklist" :key="item.key" class="checklist-item" :class="{ done: item.done }">
+          <view class="checklist-mark">
+            <AppIcon v-if="item.done" name="check" :size="10" color="#FFFFFF" />
+          </view>
+          <text class="checklist-text">{{ item.label }}</text>
+        </view>
+      </view>
+      <text v-else class="generate-footnote">{{ t('creation.footnote') }}</text>
     </view>
 
     <!-- AI 生成中全屏遮罩：锁定页面其余交互 -->
@@ -366,8 +412,19 @@ import { handleSaveAlbumFail } from '@/utils/albumPermission.js'
 const { t } = useI18n()
 
 // 进度步骤
-const steps = ['上传照片', '选择场景', 'AI优化', '下载保存']
+const steps = computed(() => [t('creation.steps.spec'), t('creation.steps.photo'), t('creation.steps.pro'), t('creation.steps.download')])
 const currentStep = ref(1)
+
+// 折叠式步骤区：当前展开的区块（'spec' | 'photo' | 'pro'），同一时间恒定只展开一个
+const activeSection = ref('spec')
+const setActiveSection = (name) => {
+  // 照片没上传之前不能提前跳到"AI优化"（回看已完成的步骤不受限）
+  if (name === 'pro' && !inputImage.value) {
+    uni.showToast({ title: t('creation.toast.uploadPhotoFirst'), icon: 'none' })
+    return
+  }
+  activeSection.value = name
+}
 
 // 步骤条状态推进：只前进不后退（生成失败的回退由 generatePhoto 显式处理）
 const markStepReached = (step) => {
@@ -463,10 +520,16 @@ const customSize = ref({
 })
 const isGenerating = ref(false)
 const showAll = ref(false)
-const isProOptionsExpanded = ref(true)
 const isSubscribed = ref(false)
 const remainingAttempts = ref(0)
 const paymentEnabled = paymentAPI.isPaymentEnabled()
+
+// 生成前必填项清单：规格默认已选，实际卡点通常是"是否已上传照片"
+const requirementChecklist = computed(() => [
+  { key: 'spec', label: t('creation.checklist.spec'), done: !!selectedSpec.value },
+  { key: 'photo', label: t('creation.checklist.photo'), done: !!inputImage.value }
+])
+const canGenerate = computed(() => requirementChecklist.value.every((item) => item.done))
 const PRIVACY_NOTICE_KEY = 'aiidphotoPrivacyNoticeAcceptedV1'
 const showPrivacyDialog = ref(false)
 const privacyReady = ref(false)
@@ -738,6 +801,8 @@ onLoad((options) => {
     if (specs.value.indexOf(matched) >= COLLAPSED_SPEC_COUNT) {
       showAll.value = true
     }
+    // 已从首页带入规格,直接展开下一步(上传照片)
+    activeSection.value = 'photo'
   }
 })
 
@@ -842,6 +907,18 @@ const promptProUpgrade = () => {
   })
 }
 
+// 照片就绪的统一处理：压缩成功/失败、相册/拍照四条路径共用
+const handlePhotoReady = (path) => {
+  inputImage.value = path
+  outputImage.value = null
+  outputProduceId.value = ''
+  // 保留用户已选规格（含 specId 预选），无选择时兜底第一个规格
+  if (!selectedSpec.value) selectedSpec.value = specs.value[0]
+  markStepReached(2) // 照片就绪，进入"选择场景"
+  // 照片区正展开时，自动进入下一步(AI优化)
+  if (activeSection.value === 'photo') activeSection.value = 'pro'
+}
+
 const chooseFromAlbum = () => {
   uni.chooseImage({
     count: 1,
@@ -853,22 +930,9 @@ const chooseFromAlbum = () => {
       uni.compressImage({
         src: tempFilePath,
         quality: 80,
-        success: (compressRes) => {
-          inputImage.value = compressRes.tempFilePath
-          outputImage.value = null
-          outputProduceId.value = ''
-          // 保留用户已选规格（含 specId 预选），无选择时兜底第一个规格
-          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
-          markStepReached(2) // 照片就绪，进入"选择场景"
-        },
-        fail: () => {
-          // 压缩失败则使用原图
-          inputImage.value = tempFilePath
-          outputImage.value = null
-          outputProduceId.value = ''
-          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
-          markStepReached(2)
-        }
+        success: (compressRes) => handlePhotoReady(compressRes.tempFilePath),
+        // 压缩失败则使用原图
+        fail: () => handlePhotoReady(tempFilePath)
       })
     },
     fail: (err) => {
@@ -892,20 +956,8 @@ const takePhoto = () => {
       uni.compressImage({
         src: tempFilePath,
         quality: 80,
-        success: (compressRes) => {
-          inputImage.value = compressRes.tempFilePath
-          outputImage.value = null
-          outputProduceId.value = ''
-          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
-          markStepReached(2)
-        },
-        fail: () => {
-          inputImage.value = tempFilePath
-          outputImage.value = null
-          outputProduceId.value = ''
-          if (!selectedSpec.value) selectedSpec.value = specs.value[0]
-          markStepReached(2)
-        }
+        success: (compressRes) => handlePhotoReady(compressRes.tempFilePath),
+        fail: () => handlePhotoReady(tempFilePath)
       })
     },
     fail: (err) => {
@@ -950,6 +1002,7 @@ const clearPhoto = () => {
   outputImage.value = null
   outputProduceId.value = ''
   currentStep.value = 1 // 清除照片后回到"上传照片"步骤
+  activeSection.value = 'photo'
 }
 
 const regeneratePhoto = () => {
@@ -968,6 +1021,7 @@ const selectSpec = (spec) => {
   showCustomSizePanel.value = false
   // 已上传照片时，选择规格即激活"选择场景"步骤
   if (inputImage.value) markStepReached(2)
+  if (activeSection.value === 'spec') activeSection.value = inputImage.value ? 'pro' : 'photo'
 }
 
 const selectCustomSize = () => {
@@ -1013,6 +1067,7 @@ const applyCustomSize = () => {
   isCustomSize.value = true
   showCustomSizePanel.value = false
   if (inputImage.value) markStepReached(2)
+  if (activeSection.value === 'spec') activeSection.value = inputImage.value ? 'pro' : 'photo'
   uni.showToast({
     title: t('creation.toast.customSizeApplied', { size: `${normalizedWidth}×${normalizedHeight}` }),
     icon: 'success'
@@ -1021,10 +1076,6 @@ const applyCustomSize = () => {
 
 const toggleShowAll = () => {
   showAll.value = !showAll.value
-}
-
-const toggleProOptions = () => {
-  isProOptionsExpanded.value = !isProOptionsExpanded.value
 }
 
 const selectBeauty = (level) => {
@@ -1411,7 +1462,8 @@ const showPrintLayout = async () => {
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100vh;
+  /* 固定视口高度,让 .scroll-content 的 flex:1 拿到确定高度(头部+进度条固定,仅内容区滚动) */
+  height: 100vh;
   background-color: var(--color-bg-primary);
   display: flex;
   flex-direction: column;
@@ -1515,7 +1567,7 @@ const showPrintLayout = async () => {
 /* 滚动内容 */
 .scroll-content {
   flex: 1;
-  padding: 0 0 110px;
+  padding: var(--spacing-lg) 0 calc(110px + env(safe-area-inset-bottom));
   overflow-y: auto;
 }
 
@@ -1805,13 +1857,6 @@ const showPrintLayout = async () => {
 }
 
 /* 规格选择 */
-.section-label {
-  font-size: 15px;
-  font-weight: 600;
-  color: #333333;
-  margin-bottom: 16px;
-}
-
 .spec-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1936,26 +1981,6 @@ const showPrintLayout = async () => {
 /* Section */
 .section {
   padding: 0 var(--spacing-lg) var(--spacing-xl);
-}
-
-/* 规格选择 */
-.spec-selector {
-  background-color: var(--color-bg-primary);
-  border: 1px solid var(--color-bg-tertiary);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.section-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--color-branch-gray);
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-sm);
-  border-bottom: 1px solid var(--color-bg-tertiary);
 }
 
 .spec-grid {
@@ -2192,15 +2217,28 @@ const showPrintLayout = async () => {
   border-radius: 4px;
 }
 
-/* Pro选项 */
-.pro-options {
-  border: 1.5px solid var(--color-ink-black);
+/* 折叠式步骤区 */
+.accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.accordion-section {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-bg-tertiary);
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.pro-header {
+.accordion-section.expanded {
+  border-color: var(--color-sky-blue);
+  box-shadow: 0 2px 10px rgba(36, 100, 200, 0.1);
+}
+
+.accordion-header {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2208,19 +2246,65 @@ const showPrintLayout = async () => {
   transition: background-color 0.15s ease;
 }
 
-.pro-header:active {
+.accordion-header:active {
   background-color: var(--color-bg-tertiary);
 }
 
-.pro-header.expanded {
-  background-color: rgba(36, 100, 200, 0.04);
+.accordion-header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
 }
 
-.pro-title {
+.accordion-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+}
+
+.accordion-check.done {
+  background-color: var(--color-sky-blue);
+}
+
+.accordion-check.optional {
+  background-color: transparent;
+  border: 1.5px dashed var(--color-bg-tertiary);
+}
+
+.accordion-step-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-branch-gray);
+}
+
+.accordion-heading-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.accordion-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--color-ink-black);
   letter-spacing: -0.2px;
+}
+
+.accordion-summary {
+  font-size: 12px;
+  color: var(--color-branch-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pro-badge {
@@ -2533,6 +2617,44 @@ const showPrintLayout = async () => {
   color: #8c8c8c;
   text-align: center;
   margin-top: 6px;
+}
+
+.requirement-checklist {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.checklist-mark {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-branch-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checklist-item.done .checklist-mark {
+  border-color: var(--color-sky-blue);
+  background-color: var(--color-sky-blue);
+}
+
+.checklist-text {
+  font-size: 12px;
+  color: var(--color-branch-gray);
+}
+
+.checklist-item.done .checklist-text {
+  color: var(--color-sky-blue);
 }
 
 /* 生成中全屏遮罩 */

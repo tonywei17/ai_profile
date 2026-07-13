@@ -104,13 +104,23 @@
     }
   },
   "creation": {
-    "format": "01. Format",
+    "steps": {
+      "spec": "Spec",
+      "photo": "Photo",
+      "pro": "AI Customize",
+      "download": "Download"
+    },
+    "checklist": {
+      "spec": "Choose a photo spec",
+      "photo": "Upload or take a photo"
+    },
     "upload": {
       "title": "Click to Upload Photo",
       "subtitle": "Support JPG/PNG format, max 20MB",
       "tips": "Front-facing, well-lit, no obstructions recommended",
       "changePhoto": "Change Photo"
     },
+    "photoUploaded": "Photo uploaded",
     "specs": {
       "chinaID": "China ID Card",
       "oneInch": "One Inch",
@@ -197,6 +207,7 @@
       "invalidCustomSize": "Enter a valid size within 10–300 mm",
       "customSizeApplied": "Applied {size} mm",
       "selectSpecFirst": "Please select a photo spec",
+      "uploadPhotoFirst": "Please upload a photo first",
       "noAttempts": "No generation attempts left",
       "deductFailed": "Failed to deduct attempt",
       "generateSuccess": "Generated",

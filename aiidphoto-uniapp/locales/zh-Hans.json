@@ -76,7 +76,7 @@
     },
     "subscription": {
       "freeUser": "基础用户",
-      "freeDesc": "购买后获得 3 次 AI 生成机会",
+      "freeDesc": "购买后获得3次AI生成机会",
       "features": "3次生成 · 高清下载 · 打印排版",
       "title": "生成次数管理",
       "currentStatus": "当前状态",
@@ -103,13 +103,23 @@
     }
   },
   "creation": {
-    "format": "01. 格式",
+    "steps": {
+      "spec": "选择规格",
+      "photo": "上传照片",
+      "pro": "AI优化",
+      "download": "下载保存"
+    },
+    "checklist": {
+      "spec": "选择证件规格",
+      "photo": "上传或拍摄照片"
+    },
     "upload": {
       "title": "点击上传照片",
       "subtitle": "支持 JPG/PNG 格式，大小不超过 20MB",
       "tips": "建议正面、光线充足、无遮挡",
       "changePhoto": "更换照片"
     },
+    "photoUploaded": "已上传照片",
     "specs": {
       "chinaID": "居民身份证",
       "oneInch": "一寸照",
@@ -223,6 +233,7 @@
       "invalidCustomSize": "请输入 10–300 mm 的有效尺寸",
       "customSizeApplied": "已应用 {size} mm",
       "selectSpecFirst": "请选择证件照规格",
+      "uploadPhotoFirst": "请先上传照片",
       "noAttempts": "生成次数不足",
       "deductFailed": "扣除次数失败",
       "generateSuccess": "生成成功",
