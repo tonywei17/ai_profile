@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import sharp from "sharp";
 import { config } from "../config";
 import { extractClientIp } from "../middleware/rateLimit";
 import { AttemptType, paymentStore } from "../services/paymentStore";
@@ -125,9 +126,18 @@ async function callHivision(
   const timer = setTimeout(() => controller.abort(), HIVISION_TIMEOUT_MS);
 
   try {
+    // Hivision's matting (cv2.split) hard-codes 3 channels; RGBA PNGs (e.g. phone
+    // screenshots) or CMYK JPEGs crash it with "too many values to unpack".
+    // Normalize to flat sRGB JPEG before sending.
+    const normalizedImage = await sharp(Buffer.from(imageBase64, "base64"))
+      .flatten({ background: "#ffffff" })
+      .toColorspace("srgb")
+      .jpeg({ quality: 95 })
+      .toBuffer();
+
     // Step 1: face detection + matting → RGBA PNG at target dimensions
     const form1 = new FormData();
-    form1.append("input_image_base64", imageBase64);
+    form1.append("input_image_base64", normalizedImage.toString("base64"));
     form1.append("width", String(widthPx));
     form1.append("height", String(heightPx));
     form1.append("hd", "false");
