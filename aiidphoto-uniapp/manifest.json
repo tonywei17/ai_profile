@@ -2,8 +2,8 @@
   "name": "光影形象馆",
   "appid": "__UNI__YOUR_APPID",
   "description": "AI职业形象照与证件照助手",
-  "versionName": "1.0.3",
-  "versionCode": "103",
+  "versionName": "1.0.4",
+  "versionCode": "104",
   "transformPx": false,
   "networkTimeout": {
     "request": 150000,
@@ -37,6 +37,7 @@
   "quickapp": {},
   "mp-weixin": {
     "appid": "wx536140235822460a",
+    "__usePrivacyCheck__": true,
     "lazyCodeLoading": "requiredComponents",
     "setting": {
       "urlCheck": true,

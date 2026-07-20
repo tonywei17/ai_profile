@@ -936,6 +936,10 @@ const chooseFromAlbum = () => {
       })
     },
     fail: (err) => {
+      // 微信在隐私接口未声明/未授权、或用户取消时都会走到这里，errMsg 是唯一能区分的线索
+      console.error('chooseImage(album) 失败:', err && err.errMsg, err)
+      // 用户主动取消不算失败，不弹错误提示
+      if (err && typeof err.errMsg === 'string' && err.errMsg.includes('cancel')) return
       uni.showToast({
         title: t('creation.toast.chooseImageFailed'),
         icon: 'none'
@@ -961,6 +965,9 @@ const takePhoto = () => {
       })
     },
     fail: (err) => {
+      console.error('chooseImage(camera) 失败:', err && err.errMsg, err)
+      // 用户主动取消不算失败，不弹错误提示
+      if (err && typeof err.errMsg === 'string' && err.errMsg.includes('cancel')) return
       uni.showToast({
         title: t('creation.toast.takePhotoFailed'),
         icon: 'none'
