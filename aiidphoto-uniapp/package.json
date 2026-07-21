@@ -1,6 +1,6 @@
 {
   "name": "aiidphoto-uniapp",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "AI证件照生成应用 - uni-app跨端版本",
   "main": "main.js",
   "scripts": {

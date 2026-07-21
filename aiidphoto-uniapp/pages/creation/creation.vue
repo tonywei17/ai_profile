@@ -41,6 +41,12 @@
 
     <!-- 滚动内容 -->
     <scroll-view scroll-y class="scroll-content">
+      <!-- AI 生成显著标识（合规要求：AI创作深度合成需在生成页显著说明） -->
+      <view class="ai-notice">
+        <text class="ai-notice-tag">AI</text>
+        <text class="ai-notice-text">{{ t('creation.aiNotice') }}</text>
+      </view>
+
       <!-- 折叠式步骤区：规格 / 照片 / AI优化，同一时间仅展开一个，其余折叠为一行摘要 -->
       <view class="accordion-list">
         <!-- 01 规格选择 -->
@@ -2526,6 +2532,37 @@ const showPrintLayout = async () => {
   color: var(--color-sky-blue);
   font-size: 11px;
   font-weight: 600;
+}
+
+/* AI 生成显著标识横幅（合规） */
+.ai-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(36, 100, 200, 0.28);
+  border-radius: 12px;
+  background: rgba(36, 100, 200, 0.08);
+}
+
+.ai-notice-tag {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--color-sky-blue);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.ai-notice-text {
+  flex: 1;
+  color: var(--color-sky-blue);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .result-title {
