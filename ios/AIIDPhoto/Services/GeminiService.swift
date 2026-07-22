@@ -26,9 +26,13 @@ enum GeminiError: LocalizedError {
 // MARK: - Codable Models (Backend Proxy)
 
 struct BackendGenerateRequest: Encodable {
-    let image: String   // base64
-    let prompt: String
-    let tier: String    // "free" or "pro"
+    let image: String          // base64
+    let tier: String           // "free" or "pro"
+    let specWidthPx: Int
+    let specHeightPx: Int
+    let bgColorHex: String     // no leading '#'
+    let cosmeticPrompt: String // person-only retouch suffix; empty string = skip cosmetic pass
+    let applyCosmetic: Bool    // true = run Nano Banana 2 cosmetic pass on top of the Hivision base photo
 }
 
 struct BackendGenerateResponse: Decodable {
@@ -57,22 +61,39 @@ final class GeminiService {
     // MARK: - Public API
 
     enum OutputTier {
-        case free   // 512px max dimension, cheaper model
-        case pro    // 1024px max dimension, better model
+        case free   // Hivision-only base photo, no cosmetic pass
+        case pro    // Full pipeline: Hivision base + Nano Banana 2 cosmetic pass
 
-        var maxDimension: CGFloat { self == .free ? 512 : 1024 }
+        /// Fixed input cap for both tiers — the base photo (Hivision) is free either way, and a
+        /// sharper input simply improves matting quality, so there's no cost reason to downscale
+        /// `.free` harder than `.pro` anymore.
+        static let inputMaxDimension: CGFloat = 1024
+
         var apiValue: String { self == .free ? "free" : "pro" }
     }
 
-    func generateIDPhoto(from image: UIImage, prompt: String, tier: OutputTier = .pro) async throws -> UIImage {
+    /// - Parameters:
+    ///   - specWidthPx/specHeightPx: target output pixel dimensions (mm → px @ 300 DPI, computed by the caller).
+    ///   - bgColorHex: hex color (no leading '#') for the Hivision background-replacement step.
+    ///   - cosmeticPrompt: person-only retouch suffix (beauty/attire/hair/accessories). Empty string is fine
+    ///     when `applyCosmetic` is false.
+    ///   - applyCosmetic: whether the backend should run the Nano Banana 2 cosmetic pass on top of the
+    ///     Hivision base photo.
+    func generateIDPhoto(from image: UIImage,
+                         specWidthPx: Int,
+                         specHeightPx: Int,
+                         bgColorHex: String,
+                         cosmeticPrompt: String,
+                         applyCosmetic: Bool,
+                         tier: OutputTier = .pro) async throws -> UIImage {
         guard let backendURL = Config.backendBaseURL else {
             throw GeminiError.invalidConfig
         }
 
         // Heavy image processing off the main thread
         let base64 = try await Task.detached(priority: .userInitiated) {
-            let processed = image.capped(to: tier.maxDimension)
-            guard let jpegData = processed.jpegData(compressionQuality: tier == .free ? 0.85 : 0.9) else {
+            let processed = image.capped(to: OutputTier.inputMaxDimension)
+            guard let jpegData = processed.jpegData(compressionQuality: 0.9) else {
                 throw GeminiError.invalidImage
             }
             let b64 = jpegData.base64EncodedString()
@@ -80,13 +101,17 @@ final class GeminiService {
             return b64
         }.value
 
-        let cleanPrompt = sanitizePrompt(prompt)
-        return try await requestViaBackend(base64: base64, prompt: cleanPrompt, tier: tier, backendURL: backendURL)
-    }
-
-    func generateIDPhoto(from image: UIImage) async throws -> UIImage {
-        let defaultPrompt = "生成证件照：浅色纯色背景，35x45mm，正脸居中，头肩框图，光照均匀，自然风格。"
-        return try await generateIDPhoto(from: image, prompt: defaultPrompt)
+        let cleanPrompt = sanitizePrompt(cosmeticPrompt)
+        return try await requestViaBackend(
+            base64: base64,
+            specWidthPx: specWidthPx,
+            specHeightPx: specHeightPx,
+            bgColorHex: bgColorHex,
+            cosmeticPrompt: cleanPrompt,
+            applyCosmetic: applyCosmetic,
+            tier: tier,
+            backendURL: backendURL
+        )
     }
 
     // MARK: - Backend Proxy
@@ -100,13 +125,28 @@ final class GeminiService {
         return clean
     }
 
-    private func requestViaBackend(base64: String, prompt: String, tier: OutputTier, backendURL: URL) async throws -> UIImage {
+    private func requestViaBackend(base64: String,
+                                    specWidthPx: Int,
+                                    specHeightPx: Int,
+                                    bgColorHex: String,
+                                    cosmeticPrompt: String,
+                                    applyCosmetic: Bool,
+                                    tier: OutputTier,
+                                    backendURL: URL) async throws -> UIImage {
         let url = backendURL.appendingPathComponent("api/gemini/generate")
         var req = Config.authenticatedRequest(url: url)
         req.httpMethod = "POST"
         req.timeoutInterval = 120
 
-        let body = BackendGenerateRequest(image: base64, prompt: prompt, tier: tier.apiValue)
+        let body = BackendGenerateRequest(
+            image: base64,
+            tier: tier.apiValue,
+            specWidthPx: specWidthPx,
+            specHeightPx: specHeightPx,
+            bgColorHex: bgColorHex,
+            cosmeticPrompt: cosmeticPrompt,
+            applyCosmetic: applyCosmetic
+        )
         req.httpBody = try encoder.encode(body)
 
         // Retry up to 2 times for transient network errors

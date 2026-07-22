@@ -180,6 +180,19 @@ enum BackgroundColorOption: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Hex color (no leading `#`) handed to the backend's Hivision background-replacement step.
+    /// `.specDefault` intentionally maps to the same white as `.pureWhite` — Hivision always
+    /// needs a concrete color, "spec default" just means "don't let the user override it".
+    var bgColorHex: String {
+        switch self {
+        case .specDefault: "FFFFFF"
+        case .pureWhite:   "FFFFFF"
+        case .lightBlue:   "D4E9F7"
+        case .lightGray:   "E8E8E8"
+        case .red:         "D03030"
+        }
+    }
+
     func displayName(language: String) -> String {
         switch self {
         case .specDefault: return l(zh: "规格默认", en: "Default",     ja: "規格標準",       ko: "규격 기본",    vi: "Mặc định", id: "Default", pt: "Padrão", lang: language)
@@ -258,6 +271,21 @@ struct PhotoOptions {
             attire.promptSuffix,
             hair.promptSuffix,
             background.promptSuffix,
+            accessories.promptSuffix,
+        ].compactMap { $0 }
+
+        guard !suffixes.isEmpty else { return "" }
+        return " " + suffixes.joined(separator: " ") + " " + Self.safetyConstraint
+    }
+
+    /// Person-only retouch prompt for the new two-stage pipeline (Hivision base + Nano Banana 2
+    /// cosmetic pass). Deliberately excludes `background.promptSuffix` — background color is now
+    /// applied by Hivision via `bgColorHex`, not by the cosmetic model.
+    func buildCosmeticPrompt() -> String {
+        let suffixes = [
+            beauty.promptSuffix,
+            attire.promptSuffix,
+            hair.promptSuffix,
             accessories.promptSuffix,
         ].compactMap { $0 }
 

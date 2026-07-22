@@ -2,6 +2,23 @@ import SwiftUI
 import PhotosUI
 import StoreKit
 
+// MARK: - Generation Mode (three-tier funnel)
+
+/// Which of the three funnel tiers a given generation belongs to. Drives base-image processing
+/// (tier passed to the backend), cosmetic-pass eligibility, and download/watermark gating.
+enum GenerationMode {
+    /// Subscriber: full pipeline (Hivision base + Nano Banana 2 cosmetic pass), no watermark,
+    /// save/print allowed immediately.
+    case proFull
+    /// Lifetime-first free generation: full pipeline preview, watermarked, save/print gated
+    /// behind subscribing (the underlying clean image is kept so no re-generation is needed
+    /// once the user subscribes).
+    case firstFreePreview
+    /// Regular ad-gated free generation: Hivision base photo only (no cosmetic pass), no
+    /// watermark, save allowed as today.
+    case regularFreeBasic
+}
+
 struct ContentView: View {
     @EnvironmentObject var subscription: SubscriptionManager
     @EnvironmentObject var usage: UsageManager
@@ -21,6 +38,31 @@ struct ContentView: View {
     private var sortedSpecs: [IDPhotoSpec] { IDPhotoSpec.sorted(for: Locale.current) }
     private var lang: String { langManager.effectiveCode }
 
+    /// True for subscribers AND for the lifetime-first-free user (their one free generation gets
+    /// full Pro customization as a "wow" preview). Only a regular ad-gated free user is excluded.
+    private var canUsePro: Bool {
+        subscription.hasProAccess || usage.hasLifetimeFreeLeft
+    }
+
+    /// True when the current result is a watermarked first-free preview that still needs a
+    /// subscription to save/print. Becomes false automatically once the user subscribes —
+    /// the underlying `outputImage` is never mutated, so nothing needs to be re-generated.
+    private var isWatermarkedPreview: Bool {
+        lastMode == .firstFreePreview && !subscription.hasProAccess
+    }
+
+    /// Derives which funnel tier the *next* generation belongs to, from current manager state.
+    /// Must be read before `usage.markUsed` changes `hasLifetimeFreeLeft` for this generation.
+    private func currentGenerationMode() -> GenerationMode {
+        if subscription.hasProAccess {
+            return .proFull
+        } else if usage.hasLifetimeFreeLeft {
+            return .firstFreePreview
+        } else {
+            return .regularFreeBasic
+        }
+    }
+
     @State private var selectedItem: PhotosPickerItem?
     @State private var inputImage: UIImage?
     @State private var outputImage: UIImage?
@@ -28,6 +70,9 @@ struct ContentView: View {
 
     @State private var photoOptions = PhotoOptions.defaults
     @State private var isGenerating = false
+    /// Which funnel tier produced `outputImage`. Drives the watermark overlay and the
+    /// save/print → subscribe interception for `.firstFreePreview` results.
+    @State private var lastMode: GenerationMode?
     @State private var showSubscriptionSheet = false
     @State private var showSettingsSheet = false
     @State private var showCamera = false
@@ -126,7 +171,7 @@ struct ContentView: View {
                             // Pro options (beauty, attire, hair, background, accessories)
                             ProOptionsView(
                                 options: $photoOptions,
-                                isSubscribed: subscription.hasProAccess,
+                                isSubscribed: canUsePro,
                                 language: lang,
                                 onLockedTap: { showSubscriptionSheet = true }
                             )
@@ -157,6 +202,7 @@ struct ContentView: View {
         }
         .onChange(of: selectedItem) { newItem in
             outputImage = nil
+            lastMode = nil
             Task { await loadSelectedImage(newItem) }
         }
         // PhotosPicker modifier (triggered by state, NOT inside Menu)
@@ -174,6 +220,7 @@ struct ContentView: View {
                     selectedItem = nil
                     inputImage = nil
                     outputImage = nil
+                    lastMode = nil
                 }
             }
         }
@@ -495,17 +542,37 @@ struct ContentView: View {
                 ComparisonSliderView(before: before, after: result, language: lang)
                     .aspectRatio(result.size.width / result.size.height, contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: 400)
+                    .overlay {
+                        // Watermark is a pure SwiftUI overlay — the underlying `outputImage`
+                        // stays clean, so subscribing lets the user save it immediately with
+                        // no re-generation.
+                        if isWatermarkedPreview {
+                            WatermarkOverlayView(language: lang)
+                                .allowsHitTesting(false)
+                        }
+                    }
+
+                if isWatermarkedPreview {
+                    Text(firstFreePreviewBannerText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.branchGray)
+                }
 
                 // Save & Share buttons
                 HStack(spacing: 0) {
                     Button {
                         guard let img = outputImage else { return }
+                        if isWatermarkedPreview {
+                            showSubscriptionSheet = true
+                            AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "firstFreeSave"])
+                            return
+                        }
                         UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
                         showSavedToastBriefly()
                         AnalyticsManager.shared.track(AnalyticsManager.Event.photoSaved)
                     } label: {
                         HStack(spacing: 6) {
-                            Image(systemName: "square.and.arrow.down")
+                            Image(systemName: isWatermarkedPreview ? "lock.fill" : "square.and.arrow.down")
                                 .font(.system(size: 13))
                             Text(saveLabel)
                                 .font(.system(size: 13, weight: .medium))
@@ -561,7 +628,10 @@ struct ContentView: View {
     private var postGenerationBar: some View {
         HStack(spacing: 0) {
             Button {
-                withAnimation(.easeInOut(duration: 0.3)) { outputImage = nil }
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    outputImage = nil
+                    lastMode = nil
+                }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.counterclockwise")
@@ -722,6 +792,15 @@ struct ContentView: View {
     private var comparisonTitle: String { l("效果对比", "Before & After", "効果比較", "전후 비교", vi: "Trước & Sau", id: "Sebelum & Sesudah", pt: "Antes & Depois") }
     private var saveLabel:       String { l("保存到相册", "Save to Photos", "写真を保存", "사진 저장", vi: "Lưu vào Ảnh", id: "Simpan ke Foto", pt: "Salvar em Fotos") }
     private var shareLabel:      String { l("分享", "Share", "共有", "공유", vi: "Chia sẻ", id: "Bagikan", pt: "Compartilhar") }
+    private var firstFreePreviewBannerText: String {
+        l("水印预览版 · 订阅会员解锁无水印高清保存",
+          "Watermarked preview · Subscribe to save the unwatermarked photo",
+          "透かし入りプレビュー・会員登録で透かしなし保存",
+          "워터마크 미리보기 · 구독하면 워터마크 없이 저장 가능",
+          vi: "Bản xem trước có watermark · Đăng ký để lưu ảnh không watermark",
+          id: "Pratinjau berwatermark · Berlangganan untuk simpan tanpa watermark",
+          pt: "Prévia com marca d'água · Assine para salvar sem marca d'água")
+    }
     private var regenerateLabel: String { l("重新生成", "Regenerate", "再生成", "재생성", vi: "Tạo lại", id: "Buat Ulang", pt: "Regerar") }
     private var retakeLabel:     String { l("换一张照片", "Try Another Photo", "別の写真で試す", "다른 사진으로", vi: "Thử ảnh khác", id: "Coba Foto Lain", pt: "Outra Foto") }
     private var savedMessage:    String { l("已保存到相册", "Saved to Photos", "写真を保存しました", "사진 저장 완료", vi: "Đã lưu vào Ảnh", id: "Tersimpan ke Foto", pt: "Salvo em Fotos") }
@@ -770,7 +849,7 @@ struct ContentView: View {
             showAIConsent = true
             return
         }
-        if !subscription.hasProAccess && photoOptions.hasProSelection {
+        if !canUsePro && photoOptions.hasProSelection {
             photoOptions = .defaults
         }
         let decision = usage.canGenerate(isSubscribed: subscription.hasProAccess)
@@ -843,27 +922,74 @@ struct ContentView: View {
         lastGenerateTime = Date()
         isGenerating = true
         defer { isGenerating = false }
+
+        // Decide the funnel tier BEFORE any state mutation (usage.markUsed below would flip
+        // `hasLifetimeFreeLeft`). A referral bonus generation always renders at full Pro quality,
+        // unwatermarked — matching its pre-existing behavior.
+        let mode: GenerationMode = proOverride ? .proFull : currentGenerationMode()
+
         do {
-            let basePrompt = isCustomSize ? customSize.prompt : selectedSpec.prompt
-            let finalPrompt = basePrompt + photoOptions.buildPromptSuffix()
-            let tier: GeminiService.OutputTier = (subscription.hasProAccess || proOverride) ? .pro : .free
+            let (widthMM, heightMM) = isCustomSize ? customSize.photoSizeMM : selectedSpec.photoSizeMM
+            let specWidthPx = Int((widthMM / 25.4 * 300).rounded())
+            let specHeightPx = Int((heightMM / 25.4 * 300).rounded())
+            let bgColorHex = photoOptions.background.bgColorHex
+
+            let applyCosmetic: Bool
+            let cosmeticPrompt: String
+            switch mode {
+            case .proFull:
+                applyCosmetic = true
+                cosmeticPrompt = photoOptions.buildCosmeticPrompt()
+            case .regularFreeBasic:
+                // Base Hivision photo only — no Nano Banana 2 cosmetic pass for this tier.
+                applyCosmetic = false
+                cosmeticPrompt = ""
+            case .firstFreePreview:
+                applyCosmetic = true
+                if photoOptions.hasProSelection {
+                    cosmeticPrompt = photoOptions.buildCosmeticPrompt()
+                } else {
+                    // User picked nothing Pro yet — show a "wow" showcase default instead of a
+                    // plain photo, WITHOUT touching the user's own saved photoOptions state.
+                    var effectiveOptions = photoOptions
+                    effectiveOptions.attire = .navySuit
+                    effectiveOptions.beauty = .lightEnhance
+                    cosmeticPrompt = effectiveOptions.buildCosmeticPrompt()
+                }
+            }
+
+            // `.regularFreeBasic` only gets the Hivision base photo, so it stays on the cheaper
+            // tier; both Pro and the first-free "wow" preview get the full pipeline.
+            let tier: GeminiService.OutputTier = (mode == .regularFreeBasic) ? .free : .pro
+
             let result = try await GeminiService.shared.generateIDPhoto(
                 from: input,
-                prompt: finalPrompt,
+                specWidthPx: specWidthPx,
+                specHeightPx: specHeightPx,
+                bgColorHex: bgColorHex,
+                cosmeticPrompt: cosmeticPrompt,
+                applyCosmetic: applyCosmetic,
                 tier: tier
             )
             self.outputImage = result
+            self.lastMode = mode
             if !proOverride {
                 usage.markUsed(isSubscribed: subscription.hasProAccess)
             }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
 
-            historyManager.addRecord(
-                image: result,
-                specRawValue: isCustomSize ? "custom" : selectedSpec.rawValue,
-                sizeLabel: isCustomSize ? customSize.sizeLabel : selectedSpec.sizeLabel,
-                isCustomSize: isCustomSize
-            )
+            // First-free previews are watermarked, download-gated teasers. Never persist the clean
+            // image to history — HistoryView's "Save to Photos" has no Pro gate, so storing it there
+            // would let a first-free user re-export the full-effect image and bypass the paywall.
+            // (Once they subscribe, a fresh generation re-populates history normally.)
+            if mode != .firstFreePreview {
+                historyManager.addRecord(
+                    image: result,
+                    specRawValue: isCustomSize ? "custom" : selectedSpec.rawValue,
+                    sizeLabel: isCustomSize ? customSize.sizeLabel : selectedSpec.sizeLabel,
+                    isCustomSize: isCustomSize
+                )
+            }
 
             let specName = isCustomSize ? "custom" : selectedSpec.rawValue
             AnalyticsManager.shared.track(AnalyticsManager.Event.generationSuccess, properties: ["spec": specName])
@@ -969,6 +1095,54 @@ struct ContentView: View {
     }
 }
 
+
+// MARK: - Watermark Overlay (first-free preview)
+
+/// Low-key, repeating diagonal "PREVIEW" watermark for the first-free tier's full-pipeline
+/// preview. Purely a SwiftUI overlay drawn on top of the result — never baked into the
+/// underlying `UIImage`, so it disappears the moment the user subscribes without needing to
+/// re-generate anything.
+private struct WatermarkOverlayView: View {
+    let language: String
+
+    private var word: String {
+        switch language {
+        case "zh": return "预览"
+        case "ja": return "プレビュー"
+        case "ko": return "미리보기"
+        case "vi": return "XEM TRƯỚC"
+        case "id": return "PRATINJAU"
+        case "pt": return "PRÉVIA"
+        default:   return "PREVIEW"
+        }
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let columns = 3
+            let rows = 5
+            ZStack {
+                ForEach(0..<rows, id: \.self) { row in
+                    ForEach(0..<columns, id: \.self) { col in
+                        Text(word)
+                            .font(.system(size: 13, weight: .semibold))
+                            .tracking(2)
+                            .foregroundStyle(Color.white.opacity(0.4))
+                            .fixedSize()
+                            .rotationEffect(.degrees(-30))
+                            .position(
+                                x: geo.size.width * (CGFloat(col) + 0.5) / CGFloat(columns)
+                                    + (row.isMultiple(of: 2) ? 0 : geo.size.width / CGFloat(columns) / 2),
+                                y: geo.size.height * (CGFloat(row) + 0.5) / CGFloat(rows)
+                            )
+                    }
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
 
 // MARK: - Generating Label
 
