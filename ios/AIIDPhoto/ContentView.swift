@@ -567,9 +567,7 @@ struct ContentView: View {
                             AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "firstFreeSave"])
                             return
                         }
-                        UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
-                        showSavedToastBriefly()
-                        AnalyticsManager.shared.track(AnalyticsManager.Event.photoSaved)
+                        Task { await saveTapped(img: img) }
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: isWatermarkedPreview ? "lock.fill" : "square.and.arrow.down")
@@ -1087,6 +1085,26 @@ struct ContentView: View {
             )
             text.draw(at: point, withAttributes: attrs)
         }
+    }
+
+    /// Saves the finished (non-watermarked) photo to the camera roll. Free users watch one
+    /// rewarded ad here (ad "B") before the save lands; subscribers save immediately, ad-free.
+    ///
+    /// Best-effort by design: if no ad is loaded (no fill / load failure) or the user closes the
+    /// ad early, the save still proceeds. Hard-blocking the user's own photo at the very last step
+    /// would be a worse experience than letting an occasional ad slip — the ad up-front at
+    /// generation is where the watch is enforced.
+    private func saveTapped(img: UIImage) async {
+        if !subscription.hasProAccess {
+            await adManager.loadRewarded()
+            if adManager.hasRewardedReady {
+                _ = await adManager.showRewarded()
+                AnalyticsManager.shared.track(AnalyticsManager.Event.adWatched)
+            }
+        }
+        UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
+        showSavedToastBriefly()
+        AnalyticsManager.shared.track(AnalyticsManager.Event.photoSaved)
     }
 
     private func showSavedToastBriefly() {

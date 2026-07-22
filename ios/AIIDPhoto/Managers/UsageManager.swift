@@ -53,11 +53,11 @@ final class UsageManager: ObservableObject {
                 return .reachedDailyLimit
             }
             let firstUsed = defaults.bool(forKey: kFirstUseDone)
-            // Lifetime-first generation is free; after that ads escalate with same-day usage:
-            // today's 1st = 1 ad, 2nd and beyond = 2 ads … capped at maxAdsPerGeneration.
+            // Lifetime-first generation is free; every subsequent same-day generation costs
+            // exactly ONE rewarded ad up-front (ad "A"). A second ad ("B") is charged separately
+            // at download time — see `saveTapped` in ContentView — so generation never chains ads.
             guard firstUsed else { return .allowed }
-            let ads = min(freeUsesToday + 1, Self.maxAdsPerGeneration)
-            return .requireRewardedAds(ads)
+            return .requireRewardedAds(1)
         }
     }
 
