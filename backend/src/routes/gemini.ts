@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import sharp from "sharp";
 import { config } from "../config";
 import { extractClientIp } from "../middleware/rateLimit";
 
@@ -36,9 +37,14 @@ function checkDailyBudget(): boolean {
 }
 
 interface GenerateRequest {
-  image: string; // base64
-  prompt: string;
+  image: string; // base64 (required)
   tier?: string;
+  prompt?: string; // legacy single-stage prompt
+  cosmeticPrompt?: string; // stage-2 prompt (attire/beauty/etc)
+  specWidthPx?: number; // Hivision target width
+  specHeightPx?: number; // Hivision target height
+  bgColorHex?: string; // background hex WITHOUT '#', e.g. "FFFFFF"
+  applyCosmetic?: boolean; // true => run stage-2 Nano Banana 2
 }
 
 interface GeminiAPIResponse {
@@ -57,7 +63,194 @@ interface GeminiAPIResponse {
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // ~10MB base64
 const GEMINI_TIMEOUT_MS = 90_000;
 const MAX_PROMPT_LENGTH = 2000;
+const DEFAULT_FALLBACK_PROMPT =
+  "Generate a clean ID photo with a plain light background, front-facing, centered head and shoulders, even lighting, natural.";
 
+// ============================================================
+// Stage 1: HivisionIDPhotos — self-hosted, free. Crop/center/matting/background.
+// Two-step: /idphoto (RGBA transparent) → /add_background (final JPEG)
+// ============================================================
+
+async function callHivision(
+  imageBase64: string,
+  widthPx: number,
+  heightPx: number,
+  bgColorHex: string
+): Promise<string> {
+  if (!config.hivisionUrl) {
+    throw new Error("Hivision URL not configured");
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), config.hivisionTimeoutMs);
+
+  try {
+    // Hivision's matting (cv2.split) hard-codes 3 channels; RGBA PNGs (e.g. phone
+    // screenshots) or CMYK JPEGs crash it with "too many values to unpack".
+    // Normalize to flat sRGB JPEG before sending.
+    const normalizedImage = await sharp(Buffer.from(imageBase64, "base64"))
+      .flatten({ background: "#ffffff" })
+      .toColorspace("srgb")
+      .jpeg({ quality: 95 })
+      .toBuffer();
+
+    // Step 1: face detection + matting → RGBA PNG at target dimensions
+    const form1 = new FormData();
+    form1.append("input_image_base64", normalizedImage.toString("base64"));
+    form1.append("width", String(widthPx));
+    form1.append("height", String(heightPx));
+    form1.append("hd", "false");
+    form1.append("dpi", "300");
+    form1.append("human_matting_model", "modnet_photographic_portrait_matting");
+    form1.append("face_detect_model", "mtcnn");
+    // head occupies ~2/3 of photo height per Chinese ID photo standards (GA461-2004)
+    form1.append("head_measure_ratio", "0.35");
+
+    const res1 = await fetch(`${config.hivisionUrl}/idphoto`, {
+      method: "POST",
+      body: form1,
+      signal: controller.signal,
+    });
+    const data1 = (await res1.json()) as {
+      status: boolean;
+      image_base64_standard?: string;
+    };
+    console.log("[hivision] Step1 status:", data1.status, "http:", res1.status);
+
+    if (!data1.status || !data1.image_base64_standard) {
+      throw new Error("Hivision step1 (face detect/matting) failed");
+    }
+
+    // Step 2: fill background color → JPEG
+    const color = bgColorHex.replace("#", "");
+    const form2 = new FormData();
+    form2.append("input_image_base64", data1.image_base64_standard);
+    form2.append("color", color);
+    form2.append("render", "0");
+    form2.append("dpi", "300");
+
+    const res2 = await fetch(`${config.hivisionUrl}/add_background`, {
+      method: "POST",
+      body: form2,
+      signal: controller.signal,
+    });
+    const data2 = (await res2.json()) as { status: boolean; image_base64?: string };
+
+    if (!data2.status || !data2.image_base64) {
+      throw new Error("Hivision add_background failed");
+    }
+
+    // Normalize: strip data URL prefix, whitespace, url-safe chars, fix padding
+    let b64 = data2.image_base64.replace(/^data:image\/[^;]+;base64,/, "");
+    b64 = b64.replace(/\s+/g, "");
+    b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+    const rem = b64.length % 4;
+    if (rem === 2) b64 += "==";
+    else if (rem === 3) b64 += "=";
+    console.log("[hivision] Done, bytes:", b64.length, "prefix:", b64.substring(0, 8));
+    return b64;
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      console.error("[hivision] Timeout after", config.hivisionTimeoutMs, "ms");
+      throw new Error("Hivision timeout");
+    }
+    console.error("[hivision] Error:", err);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ============================================================
+// Stage 2 / legacy: Gemini image-edit call (shared by both paths)
+// ============================================================
+
+class GeminiCallError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function callGemini(
+  imageBase64: string,
+  prompt: string,
+  endpoint: string
+): Promise<string> {
+  if (!config.geminiApiKey) {
+    throw new Error("Server API key not configured");
+  }
+
+  const geminiBody = {
+    contents: [
+      {
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: "image/jpeg", data: imageBase64 } },
+        ],
+      },
+    ],
+    generationConfig: {
+      responseModalities: ["TEXT", "IMAGE"],
+    },
+  };
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+  let geminiRes: globalThis.Response;
+  try {
+    geminiRes = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": config.geminiApiKey,
+      },
+      body: JSON.stringify(geminiBody),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  let geminiData: GeminiAPIResponse;
+  try {
+    geminiData = (await geminiRes.json()) as GeminiAPIResponse;
+  } catch {
+    console.error("Failed to parse Gemini response");
+    throw new GeminiCallError("Generation failed, please try again", 502);
+  }
+
+  if (!geminiRes.ok) {
+    // Log full error internally, return generic message to client
+    console.error(`Gemini API error ${geminiRes.status}:`, geminiData.error?.message);
+    throw new GeminiCallError(
+      "Generation failed, please try again",
+      geminiRes.status >= 500 ? 502 : geminiRes.status
+    );
+  }
+
+  // Extract image from response
+  const candidates = geminiData.candidates;
+  if (!candidates || candidates.length === 0) {
+    throw new GeminiCallError("No result from generation", 502);
+  }
+
+  const parts = candidates[0].content.parts;
+  for (const part of parts) {
+    const inlineData = part.inline_data || part.inlineData;
+    if (inlineData?.data) {
+      return inlineData.data;
+    }
+  }
+
+  throw new GeminiCallError("No image in generation result", 502);
+}
+
+// ============================================================
+// POST /generate
+// ============================================================
 router.post("/generate", async (req: Request, res: Response) => {
   // Per-IP rate limit
   const clientIp = extractClientIp(req);
@@ -85,10 +278,19 @@ router.post("/generate", async (req: Request, res: Response) => {
   }
 
   try {
-    const { image, prompt, tier } = req.body as GenerateRequest;
+    const {
+      image,
+      tier,
+      prompt,
+      cosmeticPrompt,
+      specWidthPx,
+      specHeightPx,
+      bgColorHex,
+      applyCosmetic,
+    } = req.body as GenerateRequest;
 
-    if (!image || !prompt) {
-      res.status(400).json({ error: "Missing required fields: image, prompt" });
+    if (!image) {
+      res.status(400).json({ error: "Missing required fields: image" });
       return;
     }
 
@@ -103,8 +305,71 @@ router.post("/generate", async (req: Request, res: Response) => {
       return;
     }
 
-    if (typeof prompt !== "string" || prompt.length > MAX_PROMPT_LENGTH) {
-      res.status(413).json({ error: "Prompt too long" });
+    if (prompt !== undefined) {
+      if (typeof prompt !== "string" || prompt.length > MAX_PROMPT_LENGTH) {
+        res.status(413).json({ error: "Prompt too long" });
+        return;
+      }
+    }
+
+    if (cosmeticPrompt !== undefined) {
+      if (typeof cosmeticPrompt !== "string" || cosmeticPrompt.length > MAX_PROMPT_LENGTH) {
+        res.status(413).json({ error: "Prompt too long" });
+        return;
+      }
+    }
+
+    const hasSpec =
+      typeof specWidthPx === "number" &&
+      typeof specHeightPx === "number";
+
+    // ── NEW two-stage path: Hivision (crop/matting/background) + optional Gemini cosmetic pass ──
+    if (hasSpec && config.hivisionUrl) {
+      let base: string | null = null;
+      try {
+        base = await callHivision(image, specWidthPx!, specHeightPx!, bgColorHex || "FFFFFF");
+      } catch (err) {
+        console.error("[pipeline] Hivision failed, falling back:", err);
+        base = null;
+      }
+
+      const hasCosmeticPrompt =
+        typeof cosmeticPrompt === "string" && cosmeticPrompt.trim().length > 0;
+
+      let result: string | null = null;
+      if (applyCosmetic === true && hasCosmeticPrompt) {
+        try {
+          result = await callGemini(base ?? image, cosmeticPrompt!, config.geminiEndpointPro);
+        } catch (err) {
+          console.error("[pipeline] Cosmetic (Nano Banana 2) pass failed:", err);
+          result = null;
+        }
+      } else {
+        result = base;
+      }
+
+      if (result === null) {
+        // Hivision failed AND (no cosmetic ran, or cosmetic also failed) → final fallback
+        try {
+          result = await callGemini(
+            image,
+            cosmeticPrompt || prompt || DEFAULT_FALLBACK_PROMPT,
+            config.geminiEndpointPro
+          );
+        } catch (err) {
+          console.error("[pipeline] Fallback Gemini call failed:", err);
+          res.status(502).json({ error: "Generation failed, please try again" });
+          return;
+        }
+      }
+
+      res.json({ image: result });
+      return;
+    }
+
+    // ── LEGACY single-stage path: unchanged behavior for old TestFlight clients ──
+    if (!prompt) {
+      res.status(400).json({ error: "Missing required fields: image, prompt" });
       return;
     }
 
@@ -118,76 +383,18 @@ router.post("/generate", async (req: Request, res: Response) => {
       return;
     }
 
-    const endpoint = tier === "free"
-      ? config.geminiEndpointFree
-      : config.geminiEndpointPro;
+    const endpoint = tier === "free" ? config.geminiEndpointFree : config.geminiEndpointPro;
 
-    const geminiBody = {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: "image/jpeg", data: image } },
-          ],
-        },
-      ],
-      generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"],
-      },
-    };
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-
-    let geminiRes: globalThis.Response;
     try {
-      geminiRes = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": config.geminiApiKey,
-        },
-        body: JSON.stringify(geminiBody),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    let geminiData: GeminiAPIResponse;
-    try {
-      geminiData = (await geminiRes.json()) as GeminiAPIResponse;
-    } catch {
-      console.error("Failed to parse Gemini response");
-      res.status(502).json({ error: "Generation failed, please try again" });
-      return;
-    }
-
-    if (!geminiRes.ok) {
-      // Log full error internally, return generic message to client
-      console.error(`Gemini API error ${geminiRes.status}:`, geminiData.error?.message);
-      res.status(geminiRes.status >= 500 ? 502 : geminiRes.status)
-        .json({ error: "Generation failed, please try again" });
-      return;
-    }
-
-    // Extract image from response
-    const candidates = geminiData.candidates;
-    if (!candidates || candidates.length === 0) {
-      res.status(502).json({ error: "No result from generation" });
-      return;
-    }
-
-    const parts = candidates[0].content.parts;
-    for (const part of parts) {
-      const inlineData = part.inline_data || part.inlineData;
-      if (inlineData?.data) {
-        res.json({ image: inlineData.data });
+      const resultImage = await callGemini(image, prompt, endpoint);
+      res.json({ image: resultImage });
+    } catch (err: unknown) {
+      if (err instanceof GeminiCallError) {
+        res.status(err.status).json({ error: err.message });
         return;
       }
+      throw err;
     }
-
-    res.status(502).json({ error: "No image in generation result" });
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === "AbortError") {
       console.error("Gemini API timeout after", GEMINI_TIMEOUT_MS, "ms");
