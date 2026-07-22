@@ -12,6 +12,7 @@ struct ContentView: View {
 
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
     private var sheetColorScheme: ColorScheme {
         langManager.appearance.colorScheme ?? colorScheme
@@ -37,6 +38,7 @@ struct ContentView: View {
     @State private var customSize = CustomSizeSpec()
     @State private var showHistory = false
     @State private var lastGenerateTime: Date?
+    @State private var showShareCard = false
 
     // Photo picker states (replacing Menu-based approach)
     @State private var showPhotoPicker = false
@@ -46,6 +48,11 @@ struct ContentView: View {
     // Usage limit alert
     @State private var showLimitAlert = false
     @State private var limitAlertMessage = ""
+
+    // Multi-ad opt-in confirmation (rewarded ads must be user-initiated per AdMob policy)
+    @State private var showAdConfirm = false
+    @State private var pendingAdCount = 0
+    @State private var pendingAdConfirm: CheckedContinuation<Bool, Never>?
 
     @AppStorage("successfulGenerations") private var successfulGenerations: Int = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion: String = ""
@@ -61,7 +68,7 @@ struct ContentView: View {
             get: { photoOptions.beauty != .natural },
             set: { newValue in
                 if newValue {
-                    if BeautyLevel.lightEnhance.isPro && !subscription.isSubscribed {
+                    if BeautyLevel.lightEnhance.isPro && !subscription.hasProAccess {
                         showSubscriptionSheet = true
                     } else {
                         photoOptions.beauty = .lightEnhance
@@ -78,7 +85,7 @@ struct ContentView: View {
             get: { photoOptions.attire != .keepOriginal },
             set: { newValue in
                 if newValue {
-                    if Attire.darkSuit.isPro && !subscription.isSubscribed {
+                    if Attire.darkSuit.isPro && !subscription.hasProAccess {
                         showSubscriptionSheet = true
                     } else {
                         photoOptions.attire = .darkSuit
@@ -108,7 +115,7 @@ struct ContentView: View {
                                 isCustomSize: $isCustomSize,
                                 specs: sortedSpecs,
                                 language: lang,
-                                isSubscribed: subscription.isSubscribed,
+                                isSubscribed: subscription.hasProAccess,
                                 onLockedTap: { showSubscriptionSheet = true }
                             )
 
@@ -119,7 +126,7 @@ struct ContentView: View {
                             // Pro options (beauty, attire, hair, background, accessories)
                             ProOptionsView(
                                 options: $photoOptions,
-                                isSubscribed: subscription.isSubscribed,
+                                isSubscribed: subscription.hasProAccess,
                                 language: lang,
                                 onLockedTap: { showSubscriptionSheet = true }
                             )
@@ -130,7 +137,7 @@ struct ContentView: View {
                                 resultCard.id("resultCard")
                             }
 
-                            if !subscription.isSubscribed {
+                            if !subscription.hasProAccess {
                                 AdBannerViewWrapper().frame(height: 50)
                             }
                         }
@@ -177,7 +184,7 @@ struct ContentView: View {
                     image: result,
                     photoSizeMM: isCustomSize ? customSize.photoSizeMM : selectedSpec.photoSizeMM,
                     sizeLabel: isCustomSize ? customSize.sizeLabel : selectedSpec.sizeLabel,
-                    isSubscribed: subscription.isSubscribed,
+                    isSubscribed: subscription.hasProAccess,
                     onLockedTap: {
                         showPrintLayout = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
@@ -217,6 +224,15 @@ struct ContentView: View {
                 .presentationDetents([.large])
                 .preferredColorScheme(sheetColorScheme)
         }
+        .sheet(isPresented: $showShareCard) {
+            ShareCardView(
+                referralCode: referralManager.referralCode,
+                shareText: referralManager.shareMessage(language: AppLanguage(rawValue: lang) ?? .english)
+            )
+            .environmentObject(langManager)
+            .presentationDetents([.medium, .large])
+            .preferredColorScheme(sheetColorScheme)
+        }
         .alert(errorTitle, isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
@@ -230,6 +246,23 @@ struct ContentView: View {
             Button(okLabel, role: .cancel) {}
         } message: {
             Text(limitAlertMessage)
+        }
+        .alert(adConfirmTitle, isPresented: $showAdConfirm) {
+            Button(adConfirmContinueLabel) {
+                pendingAdConfirm?.resume(returning: true)
+                pendingAdConfirm = nil
+            }
+            Button(upgradeLabel) {
+                pendingAdConfirm?.resume(returning: false)
+                pendingAdConfirm = nil
+                showSubscriptionSheet = true
+            }
+            Button(okLabel, role: .cancel) {
+                pendingAdConfirm?.resume(returning: false)
+                pendingAdConfirm = nil
+            }
+        } message: {
+            Text(adConfirmMessage(pendingAdCount))
         }
         .onChange(of: selectedSpec) { _ in
             photoOptions.background = .specDefault
@@ -256,6 +289,15 @@ struct ContentView: View {
             .environmentObject(langManager)
             .preferredColorScheme(sheetColorScheme)
         }
+        .task {
+            await referralManager.registerCode()
+            _ = await referralManager.refreshAndClaim(applyTrial: { subscription.grantPromoPremium(days: $0) })
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                subscription.refreshPromoState()
+            }
+        }
     }
 
     // MARK: - Top Toolbar
@@ -279,13 +321,13 @@ struct ContentView: View {
                 }
                 .accessibilityLabel(Text("Settings"))
                 Button { showSubscriptionSheet = true } label: {
-                    Text(subscription.isSubscribed ? subscribedLabel : "PRO")
+                    Text(subscription.hasProAccess ? subscribedLabel : "PRO")
                         .font(.system(size: 10, weight: .bold))
                         .tracking(1)
-                        .foregroundStyle(subscription.isSubscribed ? Color.inkFillForeground : Color.inkBlack)
+                        .foregroundStyle(subscription.hasProAccess ? Color.inkFillForeground : Color.inkBlack)
                         .padding(.horizontal, 10)
                         .frame(height: 44)
-                        .background(subscription.isSubscribed ? Color.inkFill : Color.clear)
+                        .background(subscription.hasProAccess ? Color.inkFill : Color.clear)
                         .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
                 }
                 .accessibilityLabel(Text("Subscription"))
@@ -534,7 +576,7 @@ struct ContentView: View {
             }
 
             Button {
-                if subscription.isSubscribed {
+                if subscription.hasProAccess {
                     showPrintLayout = true
                 } else {
                     showSubscriptionSheet = true
@@ -546,7 +588,7 @@ struct ContentView: View {
                         .font(.system(size: 11, weight: .bold))
                     Text(printBottomLabel)
                         .font(.system(size: 14, weight: .medium))
-                    if !subscription.isSubscribed {
+                    if !subscription.hasProAccess {
                         Text("PRO")
                             .font(.system(size: 9, weight: .bold))
                             .tracking(0.5)
@@ -589,7 +631,7 @@ struct ContentView: View {
             }
             .disabled(isGenerating || inputImage == nil)
 
-            if !subscription.isSubscribed {
+            if !subscription.hasProAccess {
                 Text(freeUsageNote)
                     .font(.system(size: 11))
                     .foregroundStyle(Color.branchGray)
@@ -655,14 +697,15 @@ struct ContentView: View {
     private var freeSubtitle:    String { l("首次免费", "First gen free", "初回無料", "첫 생성 무료", vi: "Lần đầu miễn phí", id: "Pertama gratis", pt: "1ª vez grátis") }
     private var freeUsageNote: String {
         let left = usage.freeUsesRemaining
+        let firstFree = usage.hasLifetimeFreeLeft
         switch lang {
-        case "zh": return "今日剩余 \(left)/\(UsageManager.freeDailyLimit) 次 · \(left == UsageManager.freeDailyLimit ? "首次免费" : "需观看广告")"
-        case "ja": return "本日残り \(left)/\(UsageManager.freeDailyLimit)回 · \(left == UsageManager.freeDailyLimit ? "初回無料" : "広告視聴が必要")"
-        case "ko": return "오늘 남은 \(left)/\(UsageManager.freeDailyLimit)회 · \(left == UsageManager.freeDailyLimit ? "첫 생성 무료" : "광고 시청 필요")"
-        case "vi": return "Còn \(left)/\(UsageManager.freeDailyLimit) lần · \(left == UsageManager.freeDailyLimit ? "Lần đầu miễn phí" : "Cần xem QC")"
-        case "id": return "Sisa \(left)/\(UsageManager.freeDailyLimit) · \(left == UsageManager.freeDailyLimit ? "Pertama gratis" : "Perlu tonton iklan")"
-        case "pt": return "Restam \(left)/\(UsageManager.freeDailyLimit) · \(left == UsageManager.freeDailyLimit ? "1ª grátis" : "Requer anúncio")"
-        default:   return "\(left)/\(UsageManager.freeDailyLimit) left today · \(left == UsageManager.freeDailyLimit ? "First gen free" : "Ad required")"
+        case "zh": return "今日剩余 \(left)/\(UsageManager.freeDailyLimit) 次 · \(firstFree ? "首次免费" : "需观看广告")"
+        case "ja": return "本日残り \(left)/\(UsageManager.freeDailyLimit)回 · \(firstFree ? "初回無料" : "広告視聴が必要")"
+        case "ko": return "오늘 남은 \(left)/\(UsageManager.freeDailyLimit)회 · \(firstFree ? "첫 생성 무료" : "광고 시청 필요")"
+        case "vi": return "Còn \(left)/\(UsageManager.freeDailyLimit) lần · \(firstFree ? "Lần đầu miễn phí" : "Cần xem QC")"
+        case "id": return "Sisa \(left)/\(UsageManager.freeDailyLimit) · \(firstFree ? "Pertama gratis" : "Perlu tonton iklan")"
+        case "pt": return "Restam \(left)/\(UsageManager.freeDailyLimit) · \(firstFree ? "1ª grátis" : "Requer anúncio")"
+        default:   return "\(left)/\(UsageManager.freeDailyLimit) left today · \(firstFree ? "First gen free" : "Ad required")"
         }
     }
     private var remainingCountText: String {
@@ -703,6 +746,19 @@ struct ContentView: View {
     private var upgradeLabel:           String { l("升级会员", "Upgrade", "アップグレード", "업그레이드", vi: "Nâng cấp", id: "Upgrade", pt: "Assinar") }
     private var printBottomLabel:       String { l("便利店打印", "Print Layout", "コンビニプリント", "편의점 인쇄", vi: "In ảnh", id: "Cetak", pt: "Imprimir") }
 
+    // Multi-ad opt-in confirmation
+    private var adConfirmTitle:         String { l("需要观看广告", "Watch Ads to Continue", "広告の視聴が必要です", "광고 시청 필요", vi: "Cần xem quảng cáo", id: "Perlu Menonton Iklan", pt: "Assista a anúncios") }
+    private var adConfirmContinueLabel: String { l("继续观看", "Watch & Continue", "視聴して続ける", "시청하고 계속", vi: "Xem & Tiếp tục", id: "Tonton & Lanjut", pt: "Assistir e continuar") }
+    private func adConfirmMessage(_ count: Int) -> String {
+        l("本次生成需要观看 \(count) 个广告。升级会员可免广告无限生成。",
+          "This generation requires watching \(count) ads. Upgrade to Pro for unlimited, ad-free generations.",
+          "今回の生成には広告を \(count) 本ご視聴いただく必要があります。プロにアップグレードすると広告なしで無制限に生成できます。",
+          "이번 생성에는 광고 \(count)개를 시청해야 합니다. 프로로 업그레이드하면 광고 없이 무제한 생성할 수 있습니다.",
+          vi: "Lần tạo này cần xem \(count) quảng cáo. Nâng cấp Pro để tạo không giới hạn, không quảng cáo.",
+          id: "Pembuatan ini memerlukan menonton \(count) iklan. Upgrade ke Pro untuk tanpa batas tanpa iklan.",
+          pt: "Esta geração requer assistir \(count) anúncios. Assine Pro para gerações ilimitadas sem anúncios.")
+    }
+
     // MARK: - Actions
 
     private func generateTapped() async {
@@ -714,20 +770,25 @@ struct ContentView: View {
             showAIConsent = true
             return
         }
-        if !subscription.isSubscribed && photoOptions.hasProSelection {
+        if !subscription.hasProAccess && photoOptions.hasProSelection {
             photoOptions = .defaults
         }
-        let decision = usage.canGenerate(isSubscribed: subscription.isSubscribed)
+        let decision = usage.canGenerate(isSubscribed: subscription.hasProAccess)
         switch decision {
         case .allowed:
             await performGenerate(input: input)
-        case .requireRewardedAd:
+        case .requireRewardedAds(let count):
             if referralManager.useBonusGeneration() {
-                await performGenerate(input: input)
+                await performGenerate(input: input, proOverride: true)
                 return
             }
-            await presentRewardedThenGenerate(input: input)
+            await presentRewardedThenGenerate(input: input, adCount: count)
         case .reachedDailyLimit:
+            // Bonus generations can break through the daily cap entirely (Pro quality, no ad).
+            if referralManager.useBonusGeneration() {
+                await performGenerate(input: input, proOverride: true)
+                return
+            }
             limitAlertMessage = limitReachedMessage
             showLimitAlert = true
             AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "reachedDailyLimit"])
@@ -738,39 +799,63 @@ struct ContentView: View {
         }
     }
 
-    private func presentRewardedThenGenerate(input: UIImage) async {
-        await adManager.loadRewarded()
-        let rewarded = await adManager.showRewarded()
-        if rewarded {
+    /// Plays `adCount` rewarded ads back-to-back, then generates. When more than one ad is
+    /// required, the user is asked to opt in once up-front (AdMob requires rewarded ads to be
+    /// user-initiated) — the single confirmation covers the whole batch.
+    private func presentRewardedThenGenerate(input: UIImage, adCount: Int) async {
+        if adCount >= 2 {
+            let confirmed = await confirmMultiAd(adCount)
+            guard confirmed else { return }
+        }
+        for _ in 0..<adCount {
+            await adManager.loadRewarded()
+            let rewarded = await adManager.showRewarded()
+            guard rewarded else {
+                errorMessage = l("未完成广告观看，无法继续生成。",
+                                 "Ad not completed. Generation cancelled.",
+                                 "広告が完了しませんでした。生成をキャンセルしました。",
+                                 "광고가 완료되지 않았습니다. 생성이 취소되었습니다.",
+                                 vi: "Chưa xem xong quảng cáo. Đã hủy tạo ảnh.",
+                                 id: "Iklan belum selesai. Pembuatan dibatalkan.",
+                                 pt: "Anúncio não concluído. Geração cancelada.")
+                return
+            }
             AnalyticsManager.shared.track(AnalyticsManager.Event.adWatched)
-            usage.markUsed(isSubscribed: false)
-            await performGenerate(input: input)
-        } else {
-            errorMessage = l("未完成广告观看，无法继续生成。",
-                             "Ad not completed. Generation cancelled.",
-                             "広告が完了しませんでした。生成をキャンセルしました。",
-                             "광고가 완료되지 않았습니다. 생성이 취소되었습니다.",
-                             vi: "Chưa xem xong quảng cáo. Đã hủy tạo ảnh.",
-                             id: "Iklan belum selesai. Pembuatan dibatalkan.",
-                             pt: "Anúncio não concluído. Geração cancelada.")
+        }
+        usage.markUsed(isSubscribed: false)
+        await performGenerate(input: input)
+    }
+
+    /// Presents the "this generation needs N ads" confirmation and suspends until the user
+    /// chooses. Returns true to proceed with the ad batch, false if they cancel.
+    private func confirmMultiAd(_ count: Int) async -> Bool {
+        await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            pendingAdCount = count
+            pendingAdConfirm = cont
+            showAdConfirm = true
         }
     }
 
-    private func performGenerate(input: UIImage) async {
+    /// - Parameter proOverride: true when this generation is funded by a referral bonus generation
+    ///   rather than the daily quota — forces Pro-quality output and skips `usage.markUsed` so the
+    ///   bonus (already decremented by the caller) doesn't also eat into the daily allowance.
+    private func performGenerate(input: UIImage, proOverride: Bool = false) async {
         lastGenerateTime = Date()
         isGenerating = true
         defer { isGenerating = false }
         do {
             let basePrompt = isCustomSize ? customSize.prompt : selectedSpec.prompt
             let finalPrompt = basePrompt + photoOptions.buildPromptSuffix()
-            let tier: GeminiService.OutputTier = subscription.isSubscribed ? .pro : .free
+            let tier: GeminiService.OutputTier = (subscription.hasProAccess || proOverride) ? .pro : .free
             let result = try await GeminiService.shared.generateIDPhoto(
                 from: input,
                 prompt: finalPrompt,
                 tier: tier
             )
             self.outputImage = result
-            usage.markUsed(isSubscribed: subscription.isSubscribed)
+            if !proOverride {
+                usage.markUsed(isSubscribed: subscription.hasProAccess)
+            }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
 
             historyManager.addRecord(
@@ -784,10 +869,12 @@ struct ContentView: View {
             AnalyticsManager.shared.track(AnalyticsManager.Event.generationSuccess, properties: ["spec": specName])
 
             successfulGenerations += 1
+            var reviewPromptTriggered = false
             if successfulGenerations >= 3 {
                 let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
                 if lastReviewPromptVersion != currentVersion {
                     lastReviewPromptVersion = currentVersion
+                    reviewPromptTriggered = true
                     Task {
                         try? await Task.sleep(for: .seconds(1.5))
                         if let scene = UIApplication.shared.connectedScenes
@@ -797,11 +884,35 @@ struct ContentView: View {
                     }
                 }
             }
+            // Share card and the system review prompt compete for the same moment — review wins,
+            // and the share card is capped at once/day so it never feels naggy. Require a real
+            // referral code first (nil → the share text would contain an empty code「」), and rely
+            // on && short-circuit so shouldShowShareCard()'s once/day marker isn't burned when we
+            // can't actually show the card.
+            if !reviewPromptTriggered, referralManager.referralCode != nil, shouldShowShareCard() {
+                showShareCard = true
+            }
         } catch {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             errorMessage = error.localizedDescription
             AnalyticsManager.shared.track(AnalyticsManager.Event.generationFailed)
         }
+    }
+
+    // MARK: - Share Card Frequency Control
+
+    private static let shareCardDayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private func shouldShowShareCard() -> Bool {
+        let key = "aiid.shareCard.lastShownDay"
+        let today = Self.shareCardDayFormatter.string(from: Date())
+        guard UserDefaults.standard.string(forKey: key) != today else { return false }
+        UserDefaults.standard.set(today, forKey: key)
+        return true
     }
 
     private func loadSelectedImage(_ item: PhotosPickerItem?) async {
@@ -814,7 +925,7 @@ struct ContentView: View {
 
     private func sharePhoto() {
         guard let img = outputImage else { return }
-        let shareImage = subscription.isSubscribed ? img : addWatermark(to: img)
+        let shareImage = subscription.hasProAccess ? img : addWatermark(to: img)
         let items: [Any] = [shareImage]
 
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

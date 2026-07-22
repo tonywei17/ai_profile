@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var redeemCodeInput = ""
     @State private var isRedeeming = false
     @State private var showRedeemSuccess = false
+    @State private var claimToastMessage: String?
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
@@ -132,6 +133,14 @@ struct SettingsView: View {
                             }
                         }
 
+                        // Invited count + trial progress
+                        referralProgressRow
+
+                        // Promo Pro trial expiry (once granted)
+                        if let until = subscription.promoPremiumUntil, until > Date() {
+                            promoActiveRow(until: until)
+                        }
+
                         // Bonus remaining
                         if referralManager.bonusGenerations > 0 {
                             HStack(spacing: 12) {
@@ -169,6 +178,10 @@ struct SettingsView: View {
                             }
                             .disabled(redeemCodeInput.count < 4 || isRedeeming)
                         }
+
+                        Link(destination: LegalURLs.referralTerms(lang: lang)) {
+                            legalRow(icon: "doc.plaintext.fill", color: .gray, title: referralTermsLabel)
+                        }
                     } header: {
                         sectionHeader(icon: "gift", title: sectionTitle("Invite Friends", "邀请好友", "友達を招待", "친구 초대", vi: "Mời bạn bè", id: "Undang Teman", pt: "Convidar Amigos"))
                     } footer: {
@@ -203,6 +216,26 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+        .task {
+            await referralManager.refreshStatus()
+            if let result = await referralManager.claimRewards(applyTrial: { subscription.grantPromoPremium(days: $0) }),
+               result.grantedGenerations > 0 || result.grantedTrialDays > 0 {
+                claimToastMessage = claimedMessage(generations: result.grantedGenerations, trialDays: result.grantedTrialDays)
+                AnalyticsManager.shared.track(AnalyticsManager.Event.referralClaimed)
+            }
+        }
+        .alert(
+            sectionTitle("Reward Received!", "获得奖励！", "報酬を獲得！", "보상 획득!",
+                         vi: "Đã nhận thưởng!", id: "Hadiah Diterima!", pt: "Recompensa Recebida!"),
+            isPresented: Binding(
+                get: { claimToastMessage != nil },
+                set: { if !$0 { claimToastMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(claimToastMessage ?? "")
         }
         .alert(
             sectionTitle("Success!", "兑换成功！", "成功！", "성공!",
@@ -526,6 +559,127 @@ struct SettingsView: View {
         return sectionTitle("Expires \(ds)", "到期日期：\(ds)", "有効期限：\(ds)", "만료일: \(ds)", vi: "Hết hạn \(ds)", id: "Berakhir \(ds)", pt: "Expira \(ds)")
     }
 
+    // MARK: - Referral Progress
+
+    /// "Invited N people — M more to unlock a 3-day Pro trial" progress row.
+    private var referralProgressRow: some View {
+        let invited = referralManager.status?.redeemCount ?? referralManager.invitedCount
+        let trialGranted = referralManager.status?.trialGranted ?? false
+        let remaining = max(0, Self.trialThreshold - invited)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: "person.3.fill")
+                    .foregroundStyle(Color.inkBlack)
+                    .frame(width: 28, height: 28)
+                    .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
+                    .clipShape(Rectangle())
+                Text(invitedCountText(invited))
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            if !trialGranted {
+                ProgressView(value: Double(min(invited, Self.trialThreshold)), total: Double(Self.trialThreshold))
+                    .tint(.purple)
+                Text(remaining > 0 ? trialProgressText(remaining: remaining) : trialReadyText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func promoActiveRow(until: Date) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "sparkles")
+                .foregroundStyle(Color.inkBlack)
+                .frame(width: 28, height: 28)
+                .overlay(Rectangle().stroke(Color.inkBorder, lineWidth: 1))
+                .clipShape(Rectangle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(promoActiveLabel).foregroundStyle(.primary)
+                Text(promoUntilText(until)).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+    }
+
+    private static let trialThreshold = 3
+
+    private func claimedMessage(generations: Int, trialDays: Int) -> String {
+        if generations > 0 && trialDays > 0 {
+            return sectionTitle(
+                "You earned \(generations) free generations and a \(trialDays)-day Pro trial!",
+                "获得 \(generations) 次免费生成和 \(trialDays) 天 Pro 体验！",
+                "\(generations)回の無料生成と\(trialDays)日間のPro体験を獲得しました！",
+                "\(generations)회 무료 생성과 \(trialDays)일 Pro 체험을 획득했습니다!",
+                vi: "Bạn nhận được \(generations) lượt tạo miễn phí và \(trialDays) ngày dùng thử Pro!",
+                id: "Anda mendapat \(generations) generasi gratis dan \(trialDays) hari trial Pro!",
+                pt: "Você ganhou \(generations) gerações grátis e \(trialDays) dias de teste Pro!"
+            )
+        } else if trialDays > 0 {
+            return sectionTitle(
+                "You earned a \(trialDays)-day Pro trial!",
+                "获得 \(trialDays) 天 Pro 体验！",
+                "\(trialDays)日間のPro体験を獲得しました！",
+                "\(trialDays)일 Pro 체험을 획득했습니다!",
+                vi: "Bạn nhận được \(trialDays) ngày dùng thử Pro!",
+                id: "Anda mendapat \(trialDays) hari trial Pro!",
+                pt: "Você ganhou \(trialDays) dias de teste Pro!"
+            )
+        }
+        return sectionTitle(
+            "You earned \(generations) free generations!",
+            "获得 \(generations) 次免费生成！",
+            "\(generations)回の無料生成を獲得しました！",
+            "\(generations)회 무료 생성을 획득했습니다!",
+            vi: "Bạn nhận được \(generations) lượt tạo miễn phí!",
+            id: "Anda mendapat \(generations) generasi gratis!",
+            pt: "Você ganhou \(generations) gerações grátis!"
+        )
+    }
+
+    private func invitedCountText(_ n: Int) -> String {
+        sectionTitle("Invited \(n) friend\(n == 1 ? "" : "s")", "已邀请 \(n) 人", "\(n)人を招待済み", "\(n)명 초대함",
+                     vi: "Đã mời \(n) người", id: "Mengundang \(n) orang", pt: "\(n) amigo(s) convidado(s)")
+    }
+    private func trialProgressText(remaining: Int) -> String {
+        sectionTitle(
+            "Invite \(remaining) more to unlock a 3-day Pro trial",
+            "再邀请 \(remaining) 人即可解锁 3 天 Pro 体验",
+            "あと\(remaining)人招待すると3日間のPro体験がもらえます",
+            "\(remaining)명 더 초대하면 3일 Pro 체험이 열려요",
+            vi: "Mời thêm \(remaining) người để mở khóa 3 ngày dùng thử Pro",
+            id: "Undang \(remaining) orang lagi untuk membuka trial Pro 3 hari",
+            pt: "Convide mais \(remaining) para desbloquear 3 dias de teste Pro"
+        )
+    }
+    private var trialReadyText: String {
+        sectionTitle("3-day Pro trial ready — reopen the app to claim it",
+                     "3 天 Pro 体验已就绪，重新打开 App 即可领取",
+                     "3日間のPro体験の準備ができました。アプリを開き直すと受け取れます",
+                     "3일 Pro 체험 준비 완료 — 앱을 다시 열면 받을 수 있어요",
+                     vi: "Đã sẵn sàng dùng thử Pro 3 ngày — mở lại ứng dụng để nhận",
+                     id: "Trial Pro 3 hari siap — buka ulang aplikasi untuk klaim",
+                     pt: "Teste Pro de 3 dias pronto — reabra o app para resgatar")
+    }
+    private var promoActiveLabel: String {
+        sectionTitle("Pro Trial Active", "Pro 体验进行中", "Proトライアル中", "프로 체험 중",
+                     vi: "Đang dùng thử Pro", id: "Trial Pro Aktif", pt: "Teste Pro Ativo")
+    }
+    private func promoUntilText(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateStyle = .medium
+        fmt.timeStyle = .none
+        let ds = fmt.string(from: date)
+        return sectionTitle("Until \(ds)", "至 \(ds)", "\(ds)まで", "\(ds)까지",
+                            vi: "Đến \(ds)", id: "Hingga \(ds)", pt: "Até \(ds)")
+    }
+    private var referralTermsLabel: String {
+        sectionTitle("Campaign Terms", "活动规则", "キャンペーン規約", "캠페인 약관",
+                     vi: "Điều khoản Chương trình", id: "Ketentuan Kampanye", pt: "Termos da Campanha")
+    }
+
     // MARK: - Referral Strings & Actions
 
     private var inviteLabel:       String { sectionTitle("Invite Friends", "邀请好友", "友達を招待", "친구 초대", vi: "Mời bạn bè", id: "Undang Teman", pt: "Convidar Amigos") }
@@ -546,16 +700,9 @@ struct SettingsView: View {
     }
 
     private func shareReferralCode() {
-        guard let code = referralManager.referralCode else { return }
-        let message = sectionTitle(
-            "用我的邀请码 \(code) 下载 AI ID Photo，我们都能获得 3 次免费 Pro 生成！",
-            "Use my referral code \(code) on AI ID Photo — we both get 3 free Pro generations!",
-            "AI証明写真アプリで招待コード \(code) を使うと、お互いに3回無料Pro生成がもらえます！",
-            "AI 증명사진 앱에서 추천 코드 \(code) 을 사용하면 서로 3회 Pro 생성을 받아요!",
-            vi: "Dùng mã giới thiệu \(code) trên AI ID Photo — cả hai nhận 3 lần Pro miễn phí!",
-            id: "Gunakan kode referral \(code) di AI ID Photo — kita berdua dapat 3 kali gratis!",
-            pt: "Use o código \(code) no AI ID Photo — nós dois ganhamos 3 gerações Pro grátis!"
-        )
+        guard referralManager.referralCode != nil else { return }
+        let message = referralManager.shareMessage(language: AppLanguage(rawValue: lang) ?? .english)
+        AnalyticsManager.shared.track(AnalyticsManager.Event.referralShareTapped, properties: ["source": "settings"])
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.keyWindow?.rootViewController {
             let ac = UIActivityViewController(activityItems: [message], applicationActivities: nil)
@@ -588,6 +735,11 @@ private enum LegalURLs {
     }
     static func termsOfService(lang: String) -> URL {
         URL(string: "\(baseURL)/terms/\(legalLang(lang)).html")!
+    }
+    static func referralTerms(lang: String) -> URL {
+        // Pages authored at ../nexus-wei.space/aiidphoto/referral-terms/{lang}.html (7 langs).
+        // Live only after the nexus-wei-site Cloud Run service is redeployed.
+        URL(string: "\(baseURL)/referral-terms/\(legalLang(lang)).html")!
     }
 
     private static func legalLang(_ code: String) -> String {

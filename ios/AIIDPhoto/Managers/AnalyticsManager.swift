@@ -28,6 +28,9 @@ final class AnalyticsManager: ObservableObject {
         static let photoSaved         = "photo_saved"
         static let photoShared        = "photo_shared"
         static let printUsed          = "print_used"
+        static let referralShareShown = "referral_share_shown"
+        static let referralShareTapped = "referral_share_tapped"
+        static let referralClaimed    = "referral_claimed"
     }
 
     // MARK: - Track

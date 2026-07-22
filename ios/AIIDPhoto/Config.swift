@@ -25,4 +25,11 @@ enum Config {
         }
         return req
     }
+
+    // MARK: - App Store
+
+    /// TODO(Wei): App Store Connect 上架后填真实数字 ID(apps.apple.com/app/idXXXXXXXXXX)
+    static let appStoreID = "0000000000"  // TODO: placeholder
+
+    static var appStoreURL: URL { URL(string: "https://apps.apple.com/app/id\(appStoreID)")! }
 }

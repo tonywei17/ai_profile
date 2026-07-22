@@ -45,6 +45,9 @@ final class SubscriptionManager: ObservableObject {
     /// Print layout credits (consumable purchases)
     @Published private(set) var printLayoutCredits: Int = 0
 
+    /// Referral-granted promo Pro entitlement expiry (StoreKit-independent, Keychain-backed).
+    @Published private(set) var promoPremiumUntil: Date?
+
     // MARK: - Private
 
     private var products: [SubscriptionPlan: Product] = [:]
@@ -56,12 +59,16 @@ final class SubscriptionManager: ObservableObject {
     private static let fallbackPrintSinglePrice = "$3.49 USD"
 
     private let kPrintLayoutCredits = "aiid.printLayout.credits"
+    private let kPromoPremiumUntil = "aiid.promo.premiumUntil"
 
     // MARK: - Init / Deinit
 
     init() {
         if Self.forceSubscribed { isSubscribed = true }
         printLayoutCredits = UserDefaults.standard.integer(forKey: kPrintLayoutCredits)
+        if let stored = KeychainHelper.readInt(key: kPromoPremiumUntil) {
+            promoPremiumUntil = Date(timeIntervalSince1970: TimeInterval(stored))
+        }
         updateListenerTask = Task { await listenForUpdates() }
         Task { await refreshProducts() }
         Task { await checkCurrentEntitlements() }
@@ -126,13 +133,46 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Print Layout Access
 
     var canUsePrintLayout: Bool {
-        isSubscribed || printLayoutCredits > 0
+        hasProAccess || printLayoutCredits > 0
     }
 
     func consumePrintLayoutCredit() {
-        guard !isSubscribed, printLayoutCredits > 0 else { return }
+        guard !hasProAccess, printLayoutCredits > 0 else { return }
         printLayoutCredits -= 1
         UserDefaults.standard.set(printLayoutCredits, forKey: kPrintLayoutCredits)
+    }
+
+    // MARK: - Promo Pro Entitlement (referral reward)
+
+    /// Whether a referral-granted promo Pro period is currently active.
+    var isPromoPremiumActive: Bool {
+        (promoPremiumUntil ?? .distantPast) > Date()
+    }
+
+    /// Single source of truth for Pro access across the app: real subscription OR active promo trial.
+    var hasProAccess: Bool {
+        isSubscribed || isPromoPremiumActive
+    }
+
+    /// Grants (or extends) a promo Pro period. Idempotent-friendly: stacks on top of any remaining time
+    /// rather than resetting it, so a duplicate/replayed grant never shortens the user's entitlement.
+    func grantPromoPremium(days: Int) {
+        guard days > 0 else { return }
+        let base = max(promoPremiumUntil ?? Date(), Date())
+        let newUntil = base.addingTimeInterval(TimeInterval(days) * 86400)
+        promoPremiumUntil = newUntil
+        KeychainHelper.saveInt(key: kPromoPremiumUntil, value: Int(newUntil.timeIntervalSince1970))
+    }
+
+    /// Re-reads the promo expiry from Keychain and forces a UI refresh — call on foreground return
+    /// so a lapsed trial (no value change, just time passing) still downgrades the UI promptly.
+    func refreshPromoState() {
+        if let stored = KeychainHelper.readInt(key: kPromoPremiumUntil) {
+            promoPremiumUntil = Date(timeIntervalSince1970: TimeInterval(stored))
+        } else {
+            promoPremiumUntil = nil
+        }
+        objectWillChange.send()
     }
 
     // MARK: - Entitlement Checking

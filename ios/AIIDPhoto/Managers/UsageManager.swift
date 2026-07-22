@@ -2,7 +2,9 @@ import Foundation
 
 @MainActor
 final class UsageManager: ObservableObject {
-    enum Decision { case allowed, requireRewardedAd, reachedDailyLimit, reachedLimit }
+    /// `.requireRewardedAds(count)` — user must watch `count` rewarded ads (back-to-back)
+    /// before this generation. Ad count escalates with same-day usage (see `canGenerate`).
+    enum Decision: Equatable { case allowed, requireRewardedAds(Int), reachedDailyLimit, reachedLimit }
 
     @Published private(set) var subscriberUsesLeft: Int = 20
     @Published private(set) var freeUsesToday: Int = 0
@@ -17,7 +19,11 @@ final class UsageManager: ObservableObject {
     // Migration flag
     private let kMigrated = "aiid.usage.keychainMigrated"
 
-    static let freeDailyLimit = 5
+    static let freeDailyLimit = 3
+
+    /// Hard cap on rewarded ads shown for a single generation, regardless of how high
+    /// `freeDailyLimit` is raised later. Keeps the escalation from becoming absurd.
+    static let maxAdsPerGeneration = 3
 
     init() {
         migrateToKeychainIfNeeded()
@@ -31,6 +37,12 @@ final class UsageManager: ObservableObject {
         max(0, Self.freeDailyLimit - freeUsesToday)
     }
 
+    /// True only until the very first generation of the app's lifetime is consumed.
+    /// After that, every generation (including each day's first) requires watching ads.
+    var hasLifetimeFreeLeft: Bool {
+        !defaults.bool(forKey: kFirstUseDone)
+    }
+
     func canGenerate(isSubscribed: Bool) -> Decision {
         resetIfNeeded()
         if isSubscribed {
@@ -40,7 +52,11 @@ final class UsageManager: ObservableObject {
                 return .reachedDailyLimit
             }
             let firstUsed = defaults.bool(forKey: kFirstUseDone)
-            return firstUsed ? .requireRewardedAd : .allowed
+            // Lifetime-first generation is free; after that ads escalate with same-day usage:
+            // today's 1st = 1 ad, 2nd = 2 ads, 3rd = 3 ads … capped at maxAdsPerGeneration.
+            guard firstUsed else { return .allowed }
+            let ads = min(freeUsesToday + 1, Self.maxAdsPerGeneration)
+            return .requireRewardedAds(ads)
         }
     }
 

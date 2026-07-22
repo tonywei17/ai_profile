@@ -12,8 +12,10 @@ import tripoRouter from "./routes/tripo";
 
 const app = express();
 
-// Trust Cloud Run's load balancer for correct req.ip
-app.set("trust proxy", true);
+// Trust exactly ONE proxy hop (Cloud Run's front end). `true` would trust the whole
+// X-Forwarded-For chain, letting clients spoof the leftmost entry and bypass IP-based
+// rate limiting / the referral ipDaily anti-fraud gate.
+app.set("trust proxy", 1);
 
 // Security headers
 app.use(helmet());
