@@ -888,8 +888,12 @@ struct ContentView: View {
         }
         for _ in 0..<adCount {
             await adManager.loadRewarded()
+            // No ad available to show (no fill / load error). Never punish the user by blocking
+            // their generation over our inability to serve an ad — skip this slot and continue.
+            guard adManager.hasRewardedReady else { continue }
             let rewarded = await adManager.showRewarded()
             guard rewarded else {
+                // The user actively abandoned the ad before earning the reward → cancel.
                 errorMessage = l("未完成广告观看，无法继续生成。",
                                  "Ad not completed. Generation cancelled.",
                                  "広告が完了しませんでした。生成をキャンセルしました。",

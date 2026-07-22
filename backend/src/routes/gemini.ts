@@ -103,8 +103,10 @@ async function callHivision(
     form1.append("dpi", "300");
     form1.append("human_matting_model", "modnet_photographic_portrait_matting");
     form1.append("face_detect_model", "mtcnn");
-    // head occupies ~2/3 of photo height per Chinese ID photo standards (GA461-2004)
-    form1.append("head_measure_ratio", "0.35");
+    // Face-area-to-frame ratio (Hivision default 0.2). 0.35 cropped too tight —
+    // it enlarged the head until the shoulders fell out of frame. 0.2 restores the
+    // standard head-and-shoulders ID-photo framing.
+    form1.append("head_measure_ratio", "0.2");
 
     const res1 = await fetch(`${config.hivisionUrl}/idphoto`, {
       method: "POST",

@@ -22,8 +22,9 @@ final class UsageManager: ObservableObject {
     static let freeDailyLimit = 3
 
     /// Hard cap on rewarded ads shown for a single generation, regardless of how high
-    /// `freeDailyLimit` is raised later. Keeps the escalation from becoming absurd.
-    static let maxAdsPerGeneration = 3
+    /// `freeDailyLimit` is raised later. Capped at 2 so the "watch N ads" promise never
+    /// exceeds what ad fill reliably delivers (3 chained ads routinely under-filled).
+    static let maxAdsPerGeneration = 2
 
     init() {
         migrateToKeychainIfNeeded()
@@ -53,7 +54,7 @@ final class UsageManager: ObservableObject {
             }
             let firstUsed = defaults.bool(forKey: kFirstUseDone)
             // Lifetime-first generation is free; after that ads escalate with same-day usage:
-            // today's 1st = 1 ad, 2nd = 2 ads, 3rd = 3 ads … capped at maxAdsPerGeneration.
+            // today's 1st = 1 ad, 2nd and beyond = 2 ads … capped at maxAdsPerGeneration.
             guard firstUsed else { return .allowed }
             let ads = min(freeUsesToday + 1, Self.maxAdsPerGeneration)
             return .requireRewardedAds(ads)

@@ -21,7 +21,7 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Debug Override
     static var forceSubscribed: Bool {
         #if DEBUG
-        return true  // Flip to true for local testing only
+        return false  // Flip to true only when locally testing the subscribed state
         #else
         return false  // Always false in release builds
         #endif
