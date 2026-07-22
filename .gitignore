@@ -59,3 +59,6 @@ playground.xcworkspace
 # Local logs
 *.log
 *.xcactivitylog
+
+# ASC operation screenshots (local audit trail, may contain store listing info)
+.asc_screenshots/
