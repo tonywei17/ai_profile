@@ -527,7 +527,7 @@ struct SettingsView: View {
     private var upgradeLabel:      String { sectionTitle("Upgrade to Pro", "升级为会员", "プロにアップグレード", "프로로 업그레이드", vi: "Nâng cấp Pro", id: "Upgrade ke Pro", pt: "Assinar Pro") }
     private var manageLabel:       String { sectionTitle("Manage Subscription", "管理订阅", "サブスクリプション管理", "구독 관리", vi: "Quản lý đăng ký", id: "Kelola Langganan", pt: "Gerenciar Assinatura") }
     private var restoreLabel:      String { sectionTitle("Restore Purchases", "恢复购买", "購入を復元", "구매 복원", vi: "Khôi phục mua hàng", id: "Pulihkan Pembelian", pt: "Restaurar Compras") }
-    private var freeUserDesc:      String { sectionTitle("First gen free, then watch a 30s ad", "首次免费，此后需观看30秒广告", "初回無料、次回から30秒広告視聴", "첫 생성 무료, 이후 30초 광고", vi: "Lần đầu miễn phí, sau đó xem QC 30 giây", id: "Pertama gratis, lalu tonton iklan 30 detik", pt: "1ª grátis, depois assista anúncio de 30s") }
+    private var freeUserDesc:      String { sectionTitle("First gen free, then watch an ad", "首次免费，此后需观看广告", "初回無料、次回から広告視聴", "첫 생성 무료, 이후 광고 시청", vi: "Lần đầu miễn phí, sau đó xem quảng cáo", id: "Pertama gratis, lalu tonton iklan", pt: "1ª grátis, depois assista um anúncio") }
     private var todayRemainingText: String {
         let n = usage.subscriberUsesLeft
         return sectionTitle("Today's remaining: \(n)", "今日剩余：\(n) 次", "本日残り：\(n)回", "오늘 남은 횟수: \(n)회", vi: "Còn lại hôm nay: \(n)", id: "Sisa hari ini: \(n)", pt: "Restantes hoje: \(n)")

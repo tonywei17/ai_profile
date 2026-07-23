@@ -373,13 +373,13 @@ struct SubscriptionSheetView: View {
           vi: "Không quảng cáo", id: "Tanpa Iklan", pt: "Sem Anúncios")
     }
     private var benefitNoAdsDesc: String {
-        l("不用看30秒广告，一键生成",
-          "Skip the 30-second ads — generate instantly",
-          "30秒広告をスキップ、即座に生成",
-          "30초 광고 건너뛰기, 즉시 생성",
-          vi: "Bỏ qua QC 30 giây — tạo ảnh ngay",
-          id: "Lewati iklan 30 detik — langsung buat",
-          pt: "Pule anúncios de 30s — gere instantaneamente")
+        l("无需观看广告，一键生成",
+          "Skip the ads — generate instantly",
+          "広告をスキップ、即座に生成",
+          "광고 건너뛰기, 즉시 생성",
+          vi: "Bỏ qua quảng cáo — tạo ảnh ngay",
+          id: "Lewati iklan — langsung buat",
+          pt: "Pule os anúncios — gere instantaneamente")
     }
     private var benefitPrintTitle: String {
         l("便利店排版打印", "Konbini Print Layout", "コンビニプリント", "편의점 인쇄 레이아웃",

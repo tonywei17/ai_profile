@@ -594,6 +594,15 @@ struct ContentView: View {
                         .overlay(Rectangle().stroke(Color.inkBlack, lineWidth: 1))
                     }
                 }
+
+                if !subscription.hasProAccess && !isWatermarkedPreview {
+                    Text(saveAdHint)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.branchGray)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 6)
+                }
             }
         }
     }
@@ -703,6 +712,16 @@ struct ContentView: View {
                 Text(freeUsageNote)
                     .font(.system(size: 11))
                     .foregroundStyle(Color.branchGray)
+                Button {
+                    showSubscriptionSheet = true
+                    AnalyticsManager.shared.track(AnalyticsManager.Event.paywallShown, properties: ["trigger": "freeGenHint"])
+                } label: {
+                    Text(proUpsellHint)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color.treeGreen)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
             } else {
                 Text(remainingCountText)
                     .font(.system(size: 11))
@@ -763,6 +782,15 @@ struct ContentView: View {
                  vi: "Tạo ảnh \(specName)", id: "Buat Foto \(specName)", pt: "Gerar Foto \(specName)")
     }
     private var freeSubtitle:    String { l("首次免费", "First gen free", "初回無料", "첫 생성 무료", vi: "Lần đầu miễn phí", id: "Pertama gratis", pt: "1ª vez grátis") }
+    private var proUpsellHint: String {
+        l("想要更自然的效果？升级 Pro 解锁美颜・换装・无水印保存",
+          "Want better results? Go Pro for beauty, outfit & watermark-free saves",
+          "もっと自然な仕上がりに？プロで美顔・服装補正・透かしなし保存",
+          "더 자연스러운 결과? 프로로 뷰티·복장·워터마크 없이 저장",
+          vi: "Muốn kết quả đẹp hơn? Nâng cấp Pro: làm đẹp, đổi trang phục & lưu không watermark",
+          id: "Ingin hasil lebih baik? Pro untuk kecantikan, pakaian & simpan tanpa watermark",
+          pt: "Quer resultados melhores? Pro: beleza, traje e salvar sem marca d'água")
+    }
     private var freeUsageNote: String {
         let left = usage.freeUsesRemaining
         let firstFree = usage.hasLifetimeFreeLeft
@@ -790,6 +818,15 @@ struct ContentView: View {
     private var comparisonTitle: String { l("效果对比", "Before & After", "効果比較", "전후 비교", vi: "Trước & Sau", id: "Sebelum & Sesudah", pt: "Antes & Depois") }
     private var saveLabel:       String { l("保存到相册", "Save to Photos", "写真を保存", "사진 저장", vi: "Lưu vào Ảnh", id: "Simpan ke Foto", pt: "Salvar em Fotos") }
     private var shareLabel:      String { l("分享", "Share", "共有", "공유", vi: "Chia sẻ", id: "Bagikan", pt: "Compartilhar") }
+    private var saveAdHint: String {
+        l("保存需观看一次广告 · 升级会员免广告直接保存",
+          "Saving plays one ad · Go Pro to save instantly, ad-free",
+          "保存時に広告が1本再生されます · 会員なら広告なしで即保存",
+          "저장 시 광고 1개가 재생됩니다 · 프로는 광고 없이 즉시 저장",
+          vi: "Lưu ảnh sẽ xem 1 quảng cáo · Nâng cấp Pro để lưu ngay, không QC",
+          id: "Menyimpan memutar 1 iklan · Upgrade Pro untuk simpan langsung tanpa iklan",
+          pt: "Salvar exibe 1 anúncio · Assine Pro para salvar sem anúncios")
+    }
     private var firstFreePreviewBannerText: String {
         l("水印预览版 · 订阅会员解锁无水印高清保存",
           "Watermarked preview · Subscribe to save the unwatermarked photo",
